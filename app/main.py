@@ -4,8 +4,9 @@ from contextlib import asynccontextmanager
 
 import structlog
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
-from app.api import chat, health, workouts
+from app.api import chat, health, profile, workouts
 from app.config import get_settings
 from app.scheduler.jobs import start_scheduler, stop_scheduler
 
@@ -30,3 +31,6 @@ app = FastAPI(
 app.include_router(health.router)
 app.include_router(chat.router)
 app.include_router(workouts.router)
+app.include_router(profile.router)
+
+app.mount("/", StaticFiles(directory="static", html=True), name="static")
