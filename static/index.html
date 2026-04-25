@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fitness Agent</title>
+    <style>
+        :root {
+            --bg: #f4f4f9;
+            --text: #333;
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --panel-bg: #fff;
+            --border: #e5e7eb;
+            --msg-user: #4f46e5;
+            --msg-agent: #f3f4f6;
+        }
+        * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+        body { margin: 0; padding: 20px; background: var(--bg); color: var(--text); display: flex; flex-direction: column; height: 100vh; }
+        header { padding-bottom: 20px; text-align: center; font-size: 1.5rem; font-weight: bold; color: var(--primary); }
+        .container { display: flex; gap: 20px; flex: 1; min-height: 0; max-width: 1200px; margin: 0 auto; width: 100%; }
+
+        /* Chat Panel */
+        .chat-panel { flex: 2; display: flex; flex-direction: column; background: var(--panel-bg); border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: hidden; }
+        .chat-history { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
+        .message { max-width: 80%; padding: 12px 16px; border-radius: 16px; line-height: 1.4; word-wrap: break-word; white-space: pre-wrap; }
+        .message.user { align-self: flex-end; background: var(--msg-user); color: white; border-bottom-right-radius: 4px; }
+        .message.agent { align-self: flex-start; background: var(--msg-agent); color: var(--text); border-bottom-left-radius: 4px; }
+        .message .meta { font-size: 0.75rem; opacity: 0.7; margin-top: 5px; display: block; }
+
+        .chat-input { padding: 15px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; background: #fafafa; }
+        .chat-controls { display: flex; gap: 10px; align-items: center; }
+        .chat-controls select { padding: 8px; border: 1px solid var(--border); border-radius: 6px; outline: none; }
+        .chat-controls textarea { flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; resize: none; height: 50px; outline: none; font-family: inherit; }
+        .chat-controls button { padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background 0.2s; }
+        .chat-controls button:hover { background: var(--primary-hover); }
+        .chat-controls button:disabled { background: #9ca3af; cursor: not-allowed; }
+
+        /* Profile Panel */
+        .profile-panel { flex: 1; background: var(--panel-bg); border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); padding: 20px; overflow-y: auto; }
+        .profile-panel h2 { margin-top: 0; font-size: 1.25rem; border-bottom: 2px solid var(--border); padding-bottom: 10px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 5px; color: #4b5563; }
+        .form-group input, .form-group textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; outline: none; }
+        .form-group input:focus, .form-group textarea:focus { border-color: var(--primary); }
+        .form-actions { margin-top: 20px; }
+        .form-actions button { width: 100%; padding: 12px; background: #10b981; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .form-actions button:hover { background: #059669; }
+        #profile-status { font-size: 0.875rem; text-align: center; margin-top: 10px; min-height: 20px; }
+
+        .loader { display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s ease-in-out infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 768px) {
+            .container { flex-direction: column; }
+            .profile-panel { order: -1; max-height: 300px; }
+        }
+    </style>
+</head>
+<body>
+
+<header>Fitness Agent</header>
+
+<div class="container">
+    <div class="chat-panel">
+        <div class="chat-history" id="chat-history">
+            <div class="message agent">
+                Hello! I'm your AI fitness agent. Update your profile on the right or say hi!
+                <span class="meta">System</span>
+            </div>
+        </div>
+        <div class="chat-input">
+            <div class="chat-controls">
+                <select id="task-hint">
+                    <option value="chat">Chat (Local)</option>
+                    <option value="plan_generation">Planner (Cloud)</option>
+                    <option value="nutrition_analysis">Nutrition (Cloud)</option>
+                    <option value="progress_review">Progress (Cloud)</option>
+                </select>
+                <textarea id="message-input" placeholder="Ask about workouts, meals, or scheduling..." onkeydown="if(event.key === 'Enter' && !event.shiftKey){ event.preventDefault(); sendMessage(); }"></textarea>
+                <button id="send-btn" onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="profile-panel">
+        <h2>Your Profile</h2>
+        <div class="form-group">
+            <label>Height (cm)</label>
+            <input type="number" id="p-height" placeholder="180">
+        </div>
+        <div class="form-group">
+            <label>Weight (kg)</label>
+            <input type="number" id="p-weight" placeholder="75">
+        </div>
+        <div class="form-group">
+            <label>Primary Goal</label>
+            <input type="text" id="p-goal" placeholder="e.g. strength, hypertrophy, weight loss">
+        </div>
+        <div class="form-group">
+            <label>Weekly Workouts Target</label>
+            <input type="number" id="p-target" value="4">
+        </div>
+        <div class="form-group">
+            <label>Equipment (comma separated)</label>
+            <input type="text" id="p-equip" placeholder="Dumbbells, Pull-up bar">
+        </div>
+        <div class="form-group">
+            <label>Notes</label>
+            <textarea id="p-notes" rows="3" placeholder="Injuries, preferences..."></textarea>
+        </div>
+        <div class="form-actions">
+            <button onclick="saveProfile()">Save Profile</button>
+            <div id="profile-status"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_URL = "";
+    const AUTH_HEADER = "Bearer test_token_123";
+    let conversationId = null;
+
+    async function loadProfile() {
+        try {
+            const res = await fetch(`${API_URL}/profile`, { headers: { "Authorization": AUTH_HEADER } });
+            if (res.ok) {
+                const data = await res.json();
+                document.getElementById('p-height').value = data.height_cm || '';
+                document.getElementById('p-weight').value = data.weight_kg || '';
+                document.getElementById('p-goal').value = data.primary_goal || '';
+                document.getElementById('p-target').value = data.weekly_workout_target || 4;
+                document.getElementById('p-equip').value = (data.equipment || []).join(', ');
+                document.getElementById('p-notes').value = data.notes || '';
+            }
+        } catch (e) {
+            console.error("Error loading profile", e);
+        }
+    }
+
+    async function saveProfile() {
+        const status = document.getElementById('profile-status');
+        status.innerText = "Saving...";
+        status.style.color = "var(--text)";
+
+        const payload = {
+            height_cm: parseFloat(document.getElementById('p-height').value) || null,
+            weight_kg: parseFloat(document.getElementById('p-weight').value) || null,
+            primary_goal: document.getElementById('p-goal').value || null,
+            weekly_workout_target: parseInt(document.getElementById('p-target').value) || 4,
+            equipment: document.getElementById('p-equip').value.split(',').map(s => s.trim()).filter(s => s),
+            notes: document.getElementById('p-notes').value || null
+        };
+
+        try {
+            const res = await fetch(`${API_URL}/profile`, {
+                method: "PUT",
+                headers: { "Authorization": AUTH_HEADER, "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                status.innerText = "Profile saved successfully!";
+                status.style.color = "#10b981";
+                setTimeout(() => status.innerText = "", 3000);
+            } else {
+                const text = await res.text();
+                status.innerText = "Error: " + text;
+                status.style.color = "red";
+            }
+        } catch (e) {
+            status.innerText = "Network error";
+            status.style.color = "red";
+        }
+    }
+
+    async function sendMessage() {
+        const input = document.getElementById('message-input');
+        const text = input.value.trim();
+        if (!text) return;
+
+        const taskHint = document.getElementById('task-hint').value;
+        const btn = document.getElementById('send-btn');
+        const history = document.getElementById('chat-history');
+
+        appendMessage(text, 'user', '');
+        input.value = '';
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loader"></span>';
+
+        try {
+            const payload = {
+                message: text,
+                task_hint: taskHint,
+                conversation_id: conversationId
+            };
+
+            const res = await fetch(`${API_URL}/chat`, {
+                method: "POST",
+                headers: { "Authorization": AUTH_HEADER, "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                conversationId = data.conversation_id;
+                appendMessage(data.reply, 'agent', `Model: ${data.model_used}`);
+            } else {
+                const errText = await res.text();
+                appendMessage(`Error: ${errText}`, 'agent', 'System Error');
+            }
+        } catch (e) {
+            appendMessage(`Network error: ${e.message}`, 'agent', 'System Error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = 'Send';
+        }
+    }
+
+    function appendMessage(text, sender, meta) {
+        const history = document.getElementById('chat-history');
+        const div = document.createElement('div');
+        div.className = `message ${sender}`;
+        div.innerText = text;
+
+        if (meta) {
+            const span = document.createElement('span');
+            span.className = 'meta';
+            span.innerText = meta;
+            div.appendChild(span);
+        }
+
+        history.appendChild(div);
+        history.scrollTop = history.scrollHeight;
+    }
+
+    loadProfile();
+</script>
+</body>
+</html>
