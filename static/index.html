@@ -6,234 +6,563 @@
     <title>Fitness Agent</title>
     <style>
         :root {
-            --bg: #f4f4f9;
-            --text: #333;
-            --primary: #4f46e5;
-            --primary-hover: #4338ca;
-            --panel-bg: #fff;
-            --border: #e5e7eb;
-            --msg-user: #4f46e5;
-            --msg-agent: #f3f4f6;
+            color-scheme: light;
+            --bg: #f6f7fb;
+            --surface: #ffffff;
+            --surface-soft: #eef1f7;
+            --text: #1f2937;
+            --muted: #667085;
+            --border: #d9deea;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --accent: #059669;
+            --danger: #dc2626;
+            --shadow: 0 12px 30px rgba(31, 41, 55, 0.08);
         }
-        * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
-        body { margin: 0; padding: 20px; background: var(--bg); color: var(--text); display: flex; flex-direction: column; height: 100vh; }
-        header { padding-bottom: 20px; text-align: center; font-size: 1.5rem; font-weight: bold; color: var(--primary); }
-        .container { display: flex; gap: 20px; flex: 1; min-height: 0; max-width: 1200px; margin: 0 auto; width: 100%; }
 
-        /* Chat Panel */
-        .chat-panel { flex: 2; display: flex; flex-direction: column; background: var(--panel-bg); border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: hidden; }
-        .chat-history { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
-        .message { max-width: 80%; padding: 12px 16px; border-radius: 16px; line-height: 1.4; word-wrap: break-word; white-space: pre-wrap; }
-        .message.user { align-self: flex-end; background: var(--msg-user); color: white; border-bottom-right-radius: 4px; }
-        .message.agent { align-self: flex-start; background: var(--msg-agent); color: var(--text); border-bottom-left-radius: 4px; }
-        .message .meta { font-size: 0.75rem; opacity: 0.7; margin-top: 5px; display: block; }
+        [data-theme="dark"] {
+            color-scheme: dark;
+            --bg: #111318;
+            --surface: #191d24;
+            --surface-soft: #232936;
+            --text: #eef2f7;
+            --muted: #a7b0bf;
+            --border: #343b49;
+            --primary: #60a5fa;
+            --primary-hover: #3b82f6;
+            --accent: #34d399;
+            --danger: #f87171;
+            --shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
+        }
 
-        .chat-input { padding: 15px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; background: #fafafa; }
-        .chat-controls { display: flex; gap: 10px; align-items: center; }
-        .chat-controls select { padding: 8px; border: 1px solid var(--border); border-radius: 6px; outline: none; }
-        .chat-controls textarea { flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; resize: none; height: 50px; outline: none; font-family: inherit; }
-        .chat-controls button { padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background 0.2s; }
-        .chat-controls button:hover { background: var(--primary-hover); }
-        .chat-controls button:disabled { background: #9ca3af; cursor: not-allowed; }
+        * { box-sizing: border-box; }
 
-        /* Profile Panel */
-        .profile-panel { flex: 1; background: var(--panel-bg); border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); padding: 20px; overflow-y: auto; }
-        .profile-panel h2 { margin-top: 0; font-size: 1.25rem; border-bottom: 2px solid var(--border); padding-bottom: 10px; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 5px; color: #4b5563; }
-        .form-group input, .form-group textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; outline: none; }
-        .form-group input:focus, .form-group textarea:focus { border-color: var(--primary); }
-        .form-actions { margin-top: 20px; }
-        .form-actions button { width: 100%; padding: 12px; background: #10b981; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .form-actions button:hover { background: #059669; }
-        #profile-status { font-size: 0.875rem; text-align: center; margin-top: 10px; min-height: 20px; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: var(--bg);
+            color: var(--text);
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
 
-        .loader { display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s ease-in-out infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        button, input, select, textarea { font: inherit; }
 
-        @media (max-width: 768px) {
-            .container { flex-direction: column; }
-            .profile-panel { order: -1; max-height: 300px; }
+        button {
+            border: 0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        button:disabled { cursor: wait; opacity: 0.72; }
+
+        input, select, textarea {
+            width: 100%;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--surface);
+            color: var(--text);
+            outline: none;
+        }
+
+        input, select { height: 42px; padding: 0 12px; }
+        textarea { min-height: 90px; padding: 12px; resize: vertical; }
+        label { display: block; color: var(--muted); font-size: 0.84rem; font-weight: 700; margin-bottom: 6px; }
+
+        .shell {
+            width: min(1220px, calc(100vw - 32px));
+            margin: 0 auto;
+            padding: 18px 0;
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+        .mark {
+            display: grid;
+            place-items: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: var(--primary);
+            color: #fff;
+            font-weight: 900;
+        }
+
+        .brand h1 { margin: 0; font-size: 1.15rem; line-height: 1.2; }
+        .brand p { margin: 2px 0 0; color: var(--muted); font-size: 0.86rem; }
+
+        .top-actions { display: flex; gap: 10px; align-items: center; }
+        .icon-button, .secondary-button {
+            height: 40px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text);
+        }
+
+        .icon-button { width: 42px; font-size: 1rem; }
+        .secondary-button { padding: 0 14px; }
+        .primary-button {
+            height: 42px;
+            padding: 0 16px;
+            background: var(--primary);
+            color: #fff;
+        }
+        .primary-button:hover { background: var(--primary-hover); }
+
+        .login-view {
+            display: grid;
+            min-height: calc(100vh - 120px);
+            place-items: center;
+        }
+
+        .login-panel {
+            width: min(420px, 100%);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            padding: 26px;
+        }
+
+        .login-panel h2 { margin: 0 0 8px; font-size: 1.35rem; }
+        .login-panel p { margin: 0 0 22px; color: var(--muted); }
+        .field { margin-bottom: 14px; }
+        .status { min-height: 22px; color: var(--muted); font-size: 0.9rem; margin-top: 12px; }
+        .status.error { color: var(--danger); }
+        .status.success { color: var(--accent); }
+
+        .app-view {
+            display: grid;
+            grid-template-columns: minmax(0, 1.8fr) minmax(320px, 0.9fr);
+            gap: 18px;
+            min-height: calc(100vh - 96px);
+        }
+
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            min-width: 0;
+        }
+
+        .chat-panel { display: grid; grid-template-rows: auto 1fr auto; min-height: 620px; }
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .panel-header h2 { margin: 0; font-size: 1rem; }
+
+        .chat-history {
+            padding: 18px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .message {
+            max-width: min(76%, 760px);
+            padding: 12px 14px;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            line-height: 1.45;
+            overflow-wrap: anywhere;
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .message.agent {
+            align-self: flex-start;
+            background: var(--surface-soft);
+            color: var(--text);
+        }
+
+        .message .meta {
+            display: block;
+            margin-top: 6px;
+            color: inherit;
+            opacity: 0.68;
+            font-size: 0.75rem;
+        }
+
+        .composer {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 10px;
+            padding: 14px;
+            border-top: 1px solid var(--border);
+            background: var(--surface);
+        }
+
+        .composer textarea { min-height: 42px; max-height: 160px; }
+
+        .profile-panel { padding: 16px; overflow-y: auto; }
+        .profile-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+        .full { grid-column: 1 / -1; }
+
+        .profile-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .hidden { display: none !important; }
+
+        @media (max-width: 860px) {
+            .app-view { grid-template-columns: 1fr; }
+            .chat-panel { min-height: 520px; }
+            .composer { grid-template-columns: 1fr; }
+            .profile-grid { grid-template-columns: 1fr; }
+            .message { max-width: 92%; }
         }
     </style>
 </head>
 <body>
-
-<header>Fitness Agent</header>
-
-<div class="container">
-    <div class="chat-panel">
-        <div class="chat-history" id="chat-history">
-            <div class="message agent">
-                Hello! I'm your AI fitness agent. Update your profile on the right or say hi!
-                <span class="meta">System</span>
+    <div class="shell">
+        <header class="topbar">
+            <div class="brand">
+                <div class="mark">FA</div>
+                <div>
+                    <h1>Fitness Agent</h1>
+                    <p id="session-label">Signed out</p>
+                </div>
             </div>
-        </div>
-        <div class="chat-input">
-            <div class="chat-controls">
-                <select id="task-hint">
-                    <option value="chat">Chat (Local)</option>
-                    <option value="plan_generation">Planner (Cloud)</option>
-                    <option value="nutrition_analysis">Nutrition (Cloud)</option>
-                    <option value="progress_review">Progress (Cloud)</option>
-                </select>
-                <textarea id="message-input" placeholder="Ask about workouts, meals, or scheduling..." onkeydown="if(event.key === 'Enter' && !event.shiftKey){ event.preventDefault(); sendMessage(); }"></textarea>
-                <button id="send-btn" onclick="sendMessage()">Send</button>
+            <div class="top-actions">
+                <button class="icon-button" id="theme-toggle" type="button" title="Toggle dark mode">D</button>
+                <button class="secondary-button hidden" id="logout-button" type="button">Logout</button>
             </div>
-        </div>
+        </header>
+
+        <main class="login-view" id="login-view">
+            <form class="login-panel" id="login-form">
+                <h2>Login</h2>
+                <p>Use the account created by the bootstrap script.</p>
+                <div class="field">
+                    <label for="email">Email</label>
+                    <input id="email" name="email" type="email" autocomplete="username" required>
+                </div>
+                <div class="field">
+                    <label for="password">Password</label>
+                    <input id="password" name="password" type="password" autocomplete="current-password" required>
+                </div>
+                <button class="primary-button" id="login-button" type="submit">Login</button>
+                <div class="status" id="login-status"></div>
+            </form>
+        </main>
+
+        <main class="app-view hidden" id="app-view">
+            <section class="panel chat-panel">
+                <div class="panel-header">
+                    <h2>Coach</h2>
+                    <select id="task-hint" aria-label="Task">
+                        <option value="chat">Chat</option>
+                        <option value="plan_generation">Plan</option>
+                        <option value="nutrition_analysis">Nutrition</option>
+                        <option value="progress_review">Progress</option>
+                    </select>
+                </div>
+                <div class="chat-history" id="chat-history"></div>
+                <form class="composer" id="chat-form">
+                    <textarea id="message-input" placeholder="Ask about workouts, meals, recovery, or scheduling..." required></textarea>
+                    <button class="primary-button" id="send-button" type="submit">Send</button>
+                </form>
+            </section>
+
+            <aside class="panel profile-panel">
+                <div class="panel-header">
+                    <h2>Profile</h2>
+                </div>
+                <form id="profile-form">
+                    <div class="profile-grid">
+                        <div class="field">
+                            <label for="p-height">Height (cm)</label>
+                            <input type="number" id="p-height" min="50" max="250" step="0.1">
+                        </div>
+                        <div class="field">
+                            <label for="p-weight">Weight (kg)</label>
+                            <input type="number" id="p-weight" min="20" max="350" step="0.1">
+                        </div>
+                        <div class="field">
+                            <label for="p-target-weight">Target weight (kg)</label>
+                            <input type="number" id="p-target-weight" min="20" max="350" step="0.1">
+                        </div>
+                        <div class="field">
+                            <label for="p-weekly">Weekly workouts</label>
+                            <input type="number" id="p-weekly" min="0" max="14" step="1">
+                        </div>
+                        <div class="field full">
+                            <label for="p-goal">Primary goal</label>
+                            <input type="text" id="p-goal" maxlength="80" placeholder="strength, endurance, fat loss">
+                        </div>
+                        <div class="field full">
+                            <label for="p-equipment">Equipment</label>
+                            <input type="text" id="p-equipment" placeholder="Dumbbells, pull-up bar, TRX">
+                        </div>
+                        <div class="field full">
+                            <label for="p-diet">Dietary restrictions</label>
+                            <input type="text" id="p-diet" placeholder="vegetarian, lactose-free">
+                        </div>
+                        <div class="field">
+                            <label for="p-calories">Daily calories</label>
+                            <input type="number" id="p-calories" min="800" max="8000" step="1">
+                        </div>
+                        <div class="field">
+                            <label for="p-sex">Sex</label>
+                            <select id="p-sex">
+                                <option value="">Unset</option>
+                                <option value="female">Female</option>
+                                <option value="male">Male</option>
+                                <option value="other">Other</option>
+                                <option value="unspecified">Unspecified</option>
+                            </select>
+                        </div>
+                        <div class="field full">
+                            <label for="p-notes">Notes</label>
+                            <textarea id="p-notes" maxlength="2000" placeholder="Injuries, preferences, schedule constraints"></textarea>
+                        </div>
+                    </div>
+                    <div class="profile-actions">
+                        <button class="primary-button" id="save-profile-button" type="submit">Save</button>
+                        <span class="status" id="profile-status"></span>
+                    </div>
+                </form>
+            </aside>
+        </main>
     </div>
 
-    <div class="profile-panel">
-        <h2>Your Profile</h2>
-        <div class="form-group">
-            <label>Height (cm)</label>
-            <input type="number" id="p-height" placeholder="180">
-        </div>
-        <div class="form-group">
-            <label>Weight (kg)</label>
-            <input type="number" id="p-weight" placeholder="75">
-        </div>
-        <div class="form-group">
-            <label>Primary Goal</label>
-            <input type="text" id="p-goal" placeholder="e.g. strength, hypertrophy, weight loss">
-        </div>
-        <div class="form-group">
-            <label>Weekly Workouts Target</label>
-            <input type="number" id="p-target" value="4">
-        </div>
-        <div class="form-group">
-            <label>Equipment (comma separated)</label>
-            <input type="text" id="p-equip" placeholder="Dumbbells, Pull-up bar">
-        </div>
-        <div class="form-group">
-            <label>Notes</label>
-            <textarea id="p-notes" rows="3" placeholder="Injuries, preferences..."></textarea>
-        </div>
-        <div class="form-actions">
-            <button onclick="saveProfile()">Save Profile</button>
-            <div id="profile-status"></div>
-        </div>
-    </div>
-</div>
+    <script>
+        const tokenKey = "fitness-agent-token";
+        const themeKey = "fitness-agent-theme";
+        let conversationId = null;
 
-<script>
-    const API_URL = "";
-    const AUTH_HEADER = "Bearer test_token_123";
-    let conversationId = null;
-
-    async function loadProfile() {
-        try {
-            const res = await fetch(`${API_URL}/profile`, { headers: { "Authorization": AUTH_HEADER } });
-            if (res.ok) {
-                const data = await res.json();
-                document.getElementById('p-height').value = data.height_cm || '';
-                document.getElementById('p-weight').value = data.weight_kg || '';
-                document.getElementById('p-goal').value = data.primary_goal || '';
-                document.getElementById('p-target').value = data.weekly_workout_target || 4;
-                document.getElementById('p-equip').value = (data.equipment || []).join(', ');
-                document.getElementById('p-notes').value = data.notes || '';
-            }
-        } catch (e) {
-            console.error("Error loading profile", e);
-        }
-    }
-
-    async function saveProfile() {
-        const status = document.getElementById('profile-status');
-        status.innerText = "Saving...";
-        status.style.color = "var(--text)";
-
-        const payload = {
-            height_cm: parseFloat(document.getElementById('p-height').value) || null,
-            weight_kg: parseFloat(document.getElementById('p-weight').value) || null,
-            primary_goal: document.getElementById('p-goal').value || null,
-            weekly_workout_target: parseInt(document.getElementById('p-target').value) || 4,
-            equipment: document.getElementById('p-equip').value.split(',').map(s => s.trim()).filter(s => s),
-            notes: document.getElementById('p-notes').value || null
+        const state = {
+            token: localStorage.getItem(tokenKey) || "",
+            email: localStorage.getItem("fitness-agent-email") || ""
         };
 
-        try {
-            const res = await fetch(`${API_URL}/profile`, {
-                method: "PUT",
-                headers: { "Authorization": AUTH_HEADER, "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-            if (res.ok) {
-                status.innerText = "Profile saved successfully!";
-                status.style.color = "#10b981";
-                setTimeout(() => status.innerText = "", 3000);
-            } else {
-                const text = await res.text();
-                status.innerText = "Error: " + text;
-                status.style.color = "red";
-            }
-        } catch (e) {
-            status.innerText = "Network error";
-            status.style.color = "red";
+        const $ = (id) => document.getElementById(id);
+
+        function applyTheme(theme) {
+            document.documentElement.dataset.theme = theme;
+            $("theme-toggle").textContent = theme === "dark" ? "L" : "D";
+            localStorage.setItem(themeKey, theme);
         }
-    }
 
-    async function sendMessage() {
-        const input = document.getElementById('message-input');
-        const text = input.value.trim();
-        if (!text) return;
+        function authHeaders() {
+            return {
+                "Authorization": `Bearer ${state.token}`,
+                "Content-Type": "application/json"
+            };
+        }
 
-        const taskHint = document.getElementById('task-hint').value;
-        const btn = document.getElementById('send-btn');
-        const history = document.getElementById('chat-history');
+        function setStatus(element, text, type = "") {
+            element.textContent = text;
+            element.className = `status ${type}`.trim();
+        }
 
-        appendMessage(text, 'user', '');
-        input.value = '';
-        btn.disabled = true;
-        btn.innerHTML = '<span class="loader"></span>';
+        function showApp(isSignedIn) {
+            $("login-view").classList.toggle("hidden", isSignedIn);
+            $("app-view").classList.toggle("hidden", !isSignedIn);
+            $("logout-button").classList.toggle("hidden", !isSignedIn);
+            $("session-label").textContent = isSignedIn ? state.email : "Signed out";
+            if (isSignedIn) {
+                loadProfile();
+                appendMessage("Ready when you are.", "agent", "System");
+            }
+        }
 
-        try {
+        async function request(path, options = {}) {
+            const res = await fetch(path, options);
+            if (res.status === 401) {
+                logout();
+                throw new Error("Session expired");
+            }
+            if (!res.ok) {
+                const text = await res.text();
+                throw new Error(text || `Request failed with ${res.status}`);
+            }
+            return res;
+        }
+
+        async function login(event) {
+            event.preventDefault();
+            const button = $("login-button");
+            button.disabled = true;
+            setStatus($("login-status"), "Signing in...");
+            try {
+                const email = $("email").value.trim();
+                const res = await request("/auth/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, password: $("password").value })
+                });
+                const data = await res.json();
+                state.token = data.access_token;
+                state.email = email;
+                localStorage.setItem(tokenKey, state.token);
+                localStorage.setItem("fitness-agent-email", state.email);
+                $("password").value = "";
+                setStatus($("login-status"), "");
+                showApp(true);
+            } catch (error) {
+                setStatus($("login-status"), error.message, "error");
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        function logout() {
+            state.token = "";
+            conversationId = null;
+            localStorage.removeItem(tokenKey);
+            localStorage.removeItem("fitness-agent-email");
+            $("chat-history").replaceChildren();
+            showApp(false);
+        }
+
+        function listFromInput(id) {
+            return $(id).value.split(",").map((item) => item.trim()).filter(Boolean);
+        }
+
+        function numberOrNull(id) {
+            const value = $(id).value;
+            return value === "" ? null : Number(value);
+        }
+
+        async function loadProfile() {
+            try {
+                const res = await request("/profile", { headers: authHeaders() });
+                const data = await res.json();
+                $("p-height").value = data.height_cm ?? "";
+                $("p-weight").value = data.weight_kg ?? "";
+                $("p-target-weight").value = data.target_weight_kg ?? "";
+                $("p-weekly").value = data.weekly_workout_target ?? 4;
+                $("p-goal").value = data.primary_goal ?? "";
+                $("p-equipment").value = (data.equipment || []).join(", ");
+                $("p-diet").value = (data.dietary_restrictions || []).join(", ");
+                $("p-calories").value = data.daily_calorie_target ?? "";
+                $("p-sex").value = data.sex ?? "";
+                $("p-notes").value = data.notes ?? "";
+            } catch (error) {
+                setStatus($("profile-status"), error.message, "error");
+            }
+        }
+
+        async function saveProfile(event) {
+            event.preventDefault();
+            const button = $("save-profile-button");
+            button.disabled = true;
+            setStatus($("profile-status"), "Saving...");
             const payload = {
-                message: text,
-                task_hint: taskHint,
-                conversation_id: conversationId
+                height_cm: numberOrNull("p-height"),
+                weight_kg: numberOrNull("p-weight"),
+                target_weight_kg: numberOrNull("p-target-weight"),
+                weekly_workout_target: numberOrNull("p-weekly"),
+                primary_goal: $("p-goal").value.trim() || null,
+                equipment: listFromInput("p-equipment"),
+                dietary_restrictions: listFromInput("p-diet"),
+                daily_calorie_target: numberOrNull("p-calories"),
+                sex: $("p-sex").value || null,
+                notes: $("p-notes").value.trim() || null
             };
 
-            const res = await fetch(`${API_URL}/chat`, {
-                method: "POST",
-                headers: { "Authorization": AUTH_HEADER, "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
+            try {
+                await request("/profile", {
+                    method: "PUT",
+                    headers: authHeaders(),
+                    body: JSON.stringify(payload)
+                });
+                setStatus($("profile-status"), "Saved", "success");
+            } catch (error) {
+                setStatus($("profile-status"), error.message, "error");
+            } finally {
+                button.disabled = false;
+            }
+        }
 
-            if (res.ok) {
+        async function sendMessage(event) {
+            event.preventDefault();
+            const input = $("message-input");
+            const text = input.value.trim();
+            if (!text) return;
+
+            const button = $("send-button");
+            appendMessage(text, "user", "");
+            input.value = "";
+            button.disabled = true;
+            button.textContent = "Sending";
+
+            try {
+                const res = await request("/chat", {
+                    method: "POST",
+                    headers: authHeaders(),
+                    body: JSON.stringify({
+                        message: text,
+                        task_hint: $("task-hint").value,
+                        conversation_id: conversationId
+                    })
+                });
                 const data = await res.json();
                 conversationId = data.conversation_id;
-                appendMessage(data.reply, 'agent', `Model: ${data.model_used}`);
-            } else {
-                const errText = await res.text();
-                appendMessage(`Error: ${errText}`, 'agent', 'System Error');
+                appendMessage(data.reply, "agent", data.model_used);
+            } catch (error) {
+                appendMessage(error.message, "agent", "Error");
+            } finally {
+                button.disabled = false;
+                button.textContent = "Send";
             }
-        } catch (e) {
-            appendMessage(`Network error: ${e.message}`, 'agent', 'System Error');
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = 'Send';
-        }
-    }
-
-    function appendMessage(text, sender, meta) {
-        const history = document.getElementById('chat-history');
-        const div = document.createElement('div');
-        div.className = `message ${sender}`;
-        div.innerText = text;
-
-        if (meta) {
-            const span = document.createElement('span');
-            span.className = 'meta';
-            span.innerText = meta;
-            div.appendChild(span);
         }
 
-        history.appendChild(div);
-        history.scrollTop = history.scrollHeight;
-    }
+        function appendMessage(text, sender, meta) {
+            const history = $("chat-history");
+            const message = document.createElement("div");
+            message.className = `message ${sender}`;
+            message.textContent = text;
+            if (meta) {
+                const label = document.createElement("span");
+                label.className = "meta";
+                label.textContent = meta;
+                message.appendChild(label);
+            }
+            history.appendChild(message);
+            history.scrollTop = history.scrollHeight;
+        }
 
-    loadProfile();
-</script>
+        $("login-form").addEventListener("submit", login);
+        $("logout-button").addEventListener("click", logout);
+        $("profile-form").addEventListener("submit", saveProfile);
+        $("chat-form").addEventListener("submit", sendMessage);
+        $("message-input").addEventListener("keydown", (event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                $("chat-form").requestSubmit();
+            }
+        });
+        $("theme-toggle").addEventListener("click", () => {
+            const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+            applyTheme(next);
+        });
+
+        applyTheme(localStorage.getItem(themeKey) || "light");
+        $("email").value = state.email;
+        showApp(Boolean(state.token));
+    </script>
 </body>
 </html>

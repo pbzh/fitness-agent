@@ -1,6 +1,7 @@
 """Chat endpoint — the main interface the iOS app and other clients hit."""
 
 import asyncio
+from typing import Annotated
 from uuid import UUID, uuid4
 
 import structlog
@@ -53,7 +54,7 @@ def _is_retryable(exc: Exception) -> bool:
 @router.post("", response_model=ChatResponse)
 async def chat(
     req: ChatRequest,
-    user_id: UUID = Depends(get_current_user_id),
+    user_id: Annotated[UUID, Depends(get_current_user_id)],
 ) -> ChatResponse:
     agent = build_agent(task=req.task_hint)
     deps = AgentDeps(session_factory=AsyncSessionLocal, user_id=user_id)

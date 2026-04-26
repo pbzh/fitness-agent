@@ -73,10 +73,11 @@ fitness-agent/
 │   │   ├── router.py        local/cloud routing per task
 │   │   └── tools.py         seven tools the agent can call
 │   ├── api/
+│   │   ├── auth.py          POST /auth/login JWT login
 │   │   ├── chat.py          POST /chat with retry on transient errors
 │   │   ├── workouts.py      direct REST for the iOS app
 │   │   ├── health.py        GET /healthz
-│   │   └── deps.py          auth dependency (single-user stub for now)
+│   │   └── deps.py          JWT auth dependency
 │   ├── db/
 │   │   ├── models.py        SQLModel schema
 │   │   └── session.py       async session factory
@@ -204,6 +205,7 @@ PROVIDER_FOR_NUTRITION=anthropic
 PROVIDER_FOR_PROGRESS=anthropic
 
 TIMEZONE=Europe/Zurich
+SCHEDULER_USER_ID=00000000-0000-0000-0000-000000000001
 ```
 
 **Spending caps:** set hard monthly limits in the Anthropic/OpenAI consoles before
@@ -211,39 +213,18 @@ running the service. Recommended: $10/month while developing.
 
 ## Bootstrapping your user
 
-The auth stub (`app/api/deps.py`) maps any bearer token to a single user. Create
-the user record once:
+Create the first login account once. Set the email and password explicitly so
+the stored password is hashed before it reaches the database:
 
 ```bash
 cd /opt/fitness-agent
-uv run python
+BOOTSTRAP_EMAIL=you@example.com BOOTSTRAP_PASSWORD='<strong-password>' \
+  uv run python scripts/bootstrap_user.py
 ```
 
-```python
-import asyncio
-from uuid import UUID
-from app.db.session import AsyncSessionLocal
-from app.db.models import User, UserProfile
-
-USER_ID = UUID("00000000-0000-0000-0000-000000000001")
-
-async def bootstrap():
-    async with AsyncSessionLocal() as session:
-        session.add(User(id=USER_ID, email="you@example.com", hashed_password="x"))
-        session.add(UserProfile(
-            user_id=USER_ID,
-            height_cm=180, weight_kg=78,
-            primary_goal="strength",
-            weekly_workout_target=4,
-            equipment=["MountainGrip hangboard", "TRX Suspension Trainer"],
-            daily_calorie_target=2600,
-            macro_targets={"protein_g": 160, "carbs_g": 280, "fat_g": 80},
-            notes="Rest days Wed and Sat. Compact 45-60 min sessions. Metric units.",
-        ))
-        await session.commit()
-
-asyncio.run(bootstrap())
-```
+The web UI served at `/` uses `POST /auth/login` and stores the returned JWT in
+browser local storage. API clients should do the same login first, then pass the
+token as `Authorization: Bearer <token>`.
 
 ## Smoke testing
 
@@ -252,14 +233,19 @@ asyncio.run(bootstrap())
 curl http://10.1.10.103:8000/healthz
 
 # Local LLM path
+TOKEN=$(curl -s -X POST http://10.1.10.103:8000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "you@example.com", "password": "<strong-password>"}' \
+  | python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])')
+
 curl -X POST http://10.1.10.103:8000/chat \
-  -H "Authorization: Bearer test" \
+  -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"message": "What is my primary fitness goal?", "task_hint": "chat"}'
 
 # Cloud LLM path with explicit write directive
 curl -X POST http://10.1.10.103:8000/chat \
-  -H "Authorization: Bearer test" \
+  -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "message": "Schedule a workout for tomorrow. Use create_workout_session to persist it after checking my profile and recent training.",
@@ -318,7 +304,7 @@ principles spell out when to write.
 - [x] Local + cloud LLM routing
 - [x] Sunday weekly plan generation (APScheduler)
 - [x] Retry logic for transient cloud errors
-- [ ] Real JWT auth (replace stub in `app/api/deps.py`)
+- [x] Real JWT auth
 - [ ] Meal planning REST endpoints
 - [ ] Open Food Facts / USDA FDC nutrition lookup tools
 - [ ] wger exercise database integration

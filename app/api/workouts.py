@@ -6,6 +6,7 @@ planning/conversation, hit these endpoints for plain CRUD.
 """
 
 from datetime import date, datetime, timedelta
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -21,9 +22,9 @@ router = APIRouter(prefix="/workouts", tags=["workouts"])
 
 @router.get("", response_model=list[WorkoutSession])
 async def list_workouts(
+    user_id: Annotated[UUID, Depends(get_current_user_id)],
+    session: Annotated[AsyncSession, Depends(get_session)],
     days: int = 14,
-    user_id: UUID = Depends(get_current_user_id),
-    session: AsyncSession = Depends(get_session),
 ) -> list[WorkoutSession]:
     cutoff = date.today() - timedelta(days=days)
     result = await session.execute(
@@ -39,9 +40,9 @@ async def list_workouts(
 async def complete_workout(
     workout_id: UUID,
     rpe: int,
+    user_id: Annotated[UUID, Depends(get_current_user_id)],
+    session: Annotated[AsyncSession, Depends(get_session)],
     notes: str | None = None,
-    user_id: UUID = Depends(get_current_user_id),
-    session: AsyncSession = Depends(get_session),
 ) -> WorkoutSession:
     result = await session.execute(
         select(WorkoutSession)
