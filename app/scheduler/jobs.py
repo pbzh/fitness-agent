@@ -13,7 +13,6 @@ from apscheduler.triggers.cron import CronTrigger
 
 from app.agent.agent import AgentDeps, build_agent
 from app.agent.router import TaskClass
-from app.api.deps import SINGLE_USER_ID
 from app.config import get_settings
 from app.db.session import AsyncSessionLocal
 
@@ -41,7 +40,8 @@ Steps:
 """
 
     agent = build_agent(task=TaskClass.PLAN_GENERATION)
-    deps = AgentDeps(session_factory=AsyncSessionLocal, user_id=SINGLE_USER_ID)
+    settings = get_settings()
+    deps = AgentDeps(session_factory=AsyncSessionLocal, user_id=settings.scheduler_user_id)
 
     try:
         result = await agent.run(prompt, deps=deps)

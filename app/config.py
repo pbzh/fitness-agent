@@ -2,6 +2,7 @@
 
 from functools import lru_cache
 from typing import Literal
+from uuid import UUID
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -45,6 +46,7 @@ class Settings(BaseSettings):
 
     log_level: str = "INFO"
     timezone: str = "Europe/Zurich"
+    scheduler_user_id: UUID = UUID("00000000-0000-0000-0000-000000000001")
 
 
 @lru_cache

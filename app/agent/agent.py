@@ -69,7 +69,7 @@ def build_agent(task: TaskClass = TaskClass.CHAT) -> Agent[AgentDeps, str]:
         deps_type=AgentDeps,
         system_prompt=SYSTEM_PROMPT,
     )
-    from app.agent import tools as _tools  # noqa: F401
+    from app.agent import tools as _tools
 
     _tools.register_tools(agent)
     return agent

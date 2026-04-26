@@ -7,10 +7,10 @@ Loads the database URL from app.config and uses SQLModel's metadata so
 
 from logging.config import fileConfig
 
-from alembic import context
 from sqlalchemy import engine_from_config, pool
 from sqlmodel import SQLModel
 
+from alembic import context
 from app.config import get_settings
 from app.db import models  # noqa: F401  (import for side effect — populates SQLModel.metadata)
 
