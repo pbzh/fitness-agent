@@ -117,6 +117,9 @@ class UserProfile(SQLModel, table=True):
     local_only: bool = False
     chat_retention_days: int | None = None  # None = keep forever
     preferred_language: str | None = None    # "en" | "de" | None=auto
+    # Inner Team role state/config. This is a profile dashboard lens, not a
+    # separate coach taxonomy.
+    inner_team: dict | None = Field(default=None, sa_type=JSONB)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
     user: User | None = Relationship(back_populates="profile")
