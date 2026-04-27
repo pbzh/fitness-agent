@@ -77,3 +77,32 @@ def decrypt(token: str) -> str | None:
         return fernet().decrypt(token.encode("ascii")).decode("utf-8")
     except (InvalidToken, ValueError, TypeError):
         return None
+
+
+async def verify_all() -> tuple[int, list[tuple[str, str]]]:
+    """Decrypt every ``api_keys_enc`` row in the DB.
+
+    Returns ``(ok_count, failures)`` where each failure is a
+    ``(user_id, provider)`` tuple identifying the unreadable ciphertext.
+    Used by the startup self-test and the daily verify-keys cron.
+    """
+    from sqlalchemy import text
+
+    from app.db.session import engine
+
+    ok = 0
+    failures: list[tuple[str, str]] = []
+    async with engine.begin() as conn:
+        rows = await conn.execute(
+            text(
+                "SELECT user_id, api_keys_enc FROM userprofile "
+                "WHERE api_keys_enc IS NOT NULL"
+            )
+        )
+        for user_id, enc in rows:
+            for provider, ciphertext in (enc or {}).items():
+                if decrypt(ciphertext) is None:
+                    failures.append((str(user_id), provider))
+                else:
+                    ok += 1
+    return ok, failures

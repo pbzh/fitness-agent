@@ -36,9 +36,34 @@ async def _probe_local_model() -> None:
         log.warning("Could not probe local model, using config default", error=str(exc))
 
 
+async def _verify_stored_secrets() -> None:
+    """Decrypt every stored API-key ciphertext at boot.
+
+    Catches the 'restart broke decryption' failure mode immediately —
+    typically caused by the encryption key file being deleted, replaced,
+    or shadowed by a SETTINGS_ENCRYPTION_KEY env mismatch.
+    """
+    from app.security.secrets import verify_all
+
+    try:
+        ok, failures = await verify_all()
+    except Exception as exc:  # noqa: BLE001 — boot must not fail on this check
+        log.warning("Secret-decryption self-test errored", error=str(exc))
+        return
+    if failures:
+        log.error(
+            "Stored API keys could not be decrypted — encryption key may have changed",
+            failed=failures,
+            ok_count=ok,
+        )
+    else:
+        log.info("Secret-decryption self-test passed", ok_count=ok)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await _probe_local_model()
+    await _verify_stored_secrets()
     log.info("Starting fitness agent", model_local=settings.local_llm_model)
     start_scheduler()
     yield

@@ -1,0 +1,16 @@
+[Unit]
+Description=Fitness Agent — daily encrypted-key verification
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/opt/fitness-agent
+Environment="PATH=/root/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+# If you pinned SETTINGS_ENCRYPTION_KEY in the main service unit, mirror
+# it here (or use EnvironmentFile= for both).
+ExecStart=/root/.local/bin/uv run python scripts/verify_keys.py
+
+# Surface failures in journal AND propagate non-zero exit to the timer.
+StandardOutput=journal
+StandardError=journal
