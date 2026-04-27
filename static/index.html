@@ -141,6 +141,20 @@
             background: var(--surface); border: 1px solid var(--border);
             border-radius: var(--radius); box-shadow: var(--shadow); padding: 28px 24px;
         }
+        .auth-tabs {
+            display: flex; gap: 4px;
+            background: var(--surface-3); border-radius: var(--radius-sm);
+            padding: 4px; margin-bottom: 24px;
+        }
+        .auth-tab {
+            flex: 1; height: 36px; border-radius: 7px;
+            font-size: 0.88rem; font-weight: 600; color: var(--text-2);
+            background: transparent; transition: all 0.15s;
+        }
+        .auth-tab.active {
+            background: var(--surface); color: var(--text);
+            box-shadow: var(--shadow-sm);
+        }
         .login-card h2 { font-size: 1.4rem; margin-bottom: 4px; }
         .login-card .subtitle { color: var(--text-2); font-size: 0.88rem; margin-bottom: 24px; }
         .field { margin-bottom: 14px; }
@@ -457,22 +471,50 @@
         </div>
     </header>
 
-    <!-- ── Login ── -->
+    <!-- ── Login / Register ── -->
     <div class="login-wrap" id="login-view">
-        <form class="login-card" id="login-form">
-            <h2>Welcome back</h2>
-            <p class="subtitle">Sign in to your fitness coach</p>
-            <div class="field">
-                <label for="email">Email</label>
-                <input id="email" name="email" type="email" autocomplete="username" required>
+        <div class="login-card">
+            <div class="auth-tabs">
+                <button class="auth-tab active" id="tab-signin" type="button">Sign in</button>
+                <button class="auth-tab" id="tab-register" type="button">Create account</button>
             </div>
-            <div class="field">
-                <label for="password">Password</label>
-                <input id="password" name="password" type="password" autocomplete="current-password" required>
-            </div>
-            <button class="btn-primary" id="login-button" type="submit">Sign in</button>
-            <div class="status" id="login-status"></div>
-        </form>
+
+            <!-- Sign-in form -->
+            <form id="login-form">
+                <h2>Welcome back</h2>
+                <p class="subtitle">Sign in to your fitness coach</p>
+                <div class="field">
+                    <label for="email">Email</label>
+                    <input id="email" name="email" type="email" autocomplete="username" required>
+                </div>
+                <div class="field">
+                    <label for="password">Password</label>
+                    <input id="password" name="password" type="password" autocomplete="current-password" required>
+                </div>
+                <button class="btn-primary" id="login-button" type="submit">Sign in</button>
+                <div class="status" id="login-status"></div>
+            </form>
+
+            <!-- Register form -->
+            <form id="register-form" class="hidden">
+                <h2>Create account</h2>
+                <p class="subtitle">Start your fitness journey</p>
+                <div class="field">
+                    <label for="reg-email">Email</label>
+                    <input id="reg-email" name="email" type="email" autocomplete="email" required>
+                </div>
+                <div class="field">
+                    <label for="reg-password">Password <span style="font-weight:400;text-transform:none">(min 8 chars)</span></label>
+                    <input id="reg-password" name="password" type="password" autocomplete="new-password" minlength="8" required>
+                </div>
+                <div class="field">
+                    <label for="reg-confirm">Confirm password</label>
+                    <input id="reg-confirm" name="confirm" type="password" autocomplete="new-password" minlength="8" required>
+                </div>
+                <button class="btn-primary" id="register-button" type="submit">Create account</button>
+                <div class="status" id="register-status"></div>
+            </form>
+        </div>
     </div>
 
     <!-- ── Chat view ── -->
@@ -1559,8 +1601,61 @@
     $("file-upload-btn").addEventListener("click", uploadFile);
     $("file-refresh-btn").addEventListener("click", renderFilesView);
 
+    /* ── Auth tabs ── */
+    function switchAuthTab(tab) {
+        const isRegister = tab === "register";
+        $("tab-signin").classList.toggle("active", !isRegister);
+        $("tab-register").classList.toggle("active", isRegister);
+        $("login-form").classList.toggle("hidden", isRegister);
+        $("register-form").classList.toggle("hidden", !isRegister);
+        setStatus($("login-status"), "");
+        setStatus($("register-status"), "");
+    }
+    $("tab-signin").addEventListener("click", () => switchAuthTab("signin"));
+    $("tab-register").addEventListener("click", () => switchAuthTab("register"));
+
+    async function register(event) {
+        event.preventDefault();
+        const password = $("reg-password").value;
+        const confirm = $("reg-confirm").value;
+        if (password !== confirm) {
+            setStatus($("register-status"), "Passwords do not match", "error");
+            return;
+        }
+        const btn = $("register-button");
+        btn.disabled = true;
+        setStatus($("register-status"), "Creating account…");
+        try {
+            const email = $("reg-email").value.trim();
+            const res = await fetch("/auth/register", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password })
+            });
+            if (res.status === 409) throw new Error("An account with that email already exists");
+            if (!res.ok) {
+                const body = await res.json().catch(() => ({}));
+                throw new Error(body.detail || `Request failed with ${res.status}`);
+            }
+            const data = await res.json();
+            state.token = data.access_token;
+            state.email = email;
+            localStorage.setItem(tokenKey, state.token);
+            localStorage.setItem(emailKey, state.email);
+            $("reg-password").value = "";
+            $("reg-confirm").value = "";
+            setStatus($("register-status"), "");
+            showApp(true);
+        } catch (err) {
+            setStatus($("register-status"), err.message, "error");
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
     /* ── Wire up ── */
     $("login-form").addEventListener("submit", login);
+    $("register-form").addEventListener("submit", register);
     $("chat-form").addEventListener("submit", sendMessage);
 
     /* ── Boot ── */

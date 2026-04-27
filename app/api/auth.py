@@ -59,6 +59,29 @@ def create_access_token(user_id: UUID) -> str:
     return jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
 
 
+class RegisterRequest(BaseModel):
+    email: str = Field(min_length=3, max_length=320)
+    password: str = Field(min_length=8, max_length=256)
+
+
+@router.post("/register", response_model=TokenResponse, status_code=201)
+async def register(
+    req: RegisterRequest,
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> TokenResponse:
+    result = await session.execute(select(User).where(User.email == req.email))
+    if result.scalar_one_or_none() is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="An account with that email already exists",
+        )
+    user = User(email=req.email, hashed_password=hash_password(req.password))
+    session.add(user)
+    await session.commit()
+    await session.refresh(user)
+    return TokenResponse(access_token=create_access_token(user.id))
+
+
 class ChangePasswordRequest(BaseModel):
     current_password: str = Field(min_length=1, max_length=256)
     new_password: str = Field(min_length=8, max_length=256)
