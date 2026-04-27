@@ -544,6 +544,61 @@
         .files-empty h3 { color: var(--text); font-size: 1rem; margin-bottom: 6px; }
         .files-empty p { font-size: 0.86rem; }
 
+        /* ── About view ── */
+        .about-wrap {
+            flex: 1; overflow-y: auto; min-height: 0;
+            padding: 20px 16px;
+            padding-bottom: max(20px, env(safe-area-inset-bottom));
+        }
+        .about-container {
+            max-width: 880px; margin: 0 auto;
+            display: flex; flex-direction: column; gap: 16px;
+        }
+        .about-features {
+            list-style: none; display: flex; flex-direction: column; gap: 10px;
+            font-size: 0.88rem; line-height: 1.5; padding: 0;
+        }
+        .about-features li {
+            padding: 10px 12px; background: var(--surface-2);
+            border-radius: var(--radius-sm); border: 1px solid var(--border);
+        }
+        .about-features code, .about-table code {
+            font-family: 'Menlo','Monaco','Consolas',ui-monospace,monospace;
+            font-size: 0.82em; padding: 1px 6px;
+            background: var(--surface-3); border-radius: 4px;
+        }
+        .about-steps {
+            display: flex; flex-direction: column; gap: 8px;
+            padding-left: 22px; font-size: 0.88rem; line-height: 1.5;
+        }
+        .about-table-wrap { overflow-x: auto; padding-bottom: 4px; }
+        .about-table {
+            width: 100%; border-collapse: collapse; font-size: 0.85rem;
+        }
+        .about-table th, .about-table td {
+            text-align: left; padding: 9px 10px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+        }
+        .about-table th {
+            font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.04em;
+            color: var(--text-2); background: var(--surface-2);
+        }
+        .about-table tr:last-child td { border-bottom: none; }
+        .about-tag {
+            display: inline-block;
+            font-size: 0.7rem; font-weight: 700;
+            padding: 2px 7px; border-radius: 10px;
+            margin: 1px 3px 1px 0;
+            white-space: nowrap;
+        }
+        .about-tag.local     { background: var(--local-bg);  color: var(--local-text); }
+        .about-tag.anthropic { background: var(--claude-bg); color: var(--claude-text); }
+        .about-tag.openai    { background: var(--openai-bg); color: var(--openai-text); }
+        .about-tag.db        { background: var(--surface-3); color: var(--text); }
+        .about-tag.disk      { background: var(--surface-3); color: var(--text); }
+        .about-tag.never     { background: var(--surface-3); color: var(--text-2); font-style: italic; }
+
         /* ── Bottom tab bar (mobile only) ── */
         .tab-bar {
             display: flex; background: var(--surface);
@@ -577,6 +632,7 @@
             <button class="nav-tab" data-view="history-view" type="button">History</button>
             <button class="nav-tab" data-view="files-view" type="button">Files</button>
             <button class="nav-tab" data-view="settings-view" type="button">Settings</button>
+            <button class="nav-tab" data-view="about-view" type="button">About</button>
         </nav>
         <div class="topbar-actions">
             <span class="session-email" id="session-label">Signed out</span>
@@ -959,6 +1015,81 @@
         </div>
     </div>
 
+    <!-- ── About view ── -->
+    <div class="about-wrap hidden" id="about-view">
+        <div class="about-container">
+            <div>
+                <div class="settings-heading">About Fitness Agent</div>
+                <div class="settings-subheading" id="about-version">Loading version…</div>
+            </div>
+
+            <div class="settings-card">
+                <div class="card-header">
+                    <h3>What it does</h3>
+                    <p>Five coaches sharing one rolling chat thread, plus the tools and integrations they call.</p>
+                </div>
+                <div class="card-body">
+                    <ul class="about-features" id="about-features">
+                        <li><strong>🎯 Manager</strong> — classifies each turn and routes to the right coach. Falls back to Chat on any error.</li>
+                        <li><strong>💬 Chat</strong> — small talk, generic Q&amp;A.</li>
+                        <li><strong>📅 Plan</strong> — builds workouts; calls <code>create_workout_session</code> to land them on your calendar.</li>
+                        <li><strong>🥗 Nutrition</strong> — meals, recipes, macros. Logs with <code>log_meal</code>.</li>
+                        <li><strong>📊 Progress</strong> — trend synthesis over your stored workouts, meals, and health metrics.</li>
+                        <li><strong>🧠 Mind</strong> — mental-health coach with crisis safety guardrails (Swiss 143 / EU 112). Logs mood snapshots via <code>log_mental_state</code>.</li>
+                        <li><strong>📎 Multimodal attachments</strong> — drop images, PDFs, DOCX, or text into chat. Images go to Claude as binary; the rest is text-extracted (capped at 20 000 chars per file).</li>
+                        <li><strong>🎨 Image generation</strong> — coaches can call <code>generate_plan_image</code> (OpenAI <code>gpt-image-1</code>); PNG saved to the file store and inlined.</li>
+                        <li><strong>📆 ICS calendar export</strong> — per-plan or rolling 30-day feed with Europe/Zurich VTIMEZONE. Drag into your calendar app.</li>
+                        <li><strong>📁 Files</strong> — uploads + generated images live on disk at <code>/opt/fitness-agent-data</code>.</li>
+                        <li><strong>🗓️ Auto weekly plan</strong> — APScheduler runs Sunday 19:00 Europe/Zurich.</li>
+                        <li><strong>⚙️ Per-user customization</strong> — override system prompt and provider per coach; bring your own API keys (encrypted at rest).</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="settings-card">
+                <div class="card-header">
+                    <h3>Where your data lives</h3>
+                    <p>What gets stored or sent for each piece of information. Reflects your <em>current</em> per-coach provider settings — change them in Settings → “LLM providers &amp; API keys”.</p>
+                </div>
+                <div class="card-body about-table-wrap">
+                    <table class="about-table" id="about-flow-table">
+                        <thead>
+                            <tr>
+                                <th>Information</th>
+                                <th>Stored in</th>
+                                <th>Sent to LLM</th>
+                            </tr>
+                        </thead>
+                        <tbody id="about-flow-tbody">
+                            <!-- populated by renderAboutFlow() -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer" style="font-size: 0.78rem; color: var(--text-2);">
+                    Local Postgres at the homelab DB LXC. Files on the agent LXC's disk.
+                    No cloud LLM call ever sees your stored API keys directly — they're only
+                    used by the server to authenticate, and never echoed in chat.
+                </div>
+            </div>
+
+            <div class="settings-card">
+                <div class="card-header">
+                    <h3>How routing decides per turn</h3>
+                </div>
+                <div class="card-body">
+                    <ol class="about-steps">
+                        <li>You send a message (and optionally attachments).</li>
+                        <li>If the coach is <strong>Auto</strong>, the manager classifier (Anthropic by default) picks one of the five sub-coaches based on the message + recent context.</li>
+                        <li>The chosen coach's provider is resolved: your per-user override → <code>.env</code> default → fall back to local if no API key.</li>
+                        <li>If you attached an image and the resolved provider is local (not multimodal), this single turn is bumped to Anthropic so the model actually sees the image.</li>
+                        <li>The agent runs with the resolved system prompt (your override if set, else the built-in default) and tools.</li>
+                        <li>Both turns (yours + the agent's) are written to <code>agentmessage</code> tagged with the resolved coach.</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ── Bottom tab bar (mobile only) ── -->
     <nav class="tab-bar hidden" id="tab-bar">
         <button class="tab-item active" data-view="app-view" type="button">
@@ -986,6 +1117,14 @@
                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
             </svg>
             Settings
+        </button>
+        <button class="tab-item" data-view="about-view" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            About
         </button>
     </nav>
 
@@ -1073,7 +1212,7 @@
     }
 
     /* ── Navigation ── */
-    const VIEWS = ["app-view", "history-view", "files-view", "settings-view"];
+    const VIEWS = ["app-view", "history-view", "files-view", "settings-view", "about-view"];
 
     function switchView(viewId) {
         VIEWS.forEach(id => $(id).classList.toggle("hidden", id !== viewId));
@@ -1084,6 +1223,8 @@
             fetchHistory().then(renderHistoryView);
         } else if (viewId === "files-view") {
             renderFilesView();
+        } else if (viewId === "about-view") {
+            renderAbout();
         }
     }
 
@@ -1245,6 +1386,170 @@
             await renderCoachPrompts(d.coach_prompts || {});
             await loadLLMConfig();
         } catch (_) {}
+    }
+
+    /* ── About view (dynamic data-flow table) ── */
+    function providerTag(provider) {
+        const span = document.createElement("span");
+        span.className = `about-tag ${provider}`;
+        const labels = { local: "Local LLM", anthropic: "Claude (Anthropic)", openai: "GPT (OpenAI)" };
+        span.textContent = labels[provider] || provider;
+        return span;
+    }
+    function plainTag(cls, text) {
+        const s = document.createElement("span");
+        s.className = `about-tag ${cls}`;
+        s.textContent = text;
+        return s;
+    }
+
+    async function renderAbout() {
+        // Stamp version line.
+        try {
+            const r = await fetch("/openapi.json");
+            const v = (await r.json()).info?.version || "?";
+            $("about-version").textContent = `Version ${v} · single-user fitness coaching agent`;
+        } catch (_) {
+            $("about-version").textContent = "Self-hosted fitness coaching agent";
+        }
+
+        // Build the table from the user's live LLM config.
+        let cfg;
+        try {
+            const r = await request("/profile/llm", { headers: authHeaders() });
+            cfg = await r.json();
+        } catch (_) {
+            cfg = { coach_providers: {}, env_providers: {}, api_keys_set: {}, api_keys_env: {} };
+        }
+        const providerForCoach = (task) =>
+            cfg.coach_providers[task] || cfg.env_providers[task] || "local";
+        const sourceFor = (provider) =>
+            cfg.api_keys_set[provider] ? "DB-encrypted" :
+            cfg.api_keys_env[provider] ? ".env" : "unset";
+
+        const rows = [
+            {
+                info: "Chat messages (your turns)",
+                stored: [["db", "Postgres · agentmessage"]],
+                sent:   [providerForCoach("chat")],
+                note:   "Tagged with the coach that handled the turn.",
+            },
+            {
+                info: "Plan-coach turns",
+                stored: [["db", "Postgres · agentmessage"]],
+                sent:   [providerForCoach("plan_generation")],
+            },
+            {
+                info: "Nutrition-coach turns",
+                stored: [["db", "Postgres · agentmessage"]],
+                sent:   [providerForCoach("nutrition_analysis")],
+            },
+            {
+                info: "Progress-coach turns",
+                stored: [["db", "Postgres · agentmessage"]],
+                sent:   [providerForCoach("progress_review")],
+            },
+            {
+                info: "Mind-coach turns",
+                stored: [["db", "Postgres · agentmessage"]],
+                sent:   [providerForCoach("mental_health")],
+                note:   "Includes mood snapshots logged via log_mental_state.",
+            },
+            {
+                info: "🎯 Manager classifier",
+                stored: [["never", "not stored"]],
+                sent:   ["anthropic"],
+                note:   "Falls back to Chat label on any error.",
+            },
+            {
+                info: "Profile (height, weight, goals, equipment, macros)",
+                stored: [["db", "Postgres · userprofile"]],
+                sent:   ["never"],
+                note:   "Sent to a coach only when a tool reads it during a turn.",
+            },
+            {
+                info: "Workouts, meals, health metrics",
+                stored: [["db", "Postgres · workoutsession, plannedmeal, meallog, healthmetric"]],
+                sent:   ["never"],
+                note:   "Read into a turn only when the agent calls a fetch tool.",
+            },
+            {
+                info: "Uploaded files (images, PDFs, DOCX, text)",
+                stored: [
+                    ["db",   "Postgres · file (metadata)"],
+                    ["disk", "/opt/fitness-agent-data (bytes)"],
+                ],
+                sent:   ["per-attachment"],
+                note:   "Images go to whatever provider handles that turn (auto-routed to Claude if local). PDFs/DOCX/text are extracted to text first.",
+            },
+            {
+                info: "Generated plan images",
+                stored: [
+                    ["db",   "Postgres · file"],
+                    ["disk", "/opt/fitness-agent-data"],
+                ],
+                sent:   ["openai"],
+                note:   "OpenAI gpt-image-1 generates the PNG; bytes return to the file store.",
+            },
+            {
+                info: "Custom system prompts (per coach)",
+                stored: [["db", "Postgres · userprofile.coach_prompts"]],
+                sent:   ["per-coach"],
+                note:   "Used as the system prompt on every turn for that coach.",
+            },
+            {
+                info: "API keys",
+                stored: [["db", `Postgres · userprofile.api_keys_enc (Fernet AES-128-CBC)`]],
+                sent:   ["never"],
+                note:   `Anthropic: ${sourceFor("anthropic")}, OpenAI: ${sourceFor("openai")}, Local: ${sourceFor("local")}. Server uses them to authenticate; never echoed back.`,
+            },
+            {
+                info: "Encryption key",
+                stored: [["disk", "/opt/fitness-agent-data/.encryption.key (or SETTINGS_ENCRYPTION_KEY env)"]],
+                sent:   ["never"],
+                note:   "Loses the key → API keys become unreadable; service falls back to .env values.",
+            },
+            {
+                info: "Auth (password + JWT)",
+                stored: [["db", "Postgres · user.hashed_password (bcrypt)"]],
+                sent:   ["never"],
+            },
+        ];
+
+        const tbody = $("about-flow-tbody");
+        tbody.replaceChildren();
+        for (const row of rows) {
+            const tr = document.createElement("tr");
+
+            const tdInfo = document.createElement("td");
+            const strong = document.createElement("strong"); strong.textContent = row.info;
+            tdInfo.appendChild(strong);
+            if (row.note) {
+                const small = document.createElement("div");
+                small.style.fontSize = "0.78rem"; small.style.color = "var(--text-2)";
+                small.style.marginTop = "3px"; small.textContent = row.note;
+                tdInfo.appendChild(small);
+            }
+            tr.appendChild(tdInfo);
+
+            const tdStored = document.createElement("td");
+            for (const [cls, text] of row.stored) tdStored.appendChild(plainTag(cls, text));
+            tr.appendChild(tdStored);
+
+            const tdSent = document.createElement("td");
+            for (const item of row.sent) {
+                if (["local", "anthropic", "openai"].includes(item)) {
+                    tdSent.appendChild(providerTag(item));
+                } else if (item === "never") {
+                    tdSent.appendChild(plainTag("never", "never sent"));
+                } else if (item === "per-attachment" || item === "per-coach") {
+                    tdSent.appendChild(plainTag("never", item));
+                }
+            }
+            tr.appendChild(tdSent);
+
+            tbody.appendChild(tr);
+        }
     }
 
     async function loadLLMConfig() {
