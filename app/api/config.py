@@ -2,15 +2,15 @@
 
 from pathlib import Path
 from typing import Annotated
-from uuid import UUID
 
 from dotenv import set_key
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
-from app.agent.router import TaskClass, Provider, _resolve_provider, get_effective_local_model
-from app.api.deps import get_current_user_id
+from app.agent.router import Provider, TaskClass, _resolve_provider, get_effective_local_model
+from app.api.deps import get_current_admin_user
 from app.config import get_settings
+from app.db.models import User
 
 router = APIRouter(prefix="/config", tags=["config"])
 
@@ -55,21 +55,30 @@ def get_routing() -> dict[str, dict[str, str]]:
 @router.patch("/routing")
 def update_routing(
     body: RoutingUpdate,
-    _: Annotated[UUID, Depends(get_current_user_id)],
+    _: Annotated[User, Depends(get_current_admin_user)],
 ) -> dict[str, dict[str, str]]:
     try:
         task = TaskClass(body.task)
-    except ValueError:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Unknown task: {body.task}")
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unknown task: {body.task}",
+        ) from exc
 
     try:
         provider = Provider(body.provider)
-    except ValueError:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Unknown provider: {body.provider}")
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unknown provider: {body.provider}",
+        ) from exc
 
     env_key = _TASK_ENV_KEY.get(task)
     if env_key is None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Task '{task}' is not configurable")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Task '{task}' is not configurable",
+        )
 
     set_key(str(_ENV_FILE), env_key, provider.value)
     get_settings.cache_clear()

@@ -278,7 +278,9 @@ def register_tools(agent: Agent[AgentDeps, str]) -> None:
         can reference it in your reply (e.g. ![plan](/files/<id>))."""
         from sqlmodel import select as _select
 
+        from app.agent.effective_config import load_effective_config, resolve_api_key
         from app.agent.image_gen import generate_image
+        from app.agent.router import Provider
         from app.db.models import UserProfile
         from app.files import storage
 
@@ -298,7 +300,11 @@ def register_tools(agent: Agent[AgentDeps, str]) -> None:
                 ),
             }
 
-        img = await generate_image(prompt)
+        eff = await load_effective_config(ctx.deps.user_id)
+        img = await generate_image(
+            prompt,
+            api_key=resolve_api_key(Provider.OPENAI, eff),
+        )
         filename = f"{kind}-{date.today().isoformat()}.png"
         fid, rel = storage.write_bytes(img.data, filename=filename, mime_type=img.mime_type)
         async with ctx.deps.session_factory() as session:
@@ -354,7 +360,10 @@ def register_tools(agent: Agent[AgentDeps, str]) -> None:
                 )
             )
         if not rows:
-            return "Nothing to log — provide at least one of mood_score, stress_level, energy_level, sleep_quality."
+            return (
+                "Nothing to log — provide at least one of mood_score, stress_level, "
+                "energy_level, sleep_quality."
+            )
         async with ctx.deps.session_factory() as session:
             session.add_all(rows)
             await session.commit()

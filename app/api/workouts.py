@@ -9,11 +9,11 @@ from datetime import date, datetime, timedelta
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
-from app.api.deps import get_current_user_id
+from app.api.deps import get_approved_user_id
 from app.db.models import WorkoutSession
 from app.db.session import get_session
 
@@ -22,7 +22,7 @@ router = APIRouter(prefix="/workouts", tags=["workouts"])
 
 @router.get("", response_model=list[WorkoutSession])
 async def list_workouts(
-    user_id: Annotated[UUID, Depends(get_current_user_id)],
+    user_id: Annotated[UUID, Depends(get_approved_user_id)],
     session: Annotated[AsyncSession, Depends(get_session)],
     days: int = 14,
 ) -> list[WorkoutSession]:
@@ -39,8 +39,8 @@ async def list_workouts(
 @router.post("/{workout_id}/complete", response_model=WorkoutSession)
 async def complete_workout(
     workout_id: UUID,
-    rpe: int,
-    user_id: Annotated[UUID, Depends(get_current_user_id)],
+    rpe: Annotated[int, Query(ge=1, le=10)],
+    user_id: Annotated[UUID, Depends(get_approved_user_id)],
     session: Annotated[AsyncSession, Depends(get_session)],
     notes: str | None = None,
 ) -> WorkoutSession:

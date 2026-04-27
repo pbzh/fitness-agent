@@ -18,7 +18,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app.security.secrets import verify_all  # noqa: E402
+from app.security.secrets import verify_all
 
 
 async def main() -> int:

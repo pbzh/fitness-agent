@@ -7,6 +7,7 @@ from uuid import UUID
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ProviderName = Literal["local", "anthropic", "openai"]
+AuthRateLimitBackend = Literal["proxy", "redis", "disabled"]
 
 
 class Settings(BaseSettings):
@@ -19,6 +20,11 @@ class Settings(BaseSettings):
     jwt_secret: str
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 10080
+    auth_rate_limit_backend: AuthRateLimitBackend = "proxy"
+    auth_rate_limit_max_attempts: int = 10
+    auth_rate_limit_window_seconds: int = 300
+    auth_rate_limit_redis_url: str | None = None
+    trusted_proxy_cidrs: str = ""
 
     # Local LLM (llama.cpp on Windows/B50)
     local_llm_base_url: str = "http://localhost:8080/v1"

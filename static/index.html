@@ -29,6 +29,17 @@
             --local-bg: #f1f5f9;    --local-text: #475569;
             --claude-bg: #faf5ff;   --claude-text: #7c3aed;
             --openai-bg: #f0fdf4;   --openai-text: #059669;
+            --color-background-primary: var(--surface);
+            --color-background-secondary: var(--surface-2);
+            --color-background-info: #e8f0ff;
+            --color-text-primary: var(--text);
+            --color-text-secondary: var(--text-2);
+            --color-text-tertiary: #94a3b8;
+            --color-text-info: var(--primary);
+            --color-text-success: var(--accent);
+            --color-border-tertiary: var(--border);
+            --border-radius-lg: 14px;
+            --border-radius-md: 8px;
         }
         [data-theme="dark"] {
             color-scheme: dark;
@@ -51,13 +62,22 @@
             --local-bg: #161e2e;    --local-text: #7c8fa6;
             --claude-bg: #1a1628;   --claude-text: #a78bfa;
             --openai-bg: #0a1a12;   --openai-text: #34d399;
+            --color-background-primary: var(--surface);
+            --color-background-secondary: var(--surface-2);
+            --color-background-info: #16243d;
+            --color-text-primary: var(--text);
+            --color-text-secondary: var(--text-2);
+            --color-text-tertiary: #64748b;
+            --color-text-info: var(--primary);
+            --color-text-success: var(--accent);
+            --color-border-tertiary: var(--border);
         }
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
-            background: var(--bg);
+            background: var(--color-background-secondary);
             color: var(--text);
             height: 100vh; height: 100dvh;
             overflow: hidden;
@@ -93,35 +113,69 @@
         }
 
         /* ── App shell ── */
-        .app { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
+        .app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            height: 100dvh;
+            background: var(--color-background-secondary);
+        }
 
         /* ── Topbar ── */
         .topbar {
             display: flex; align-items: stretch; gap: 0;
             padding: 0 20px;
-            height: 52px;
-            background: var(--surface);
-            border-bottom: 1px solid var(--border);
+            height: 56px;
+            background: var(--color-background-primary);
+            border-bottom: 0.5px solid var(--color-border-tertiary);
             flex-shrink: 0;
         }
         .brand-logo {
             display: flex; align-items: center;
-            padding-right: 24px; flex-shrink: 0;
-            border-right: 1px solid var(--border);
-            margin-right: 4px;
+            padding-right: 28px; flex-shrink: 0;
+            border-right: none;
+            margin-right: 0;
         }
         .brand-wordmark {
-            font-size: 0.92rem; font-weight: 800;
-            letter-spacing: -0.02em;
-            background: var(--gradient);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            background-clip: text;
+            font-size: 0.88rem; font-weight: 600;
+            letter-spacing: 0;
+            color: var(--color-text-info);
         }
-        .topbar-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; margin-left: auto; }
+        .topbar-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; margin-left: auto; position: relative; }
         .session-email {
+            display: none;
             font-size: 0.75rem; color: var(--text-2);
             max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
+        .avatar-menu-btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: transparent; color: var(--color-text-tertiary);
+        }
+        .avatar-circle {
+            width: 28px; height: 28px; border-radius: 50%;
+            background: var(--color-background-info); color: var(--color-text-info);
+            display: grid; place-items: center;
+            font-size: 0.7rem; font-weight: 600;
+        }
+        .avatar-caret { font-size: 1.1rem; line-height: 1; }
+        .account-menu {
+            position: absolute; right: 0; top: 42px; z-index: 30;
+            width: 210px; padding: 8px;
+            background: var(--color-background-primary);
+            border: 0.5px solid var(--color-border-tertiary);
+            border-radius: var(--border-radius-md);
+            box-shadow: var(--shadow);
+        }
+        .account-menu-email {
+            padding: 8px 10px; font-size: 0.75rem; color: var(--color-text-secondary);
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .account-menu button {
+            width: 100%; height: 32px; border-radius: var(--border-radius-md);
+            background: transparent; color: var(--color-text-secondary);
+            text-align: left; padding: 0 10px; font-size: 0.8rem;
+        }
+        .account-menu button:hover { background: var(--color-background-secondary); color: var(--color-text-primary); }
         .icon-btn {
             width: 32px; height: 32px; border-radius: var(--radius-xs);
             background: transparent; border: 1px solid var(--border);
@@ -135,16 +189,16 @@
         .nav-tabs { display: none; gap: 0; flex: 1; justify-content: center; align-items: stretch; }
         @media (min-width: 768px) { .nav-tabs { display: flex; } }
         .nav-tab {
-            height: 100%; padding: 0 16px;
+            height: 100%; padding: 0 9px;
             background: transparent; border: none;
-            border-bottom: 2px solid transparent;
-            color: var(--text-2); font-size: 0.83rem; font-weight: 600;
+            border-bottom: 1.5px solid transparent;
+            color: var(--color-text-secondary); font-size: 0.82rem; font-weight: 500;
             display: inline-flex; align-items: center;
             transition: color 0.15s, border-color 0.15s;
             border-radius: 0; cursor: pointer;
         }
-        .nav-tab:hover { color: var(--text); }
-        .nav-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+        .nav-tab:hover { color: var(--color-text-primary); }
+        .nav-tab.active { color: var(--color-text-primary); border-bottom-color: var(--color-text-info); }
         .nav-tab svg { width: 15px; height: 15px; }
         .text-btn {
             height: 32px; padding: 0 14px; border-radius: var(--radius-xs);
@@ -225,21 +279,106 @@
 
         /* ── Chat view ── */
         .content { flex: 1; overflow: hidden; display: flex; min-height: 0; }
-        @media (min-width: 768px) { .content { padding: 18px; } }
+        @media (min-width: 768px) { .content { padding: 0; gap: 0; } }
 
-        .chat-pane { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+        .chat-pane {
+            flex: 1; display: flex; flex-direction: column; min-height: 0;
+            padding: 0 24px;
+        }
+        @media (max-width: 767px) { .chat-pane { padding: 0; } }
+        .side-pane {
+            display: none;
+            width: 240px;
+            min-width: 240px;
+            max-width: 240px;
+            min-height: 0;
+            overflow-y: auto;
+            background: var(--color-background-primary);
+            border-left: 0.5px solid var(--color-border-tertiary);
+            padding: 18px 16px;
+        }
+        @media (min-width: 1120px) {
+            .side-pane { display: flex; flex-direction: column; gap: 10px; }
+        }
+        .side-card {
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            padding: 0;
+            box-shadow: none;
+        }
+        .side-card h3 {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--color-text-tertiary);
+            margin-bottom: 8px;
+        }
+        .metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .metric {
+            background: var(--color-background-secondary);
+            border: none;
+            border-radius: var(--border-radius-md);
+            padding: 10px 12px;
+            min-height: 58px;
+        }
+        .metric .value { font-size: 1.1rem; font-weight: 600; letter-spacing: 0; }
+        .metric .label { font-size: 0.68rem; color: var(--color-text-tertiary); margin-bottom: 2px; }
+        .progress-line {
+            height: 7px;
+            border-radius: 7px;
+            background: var(--surface-3);
+            overflow: hidden;
+            margin-top: 8px;
+        }
+        .progress-line span {
+            display: block;
+            height: 100%;
+            width: 0;
+            background: var(--accent);
+        }
+        .side-list { display: flex; flex-direction: column; gap: 8px; }
+        .side-item {
+            padding: 9px 0;
+            border-radius: 0;
+            background: transparent;
+            border: none;
+        }
+        .side-item-title { font-size: 0.82rem; font-weight: 600; }
+        .side-item-sub { font-size: 0.72rem; color: var(--color-text-tertiary); margin-top: 2px; }
+        .quick-actions { display: grid; grid-template-columns: 1fr; gap: 8px; }
+        .quick-action {
+            height: 32px;
+            padding: 0 10px;
+            border-radius: var(--border-radius-md);
+            background: var(--color-background-secondary);
+            border: 0.5px solid var(--color-border-tertiary);
+            color: var(--color-text-primary);
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-align: left;
+        }
+        .quick-action:hover { border-color: var(--primary); color: var(--primary); }
 
         .panel {
-            background: var(--surface); border: 1px solid var(--border);
-            border-radius: var(--radius-sm); box-shadow: var(--shadow);
+            background: transparent; border: none;
+            border-radius: 0; box-shadow: none;
             display: flex; flex-direction: column; overflow: hidden; flex: 1; min-height: 0;
         }
         @media (max-width: 767px) { .panel { border-radius: 0; border: none; box-shadow: none; } }
 
-        .panel-header { padding: 14px 18px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-        .panel-title { font-size: 0.95rem; font-weight: 700; margin-bottom: 10px; }
+        .panel-header {
+            max-width: 620px; width: 100%; margin: 0 auto;
+            padding: 20px 0 0; border-bottom: none; flex-shrink: 0;
+        }
+        .panel-title { font-size: 0.94rem; font-weight: 600; margin-bottom: 2px; }
 
-        .coach-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .coach-row {
+            display: none; align-items: center; gap: 8px; flex-wrap: wrap;
+            padding: 10px 0 0;
+        }
+        .manual-open .coach-row { display: flex; }
         .coach-pills { display: flex; gap: 5px; flex-wrap: wrap; flex: 1; }
         .coach-btn {
             padding: 4px 12px; border-radius: var(--radius-xs);
@@ -253,14 +392,33 @@
         /* ── Chat header extras ── */
         .chat-header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
         .chat-header-top .panel-title { margin-bottom: 0; }
+        .chat-subtitle {
+            margin: 2px 0 0;
+            font-size: 0.75rem;
+            color: var(--color-text-tertiary);
+        }
+        .manual-btn {
+            font-size: 0.75rem;
+            color: var(--color-text-tertiary);
+            border: 0.5px solid var(--color-border-tertiary);
+            padding: 4px 10px;
+            border-radius: var(--border-radius-md);
+            background: transparent;
+        }
+        .manual-btn.active, .manual-btn:hover {
+            color: var(--color-text-info);
+            border-color: var(--color-text-info);
+        }
         .token-toggle-btn { width: 28px; height: 28px; font-size: 0.78rem; border-radius: 7px; }
         .token-toggle-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
         .model-label {
+            display: none;
             font-size: 0.68rem; color: var(--text-2);
             font-family: 'Menlo', 'Monaco', 'Consolas', monospace;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
             max-width: 160px; flex-shrink: 1;
         }
+        .dev-mode .model-label { display: inline; }
         .token-usage { display: none; font-size: 0.69rem; opacity: 0.6; margin-top: 3px; }
         .show-tokens .token-usage { display: block; }
 
@@ -286,31 +444,39 @@
         /* ── Chat messages ── */
         .chat-history {
             flex: 1; overflow-y: auto; min-height: 0;
-            padding: 20px 18px; display: flex; flex-direction: column; gap: 12px;
+            padding: 18px 0; display: flex; flex-direction: column; gap: 14px;
+            max-width: 620px; width: 100%; margin: 0 auto;
         }
         .message {
-            max-width: min(80%, 640px); padding: 10px 14px; border-radius: 10px;
+            max-width: min(80%, 620px); padding: 10px 14px; border-radius: var(--border-radius-lg);
             line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.9rem;
         }
         .message.user {
             align-self: flex-end;
-            background: var(--gradient); color: #fff;
-            border-bottom-right-radius: 3px;
+            background: var(--color-background-info); color: var(--color-text-info);
         }
         .message.agent {
             align-self: flex-start;
-            background: var(--surface-2); border: 1px solid var(--border);
-            border-bottom-left-radius: 3px;
+            background: transparent; border: none;
+            padding: 0; max-width: 100%;
+            display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px;
         }
+        .agent-avatar {
+            width: 26px; height: 26px; border-radius: 50%;
+            background: var(--color-background-secondary);
+            display: grid; place-items: center; font-size: 0.8rem;
+        }
+        .agent-content { min-width: 0; }
+        .agent-body { font-size: 0.9rem; line-height: 1.6; }
         .message .meta { display: block; font-size: 0.7rem; opacity: 0.55; margin-top: 5px; }
         .message .coach-chip {
-            display: inline-block;
-            font-size: 0.65rem; font-weight: 700;
-            padding: 2px 8px; border-radius: 10px;
-            background: var(--surface-3); color: var(--text-2);
-            margin-bottom: 6px; letter-spacing: 0.03em;
+            display: block;
+            font-size: 0.74rem; font-weight: 500;
+            padding: 0; border-radius: 0;
+            background: transparent; color: var(--color-text-tertiary);
+            margin-bottom: 4px; letter-spacing: 0;
         }
-        .message.user .coach-chip { background: rgba(255,255,255,0.22); color: rgba(255,255,255,0.9); }
+        .message.user .coach-chip { display: none; }
 
         .typing { display: flex; gap: 4px; align-items: center; padding: 2px 0; }
         .typing span {
@@ -326,15 +492,24 @@
 
         /* ── Composer ── */
         .composer {
-            padding: 12px 14px; border-top: 1px solid var(--border);
-            background: var(--surface); display: flex; gap: 8px; align-items: flex-end;
+            padding: 14px 0 8px; border-top: 0.5px solid var(--color-border-tertiary);
+            background: transparent; display: flex; gap: 8px; align-items: flex-end;
             flex-shrink: 0; padding-bottom: max(12px, env(safe-area-inset-bottom));
+            max-width: 620px; width: 100%; margin: 0 auto;
         }
-        .composer textarea { flex: 1; width: auto; min-height: 40px; max-height: 130px; border-radius: var(--radius-xs); padding: 10px 14px; line-height: 1.45; }
+        .composer textarea {
+            flex: 1; width: auto; min-height: 38px; max-height: 130px;
+            border-radius: var(--border-radius-md); padding: 9px 10px; line-height: 1.45;
+            background: var(--color-background-primary);
+            border: 0.5px solid var(--color-border-tertiary);
+            font-size: 0.82rem;
+        }
         .send-btn {
-            width: 40px; height: 40px; flex-shrink: 0; border-radius: var(--radius-xs);
-            background: var(--gradient); color: #fff; display: grid; place-items: center;
+            width: auto; height: 34px; padding: 0 12px; flex-shrink: 0;
+            border-radius: var(--border-radius-md);
+            background: var(--color-text-info); color: #fff; display: grid; place-items: center;
             transition: opacity 0.15s, transform 0.12s;
+            font-size: 0.75rem; font-weight: 600;
         }
         .send-btn:hover:not(:disabled) { opacity: 0.85; }
         .send-btn:active:not(:disabled) { transform: scale(0.93); }
@@ -350,8 +525,9 @@
         .stop-btn svg { width: 14px; height: 14px; }
 
         .attach-btn {
-            width: 40px; height: 40px; flex-shrink: 0; border-radius: var(--radius-xs);
-            background: transparent; color: var(--text-2); border: 1px solid var(--border);
+            width: 34px; height: 34px; flex-shrink: 0; border-radius: var(--border-radius-md);
+            background: var(--color-background-primary); color: var(--color-text-tertiary);
+            border: 0.5px solid var(--color-border-tertiary);
             display: grid; place-items: center; transition: background 0.15s, color 0.15s;
         }
         .attach-btn:hover { background: var(--surface-2); color: var(--primary); }
@@ -360,7 +536,12 @@
         .pending-attachments {
             display: flex; flex-wrap: wrap; gap: 6px;
             padding: 8px 12px 0;
-            background: var(--surface);
+            background: transparent;
+            max-width: 620px; width: 100%; margin: 0 auto;
+        }
+        .composer-hint {
+            max-width: 620px; width: 100%; margin: 0 auto 8px;
+            text-align: center; color: var(--color-text-tertiary); font-size: 0.68rem;
         }
         .pending-attachments:empty { display: none; }
         .attach-chip {
@@ -621,6 +802,15 @@
             color: var(--text-2); background: var(--surface-2);
         }
         .about-table tr:last-child td { border-bottom: none; }
+        .admin-badge {
+            display: inline-flex; align-items: center; height: 22px;
+            padding: 0 8px; border-radius: 11px;
+            font-size: 0.72rem; font-weight: 700;
+            background: var(--surface-3); color: var(--text-2);
+        }
+        .admin-badge.ok { background: var(--openai-bg); color: var(--openai-text); }
+        .admin-badge.warn { background: var(--claude-bg); color: var(--claude-text); }
+        .admin-actions { display: flex; gap: 6px; flex-wrap: wrap; }
         .about-tag {
             display: inline-block;
             font-size: 0.7rem; font-weight: 700;
@@ -668,13 +858,22 @@
             <button class="nav-tab" data-view="history-view" type="button" data-i18n="nav.history">History</button>
             <button class="nav-tab" data-view="files-view" type="button" data-i18n="nav.files">Files</button>
             <button class="nav-tab" data-view="settings-view" type="button" data-i18n="nav.settings">Settings</button>
+            <button class="nav-tab hidden" data-view="admin-view" id="admin-nav-tab" type="button">Admin</button>
             <button class="nav-tab" data-view="about-view" type="button" data-i18n="nav.about">About</button>
         </nav>
         <div class="topbar-actions">
             <span class="session-email" id="session-label" data-i18n="nav.signedOut">Signed out</span>
-            <button class="icon-btn" id="lang-toggle" title="Sprache / Language" type="button">🌐 EN</button>
-            <button class="icon-btn" id="theme-toggle" title="Toggle theme">🌙</button>
-            <button class="text-btn hidden" id="logout-button" type="button" data-i18n="nav.signOut">Sign out</button>
+            <button class="avatar-menu-btn hidden" id="avatar-menu-btn" type="button" title="Account">
+                <span class="avatar-circle" id="avatar-initials">--</span>
+                <span class="avatar-caret">⌄</span>
+            </button>
+            <div class="account-menu hidden" id="account-menu">
+                <div class="account-menu-email" id="account-menu-email"></div>
+                <button id="account-settings-btn" type="button">Settings</button>
+                <button id="account-lang-btn" type="button">Language: EN</button>
+                <button id="account-theme-btn" type="button">Toggle theme</button>
+                <button id="logout-button" type="button" data-i18n="nav.signOut">Sign out</button>
+            </div>
         </div>
     </header>
 
@@ -739,8 +938,11 @@
             <div class="panel">
                 <div class="panel-header">
                     <div class="chat-header-top">
-                        <div class="panel-title" id="active-coach-title">💬 Chat Coach</div>
-                        <button class="icon-btn token-toggle-btn" id="token-toggle" type="button" title="Show / hide token usage">⧉</button>
+                        <div>
+                            <div class="panel-title" id="active-coach-title">Chat Coach</div>
+                            <p class="chat-subtitle">Auto-routing · 5 specialists available</p>
+                        </div>
+                        <button class="manual-btn" id="manual-toggle" type="button">⚙ Manual</button>
                     </div>
                     <div class="coach-row">
                         <div class="coach-pills">
@@ -776,7 +978,8 @@
                     </button>
                     <textarea id="message-input" data-i18n-placeholder="composer.placeholder" placeholder="Ask about workouts, meals, recovery… (or just attach a file)" rows="1"></textarea>
                     <button class="send-btn" id="send-button" type="submit" title="Send">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <span>Send</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="hidden">
                             <line x1="22" y1="2" x2="11" y2="13"></line>
                             <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                         </svg>
@@ -787,8 +990,63 @@
                         </svg>
                     </button>
                 </form>
+                <p class="composer-hint">Auto-routes to Plan · Nutrition · Progress · Mind · Chat</p>
             </div>
         </div>
+        <aside class="side-pane" id="dashboard-panel">
+            <div class="side-card">
+                <h3>Current plan</h3>
+                <div class="metric">
+                    <div class="value" id="dash-week-progress">--</div>
+                    <div class="label" id="dash-week-label">workouts this week</div>
+                    <div class="progress-line"><span id="dash-week-bar"></span></div>
+                </div>
+            </div>
+            <div class="side-card">
+                <h3>Today</h3>
+                <div class="side-list" id="dash-today-workouts"></div>
+            </div>
+            <div class="side-card">
+                <h3>Macros</h3>
+                <div class="metric-grid">
+                    <div class="metric">
+                        <div class="value" id="dash-calories">--</div>
+                        <div class="label" id="dash-calories-label">kcal</div>
+                    </div>
+                    <div class="metric">
+                        <div class="value" id="dash-protein">--</div>
+                        <div class="label" id="dash-protein-label">protein</div>
+                    </div>
+                    <div class="metric">
+                        <div class="value" id="dash-carbs">--</div>
+                        <div class="label" id="dash-carbs-label">carbs</div>
+                    </div>
+                    <div class="metric">
+                        <div class="value" id="dash-fat">--</div>
+                        <div class="label" id="dash-fat-label">fat</div>
+                    </div>
+                </div>
+            </div>
+            <div class="side-card">
+                <h3>Last weight</h3>
+                <div class="metric">
+                    <div class="value" id="dash-weight">--</div>
+                    <div class="label" id="dash-weight-label">no weight logged</div>
+                </div>
+            </div>
+            <div class="side-card">
+                <h3>Upcoming</h3>
+                <div class="side-list" id="dash-upcoming-workouts"></div>
+            </div>
+            <div class="side-card">
+                <h3>Quick actions</h3>
+                <div class="quick-actions">
+                    <button class="quick-action" type="button" data-prompt="Help me log breakfast: ">Log breakfast</button>
+                    <button class="quick-action" type="button" data-prompt="How's my progress this week?">How's my progress?</button>
+                    <button class="quick-action" type="button" data-prompt="Plan next week for me based on my recent training.">Plan next week</button>
+                </div>
+            </div>
+        </aside>
     </div>
 
     <!-- ── Settings view ── -->
@@ -1073,6 +1331,26 @@
                 </div>
             </div>
 
+            <!-- Developer -->
+            <div class="settings-card">
+                <div class="card-header">
+                    <h3>Developer</h3>
+                    <p>Diagnostics shown only when you need to inspect model behavior.</p>
+                </div>
+                <div class="card-body">
+                    <div class="field" style="display:flex;align-items:center;gap:12px;">
+                        <label style="margin:0;flex:1;">
+                            <span>Show model and token details in chat</span>
+                            <div style="font-weight:400;color:var(--text-2);font-size:0.78rem;text-transform:none;letter-spacing:0;margin-top:3px;">Shows provider model labels and per-message token counts.</div>
+                        </label>
+                        <label class="switch" style="flex-shrink:0;">
+                            <input type="checkbox" id="developer-details-toggle">
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
             <!-- Sign out -->
             <div class="settings-card">
                 <div class="card-header">
@@ -1120,6 +1398,26 @@
                 <span class="status" id="file-status"></span>
             </div>
             <div class="history-list" id="files-list"></div>
+        </div>
+    </div>
+
+    <!-- ── Admin view ── -->
+    <div class="history-wrap hidden" id="admin-view">
+        <div class="history-container">
+            <div>
+                <div class="settings-heading">Admin</div>
+                <div class="settings-subheading">Approve new users and manage admin access</div>
+            </div>
+            <div class="history-toolbar">
+                <button class="text-btn" id="admin-refresh-btn" type="button">Refresh</button>
+                <span class="status" id="admin-status"></span>
+            </div>
+            <div class="history-list" id="admin-users-list"></div>
+            <div>
+                <div class="settings-heading" style="font-size:1rem;margin-top:10px;">Audit</div>
+                <div class="settings-subheading">Recent admin actions</div>
+            </div>
+            <div class="history-list" id="admin-audit-list"></div>
         </div>
     </div>
 
@@ -1335,6 +1633,13 @@
             </svg>
             <span data-i18n="nav.settings">Settings</span>
         </button>
+        <button class="tab-item hidden" data-view="admin-view" id="admin-tab-mobile" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                <path d="M9 12l2 2 4-4"></path>
+            </svg>
+            <span>Admin</span>
+        </button>
         <button class="tab-item" data-view="about-view" type="button">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
@@ -1455,8 +1760,8 @@
             const v = t(el.getAttribute("data-i18n-title"));
             if (v !== undefined) el.title = v;
         });
-        const btn = document.getElementById("lang-toggle");
-        if (btn) btn.textContent = "🌐 " + ((window._lang || "en").toUpperCase());
+        const btn = document.getElementById("account-lang-btn");
+        if (btn) btn.textContent = "Language: " + ((window._lang || "en").toUpperCase());
     }
     function setLanguage(lang) {
         if (!I18N[lang]) lang = "en";
@@ -1492,6 +1797,7 @@
     const state = {
         token:      localStorage.getItem(tokenKey)  || "",
         email:      localStorage.getItem(emailKey)  || "",
+        isAdmin:    false,
         routing:    {},
         showTokens: localStorage.getItem("fitness-agent-tokens") === "1"
     };
@@ -1501,15 +1807,21 @@
     /* ── Theme ── */
     function applyTheme(t) {
         document.documentElement.dataset.theme = t;
-        $("theme-toggle").textContent = t === "dark" ? "☀️" : "🌙";
         localStorage.setItem(themeKey, t);
     }
-    $("lang-toggle").addEventListener("click", () => {
+    $("account-lang-btn").addEventListener("click", () => {
         setLanguage((window._lang || "en") === "en" ? "de" : "en");
     });
-    $("theme-toggle").addEventListener("click", () =>
+    $("account-theme-btn").addEventListener("click", () =>
         applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark")
     );
+    $("avatar-menu-btn").addEventListener("click", () => {
+        $("account-menu").classList.toggle("hidden");
+    });
+    $("account-settings-btn").addEventListener("click", () => {
+        $("account-menu").classList.add("hidden");
+        switchView("settings-view");
+    });
 
     /* ── Helpers ── */
     function authHeaders() {
@@ -1548,7 +1860,7 @@
     }
 
     /* ── Navigation ── */
-    const VIEWS = ["app-view", "history-view", "files-view", "settings-view", "about-view"];
+    const VIEWS = ["app-view", "history-view", "files-view", "settings-view", "admin-view", "about-view"];
 
     function switchView(viewId) {
         VIEWS.forEach(id => $(id).classList.toggle("hidden", id !== viewId));
@@ -1561,6 +1873,10 @@
             renderFilesView();
         } else if (viewId === "about-view") {
             renderAbout();
+        } else if (viewId === "admin-view") {
+            renderAdminUsers();
+        } else if (viewId === "app-view") {
+            loadDashboard();
         }
     }
 
@@ -1569,20 +1885,34 @@
         if (!isSignedIn) VIEWS.forEach(id => $(id).classList.add("hidden"));
         $("tab-bar").classList.toggle("hidden", !isSignedIn);
         $("nav-tabs-desktop").classList.toggle("hidden", !isSignedIn);
-        $("logout-button").classList.toggle("hidden", !isSignedIn);
+        $("avatar-menu-btn").classList.toggle("hidden", !isSignedIn);
+        $("account-menu").classList.add("hidden");
         $("session-label").textContent = isSignedIn ? state.email : "Signed out";
+        $("account-menu-email").textContent = state.email || "";
+        $("avatar-initials").textContent = initials(state.email);
+        $("admin-nav-tab").classList.toggle("hidden", !isSignedIn || !state.isAdmin);
+        $("admin-tab-mobile").classList.toggle("hidden", !isSignedIn || !state.isAdmin);
+        $("provider-select").disabled = !state.isAdmin;
         if (isSignedIn) {
             switchView("app-view");
             applyTokenToggle();
+            loadSessionUser();
             loadProfile();
             loadRouting();
             restoreHistory();
+            loadDashboard();
         }
     }
 
     document.querySelectorAll("[data-view]").forEach(el =>
         el.addEventListener("click", () => switchView(el.dataset.view))
     );
+
+    function initials(email) {
+        if (!email) return "--";
+        const local = email.split("@")[0] || email;
+        return local.slice(0, 2).toUpperCase();
+    }
 
     /* ── Provider selector ── */
     const providerCls = { local: "local", anthropic: "anthropic", openai: "openai" };
@@ -1602,6 +1932,7 @@
     }
 
     async function changeProvider(provider) {
+        if (!state.isAdmin) return;
         try {
             const res = await fetch("/config/routing", {
                 method: "PATCH",
@@ -1615,13 +1946,34 @@
     /* ── Token toggle ── */
     function applyTokenToggle() {
         $("chat-history").classList.toggle("show-tokens", state.showTokens);
-        $("token-toggle").classList.toggle("active", state.showTokens);
+        document.documentElement.classList.toggle("dev-mode", state.showTokens);
+        const toggle = $("developer-details-toggle");
+        if (toggle) toggle.checked = state.showTokens;
     }
+    function setDeveloperDetails(enabled) {
+        state.showTokens = enabled;
+        localStorage.setItem("fitness-agent-tokens", state.showTokens ? "1" : "0");
+        applyTokenToggle();
+    }
+    $("developer-details-toggle").addEventListener("change", e => {
+        setDeveloperDetails(e.target.checked);
+    });
+    document.addEventListener("keydown", e => {
+        if (e.altKey && e.key.toLowerCase() === "d") {
+            setDeveloperDetails(!state.showTokens);
+        }
+    });
+    $("manual-toggle").addEventListener("click", () => {
+        $("app-view").classList.toggle("manual-open");
+        $("manual-toggle").classList.toggle("active");
+    });
+    /*
     $("token-toggle").addEventListener("click", () => {
         state.showTokens = !state.showTokens;
         localStorage.setItem("fitness-agent-tokens", state.showTokens ? "1" : "0");
         applyTokenToggle();
     });
+    */
 
     /* ── Coach pills ── */
     function setActiveCoach(task) {
@@ -1668,7 +2020,11 @@
                 body: JSON.stringify({ email, password: $("password").value })
             });
             if (res.status === 401) throw new Error("Invalid email or password");
-            if (!res.ok) throw new Error((await res.text()) || `Request failed with ${res.status}`);
+            if (res.status === 403) throw new Error("Your account is pending admin approval.");
+            if (!res.ok) {
+                const body = await res.json().catch(() => ({}));
+                throw new Error(body.detail || `Request failed with ${res.status}`);
+            }
             const data = await res.json();
             state.token = data.access_token;
             state.email = email;
@@ -1676,6 +2032,7 @@
             localStorage.setItem(emailKey, state.email);
             $("password").value = "";
             setStatus($("login-status"), "");
+            await loadSessionUser();
             showApp(true);
         } catch (err) {
             setStatus($("login-status"), err.message, "error");
@@ -1686,6 +2043,7 @@
 
     function logout() {
         state.token = "";
+        state.isAdmin = false;
         conversationId = null;
         historyCache = [];
         pendingAttachments = [];
@@ -1694,6 +2052,25 @@
         localStorage.removeItem(emailKey);
         $("chat-history").replaceChildren();
         showApp(false);
+    }
+
+    async function loadSessionUser() {
+        if (!state.token) return;
+        try {
+            const res = await request("/auth/me", { headers: authHeaders() });
+            const me = await res.json();
+            state.email = me.email;
+            state.isAdmin = !!me.is_admin;
+            localStorage.setItem(emailKey, state.email);
+            $("session-label").textContent = state.email;
+            $("account-menu-email").textContent = state.email;
+            $("avatar-initials").textContent = initials(state.email);
+            $("admin-nav-tab").classList.toggle("hidden", !state.isAdmin);
+            $("admin-tab-mobile").classList.toggle("hidden", !state.isAdmin);
+            $("provider-select").disabled = !state.isAdmin;
+        } catch (_) {
+            state.isAdmin = false;
+        }
     }
 
     /* ── Profile load ── */
@@ -1886,6 +2263,74 @@
 
             tbody.appendChild(tr);
         }
+    }
+
+    function pct(value, target) {
+        if (!target || target <= 0) return 0;
+        return Math.max(0, Math.min(100, Math.round((value / target) * 100)));
+    }
+
+    function macroText(value, target, unit = "g") {
+        const rounded = Math.round(value || 0);
+        return target ? `${rounded}/${Math.round(target)}${unit}` : `${rounded}${unit}`;
+    }
+
+    function renderWorkoutList(el, rows, emptyText) {
+        el.replaceChildren();
+        if (!rows || rows.length === 0) {
+            const empty = document.createElement("div");
+            empty.className = "side-item";
+            empty.innerHTML = `<div class="side-item-title">${emptyText}</div>`;
+            el.appendChild(empty);
+            return;
+        }
+        for (const w of rows) {
+            const item = document.createElement("div");
+            item.className = "side-item";
+            const title = document.createElement("div");
+            title.className = "side-item-title";
+            const time = w.scheduled_time ? `${w.scheduled_time} · ` : "";
+            title.textContent = `${time}${w.workout_type.replace("_", " ")} (${w.duration_min}m)`;
+            const sub = document.createElement("div");
+            sub.className = "side-item-sub";
+            sub.textContent = `${w.scheduled_date} · ${w.intensity}${w.completed ? " · done" : ""}`;
+            item.append(title, sub);
+            el.appendChild(item);
+        }
+    }
+
+    async function loadDashboard() {
+        if (!state.token) return;
+        try {
+            const res = await request("/dashboard/summary", { headers: authHeaders() });
+            const d = await res.json();
+            const target = d.weekly_workout_target || 0;
+            const planned = d.planned_this_week || 0;
+            const completed = d.completed_this_week || 0;
+            $("dash-week-progress").textContent = `${completed}/${target || planned || 0}`;
+            $("dash-week-label").textContent = `${planned} planned this week`;
+            $("dash-week-bar").style.width = `${pct(completed, target || planned)}%`;
+
+            renderWorkoutList($("dash-today-workouts"), d.today_workouts, "No workout scheduled");
+            renderWorkoutList($("dash-upcoming-workouts"), d.upcoming_workouts, "No upcoming workouts");
+
+            const m = d.macros;
+            $("dash-calories").textContent = m.calorie_target
+                ? `${m.calories}/${m.calorie_target}`
+                : String(m.calories || 0);
+            $("dash-calories-label").textContent = "kcal today";
+            $("dash-protein").textContent = macroText(m.protein_g, m.protein_target_g);
+            $("dash-carbs").textContent = macroText(m.carbs_g, m.carbs_target_g);
+            $("dash-fat").textContent = macroText(m.fat_g, m.fat_target_g);
+
+            if (d.last_weight) {
+                $("dash-weight").textContent = `${d.last_weight.value_kg.toFixed(1)} kg`;
+                $("dash-weight-label").textContent = formatTs(d.last_weight.recorded_at);
+            } else {
+                $("dash-weight").textContent = "--";
+                $("dash-weight-label").textContent = "no weight logged";
+            }
+        } catch (_) {}
     }
 
     async function loadLLMConfig() {
@@ -2529,6 +2974,130 @@
         }
     }
 
+    /* ── Admin ── */
+    async function fetchAdminUsers() {
+        const res = await request("/admin/users", { headers: authHeaders() });
+        return await res.json();
+    }
+
+    async function fetchAdminAudit() {
+        const res = await request("/admin/audit?limit=50", { headers: authHeaders() });
+        return await res.json();
+    }
+
+    async function updateAdminUser(userId, payload) {
+        const res = await request("/admin/users/" + userId, {
+            method: "PATCH",
+            headers: authHeaders(),
+            body: JSON.stringify(payload),
+        });
+        return await res.json();
+    }
+
+    async function renderAdminUsers() {
+        if (!state.isAdmin) return;
+        const list = $("admin-users-list");
+        const auditList = $("admin-audit-list");
+        list.replaceChildren();
+        auditList.replaceChildren();
+        setStatus($("admin-status"), "Loading…");
+        try {
+            const users = await fetchAdminUsers();
+            setStatus($("admin-status"), `${users.length} user${users.length === 1 ? "" : "s"}`);
+            for (const u of users) {
+                const item = document.createElement("div");
+                item.className = "history-item";
+
+                const head = document.createElement("div");
+                head.className = "history-item-head";
+                const email = document.createElement("span");
+                email.className = "role-user";
+                email.textContent = u.email;
+                head.appendChild(email);
+                const created = document.createElement("span");
+                created.textContent = "· joined " + formatTs(u.created_at);
+                head.appendChild(created);
+                item.appendChild(head);
+
+                const badges = document.createElement("div");
+                badges.style.display = "flex";
+                badges.style.gap = "6px";
+                badges.style.marginTop = "4px";
+                const approved = document.createElement("span");
+                approved.className = "admin-badge " + (u.is_approved ? "ok" : "warn");
+                approved.textContent = u.is_approved ? "approved" : "pending";
+                const admin = document.createElement("span");
+                admin.className = "admin-badge " + (u.is_admin ? "ok" : "");
+                admin.textContent = u.is_admin ? "admin" : "user";
+                badges.append(approved, admin);
+                item.appendChild(badges);
+
+                const actions = document.createElement("div");
+                actions.className = "admin-actions";
+                actions.style.marginTop = "8px";
+
+                const approvalBtn = document.createElement("button");
+                approvalBtn.className = u.is_approved ? "btn-danger" : "btn-save";
+                approvalBtn.style.height = "32px";
+                approvalBtn.style.padding = "0 10px";
+                approvalBtn.textContent = u.is_approved ? "Revoke approval" : "Approve";
+                approvalBtn.addEventListener("click", async () => {
+                    await updateAdminUser(u.id, { is_approved: !u.is_approved });
+                    renderAdminUsers();
+                });
+
+                const adminBtn = document.createElement("button");
+                adminBtn.className = u.is_admin ? "btn-danger" : "text-btn";
+                adminBtn.style.height = "32px";
+                adminBtn.style.padding = "0 10px";
+                adminBtn.textContent = u.is_admin ? "Remove admin" : "Make admin";
+                adminBtn.addEventListener("click", async () => {
+                    await updateAdminUser(u.id, { is_admin: !u.is_admin });
+                    renderAdminUsers();
+                });
+
+                actions.append(approvalBtn, adminBtn);
+                item.appendChild(actions);
+                list.appendChild(item);
+            }
+            const audit = await fetchAdminAudit();
+            if (audit.length === 0) {
+                const empty = document.createElement("div");
+                empty.className = "history-empty";
+                empty.textContent = "No admin actions recorded yet.";
+                auditList.appendChild(empty);
+            } else {
+                for (const a of audit) {
+                    const item = document.createElement("div");
+                    item.className = "history-item";
+                    const head = document.createElement("div");
+                    head.className = "history-item-head";
+                    const action = document.createElement("span");
+                    action.className = "role-agent";
+                    action.textContent = a.action.replaceAll("_", " ");
+                    head.appendChild(action);
+                    const ts = document.createElement("span");
+                    ts.textContent = "· " + formatTs(a.created_at);
+                    head.appendChild(ts);
+                    item.appendChild(head);
+                    const body = document.createElement("div");
+                    body.className = "history-item-text";
+                    body.textContent = `${a.actor_email || a.actor_user_id} → ${a.target_email || a.target_user_id}`;
+                    item.appendChild(body);
+                    auditList.appendChild(item);
+                }
+            }
+        } catch (err) {
+            setStatus($("admin-status"), err.message, "error");
+            const empty = document.createElement("div");
+            empty.className = "history-empty";
+            empty.textContent = "Could not load users: " + err.message;
+            list.appendChild(empty);
+        }
+    }
+
+    $("admin-refresh-btn").addEventListener("click", renderAdminUsers);
+
     /* ── Chat ── */
     function renderAttachments(container, attachments) {
         if (!attachments || attachments.length === 0) return;
@@ -2556,19 +3125,31 @@
     function renderMessage(text, sender, meta, usage, task, attachments) {
         const msg = document.createElement("div");
         msg.className = `message ${sender}`;
-        if (task && COACH_META[task]) {
+        let content = msg;
+        if (sender === "agent") {
+            const avatar = document.createElement("div");
+            avatar.className = "agent-avatar";
+            avatar.textContent = COACH_META[task]?.icon || "💬";
+            content = document.createElement("div");
+            content.className = "agent-content";
+            msg.append(avatar, content);
+        }
+        if (sender === "agent" && task && COACH_META[task]) {
             const chip = document.createElement("span");
             chip.className = "coach-chip";
-            chip.textContent = coachLabel(task);
-            msg.appendChild(chip);
+            chip.textContent = COACH_META[task].label;
+            content.appendChild(chip);
         }
-        msg.appendChild(document.createTextNode(text));
-        renderAttachments(msg, attachments);
+        const body = document.createElement("div");
+        body.className = sender === "agent" ? "agent-body" : "";
+        body.appendChild(document.createTextNode(text));
+        content.appendChild(body);
+        renderAttachments(content, attachments);
         if (meta) {
             const metaEl = document.createElement("span");
             metaEl.className = "meta";
             metaEl.textContent = meta;
-            msg.appendChild(metaEl);
+            content.appendChild(metaEl);
         }
         if (usage && sender === "agent") {
             const parts = [];
@@ -2579,7 +3160,7 @@
                 const tokenEl = document.createElement("span");
                 tokenEl.className = "token-usage";
                 tokenEl.textContent = parts.join(" · ");
-                msg.appendChild(tokenEl);
+                content.appendChild(tokenEl);
             }
         }
         return msg;
@@ -2630,6 +3211,15 @@
     }
 
     $("stop-button").addEventListener("click", () => currentAbortController?.abort());
+
+    document.querySelectorAll(".quick-action").forEach(btn => {
+        btn.addEventListener("click", () => {
+            switchView("app-view");
+            $("message-input").value = btn.dataset.prompt || "";
+            $("message-input").focus();
+            $("message-input").dispatchEvent(new Event("input"));
+        });
+    });
 
     /* ── Pending attachments for the next chat send ── */
     function renderPendingAttachments() {
@@ -2725,6 +3315,7 @@
             const replyTask = data.resolved_task || sentTask;
             appendMessage(data.reply, "agent", data.model_used, data.token_usage, true, replyTask);
             if (data.routed_by_manager) showRoutedCoach(replyTask);
+            loadDashboard();
         } catch (err) {
             removeTyping();
             if (err.name !== "AbortError") appendMessage(err.message, "agent", "Error");
@@ -2802,6 +3393,16 @@
                 throw new Error(body.detail || `Request failed with ${res.status}`);
             }
             const data = await res.json();
+            if (data.pending_approval) {
+                $("reg-password").value = "";
+                $("reg-confirm").value = "";
+                setStatus(
+                    $("register-status"),
+                    "Account created. An admin must approve it before you can sign in.",
+                    "success",
+                );
+                return;
+            }
             state.token = data.access_token;
             state.email = email;
             localStorage.setItem(tokenKey, state.token);
@@ -2809,6 +3410,7 @@
             $("reg-password").value = "";
             $("reg-confirm").value = "";
             setStatus($("register-status"), "");
+            await loadSessionUser();
             showApp(true);
         } catch (err) {
             setStatus($("register-status"), err.message, "error");

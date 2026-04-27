@@ -8,7 +8,19 @@ import structlog
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from app.api import auth, calendar, chat, config, files, gdpr, health, profile, workouts
+from app.api import (
+    admin,
+    auth,
+    calendar,
+    chat,
+    config,
+    dashboard,
+    files,
+    gdpr,
+    health,
+    profile,
+    workouts,
+)
 from app.config import get_settings
 from app.scheduler.jobs import start_scheduler, stop_scheduler
 
@@ -47,7 +59,7 @@ async def _verify_stored_secrets() -> None:
 
     try:
         ok, failures = await verify_all()
-    except Exception as exc:  # noqa: BLE001 — boot must not fail on this check
+    except Exception as exc:
         log.warning("Secret-decryption self-test errored", error=str(exc))
         return
     if failures:
@@ -77,8 +89,10 @@ app = FastAPI(
 )
 
 app.include_router(health.router)
+app.include_router(admin.router)
 app.include_router(auth.router)
 app.include_router(config.router)
+app.include_router(dashboard.router)
 app.include_router(chat.router)
 app.include_router(workouts.router)
 app.include_router(profile.router)

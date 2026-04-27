@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import io
 import json
+import tempfile
 import zipfile
 from datetime import date, datetime, time
 from typing import Annotated
@@ -17,10 +17,9 @@ from sqlalchemy import text
 from sqlmodel import select
 
 from app.api.auth import verify_password
-from app.api.deps import get_current_user_id
+from app.api.deps import get_approved_user_id
 from app.db.models import (
     AgentMessage,
-    File as DBFile,
     HealthMetric,
     MealLog,
     MealPlan,
@@ -29,6 +28,9 @@ from app.db.models import (
     UserProfile,
     WorkoutPlan,
     WorkoutSession,
+)
+from app.db.models import (
+    File as DBFile,
 )
 from app.db.session import AsyncSessionLocal
 from app.files import storage
@@ -64,7 +66,7 @@ def _row_dict(row) -> dict:
 
 @router.get("/export.zip")
 async def export_my_data(
-    user_id: Annotated[UUID, Depends(get_current_user_id)],
+    user_id: Annotated[UUID, Depends(get_approved_user_id)],
 ) -> StreamingResponse:
     """Bundle every piece of personal data into a single ZIP.
 
@@ -124,8 +126,8 @@ async def export_my_data(
         else:
             payload["api_keys_status"] = {}
 
-    buf = io.BytesIO()
-    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+    tmp = tempfile.SpooledTemporaryFile(max_size=8 * 1024 * 1024, mode="w+b")  # noqa: SIM115
+    with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as zf:
         zf.writestr(
             "data.json",
             json.dumps(payload, default=_json_default, indent=2),
@@ -150,14 +152,14 @@ async def export_my_data(
             if not full.exists():
                 continue
             try:
-                zf.writestr(f"files/{f.id}/{f.filename}", full.read_bytes())
-            except Exception as exc:  # noqa: BLE001
+                zf.write(full, arcname=f"files/{f.id}/{f.filename}")
+            except Exception as exc:
                 log.warning("Skipping file in export", file_id=str(f.id), error=str(exc))
 
-    buf.seek(0)
+    tmp.seek(0)
     fname = f"fitness-agent-export-{date.today().isoformat()}.zip"
     return StreamingResponse(
-        buf,
+        tmp,
         media_type="application/zip",
         headers={"Content-Disposition": f'attachment; filename="{fname}"'},
     )
@@ -176,7 +178,7 @@ class DeleteAccountRequest(BaseModel):
 @router.delete("/account", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_my_account(
     body: DeleteAccountRequest,
-    user_id: Annotated[UUID, Depends(get_current_user_id)],
+    user_id: Annotated[UUID, Depends(get_approved_user_id)],
 ) -> None:
     """Hard-delete every row the user owns plus their on-disk files.
 
@@ -254,7 +256,7 @@ async def delete_my_account(
     for path in file_paths:
         try:
             storage.delete(path)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             log.warning("Could not delete file from disk", path=path, error=str(exc))
 
     log.info("Account deleted", user_id=str(user_id))

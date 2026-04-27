@@ -18,14 +18,20 @@ class GeneratedImage:
     prompt: str
 
 
-async def generate_image(prompt: str, *, size: str = "1024x1024") -> GeneratedImage:
+async def generate_image(
+    prompt: str,
+    *,
+    size: str = "1024x1024",
+    api_key: str | None = None,
+) -> GeneratedImage:
     settings = get_settings()
-    if not settings.openai_api_key:
+    resolved_api_key = api_key or settings.openai_api_key
+    if not resolved_api_key:
         raise RuntimeError(
             "OPENAI_API_KEY is not configured — image generation requires OpenAI."
         )
 
-    client = AsyncOpenAI(api_key=settings.openai_api_key)
+    client = AsyncOpenAI(api_key=resolved_api_key)
     resp = await client.images.generate(
         model=settings.openai_image_model,
         prompt=prompt,

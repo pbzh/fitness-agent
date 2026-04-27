@@ -3,12 +3,13 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File as FastFile, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
+from fastapi import File as FastFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from sqlmodel import select
 
-from app.api.deps import get_current_user_id
+from app.api.deps import get_approved_user_id
 from app.config import get_settings
 from app.db.models import File, FileKind
 from app.db.session import AsyncSessionLocal
@@ -47,30 +48,45 @@ def _to_meta(f: File) -> FileMeta:
 
 @router.get("", response_model=list[FileMeta])
 async def list_files(
-    user_id: Annotated[UUID, Depends(get_current_user_id)],
+    user_id: Annotated[UUID, Depends(get_approved_user_id)],
     kind: str | None = None,
 ) -> list[FileMeta]:
     async with AsyncSessionLocal() as session:
         stmt = select(File).where(File.user_id == user_id).order_by(File.created_at.desc())
         if kind:
-            stmt = stmt.where(File.kind == FileKind(kind))
+            try:
+                file_kind = FileKind(kind)
+            except ValueError as exc:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Unknown file kind: {kind}",
+                ) from exc
+            stmt = stmt.where(File.kind == file_kind)
         result = await session.execute(stmt)
         return [_to_meta(f) for f in result.scalars().all()]
 
 
 @router.post("", response_model=FileMeta, status_code=status.HTTP_201_CREATED)
 async def upload_file(
-    user_id: Annotated[UUID, Depends(get_current_user_id)],
+    user_id: Annotated[UUID, Depends(get_approved_user_id)],
     upload: Annotated[UploadFile, FastFile()],
     description: str | None = None,
 ) -> FileMeta:
     settings = get_settings()
-    data = await upload.read()
-    if len(data) > settings.max_upload_bytes:
-        raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail=f"File exceeds {settings.max_upload_bytes // 1024 // 1024} MB limit",
-        )
+    chunks: list[bytes] = []
+    total = 0
+    while True:
+        chunk = await upload.read(1024 * 1024)
+        if not chunk:
+            break
+        total += len(chunk)
+        if total > settings.max_upload_bytes:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail=f"File exceeds {settings.max_upload_bytes // 1024 // 1024} MB limit",
+            )
+        chunks.append(chunk)
+    data = b"".join(chunks)
 
     fid, rel = storage.write_bytes(
         data,
@@ -97,7 +113,7 @@ async def upload_file(
 @router.get("/{file_id}")
 async def download_file(
     file_id: UUID,
-    user_id: Annotated[UUID, Depends(get_current_user_id)],
+    user_id: Annotated[UUID, Depends(get_approved_user_id)],
 ) -> FileResponse:
     async with AsyncSessionLocal() as session:
         result = await session.execute(
@@ -116,7 +132,7 @@ async def download_file(
 @router.delete("/{file_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_file(
     file_id: UUID,
-    user_id: Annotated[UUID, Depends(get_current_user_id)],
+    user_id: Annotated[UUID, Depends(get_approved_user_id)],
 ) -> None:
     async with AsyncSessionLocal() as session:
         result = await session.execute(

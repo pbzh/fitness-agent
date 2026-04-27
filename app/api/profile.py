@@ -11,8 +11,8 @@ from pydantic import BaseModel, Field, field_validator
 from sqlmodel import select
 
 from app.agent.prompts import COACH_META, default_prompts
-from app.agent.router import Provider, _env_provider_for, TaskClass
-from app.api.deps import get_current_user_id
+from app.agent.router import Provider, TaskClass, _env_provider_for
+from app.api.deps import get_approved_user_id
 from app.config import get_settings
 from app.db.models import UserProfile
 from app.db.session import AsyncSessionLocal
@@ -195,7 +195,7 @@ class LLMConfigUpdate(BaseModel):
 
 @router.get("/coach-prompts/defaults", response_model=list[CoachPromptDefault])
 async def get_coach_prompt_defaults(
-    _: Annotated[UUID, Depends(get_current_user_id)],
+    _: Annotated[UUID, Depends(get_approved_user_id)],
 ) -> list[CoachPromptDefault]:
     """Built-in default system prompts per editable coach.
 
@@ -227,7 +227,9 @@ def _llm_snapshot(profile: UserProfile | None) -> LLMConfigRead:
         api_keys_env={
             "anthropic": bool(settings.anthropic_api_key),
             "openai":    bool(settings.openai_api_key),
-            "local":     bool(settings.local_llm_api_key and settings.local_llm_api_key != "not-needed"),
+            "local": bool(
+                settings.local_llm_api_key and settings.local_llm_api_key != "not-needed"
+            ),
         },
         local_only=bool(profile.local_only) if profile else False,
         chat_retention_days=profile.chat_retention_days if profile else None,
@@ -237,7 +239,7 @@ def _llm_snapshot(profile: UserProfile | None) -> LLMConfigRead:
 
 @router.get("/llm", response_model=LLMConfigRead)
 async def get_llm_config(
-    user_id: Annotated[UUID, Depends(get_current_user_id)],
+    user_id: Annotated[UUID, Depends(get_approved_user_id)],
 ) -> LLMConfigRead:
     async with AsyncSessionLocal() as session:
         profile = (
@@ -249,7 +251,7 @@ async def get_llm_config(
 @router.put("/llm", response_model=LLMConfigRead)
 async def update_llm_config(
     body: LLMConfigUpdate,
-    user_id: Annotated[UUID, Depends(get_current_user_id)],
+    user_id: Annotated[UUID, Depends(get_approved_user_id)],
 ) -> LLMConfigRead:
     async with AsyncSessionLocal() as session:
         profile = (
@@ -295,7 +297,7 @@ async def update_llm_config(
 
 
 @router.get("", response_model=ProfileRead)
-async def get_profile(user_id: Annotated[UUID, Depends(get_current_user_id)]):
+async def get_profile(user_id: Annotated[UUID, Depends(get_approved_user_id)]):
     async with AsyncSessionLocal() as session:
         result = await session.execute(
             select(UserProfile).where(UserProfile.user_id == user_id)
@@ -309,7 +311,7 @@ async def get_profile(user_id: Annotated[UUID, Depends(get_current_user_id)]):
 @router.put("", response_model=ProfileRead)
 async def update_profile(
     update_data: ProfileUpdate,
-    user_id: Annotated[UUID, Depends(get_current_user_id)],
+    user_id: Annotated[UUID, Depends(get_approved_user_id)],
 ):
     async with AsyncSessionLocal() as session:
         result = await session.execute(

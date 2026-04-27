@@ -13,6 +13,7 @@ The format is Fernet (AES-128-CBC + HMAC-SHA256, 32-byte url-safe-b64 key).
 from __future__ import annotations
 
 import os
+from contextlib import suppress
 from pathlib import Path
 
 import structlog
@@ -41,11 +42,8 @@ def _load_or_create_key() -> bytes:
     key = Fernet.generate_key()
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(key)
-    try:
+    with suppress(OSError):
         path.chmod(0o600)
-    except OSError:
-        # On platforms / filesystems that don't honor chmod we just log.
-        pass
     log.warning(
         "Generated new SETTINGS_ENCRYPTION_KEY",
         path=str(path),

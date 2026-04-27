@@ -6,7 +6,6 @@ persona invoked via TaskClass.MENTAL_HEALTH.
 
 from app.agent.router import TaskClass
 
-
 FITNESS_PROMPT = """You are a personal fitness and nutrition coach for a single user.
 
 Your job is to:

@@ -10,13 +10,17 @@ from datetime import date, datetime, timedelta
 import structlog
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
+from pydantic_ai import Agent
 from sqlalchemy import text
 from sqlmodel import select
 
-from app.agent.agent import AgentDeps, build_agent
-from app.agent.router import TaskClass
+from app.agent.agent import AgentDeps
+from app.agent.effective_config import load_effective_config, resolve_api_key
+from app.agent.prompts import resolve_prompt
+from app.agent.router import Provider, TaskClass, _env_provider_for, build_model
+from app.agent.tools import register_tools
 from app.config import get_settings
-from app.db.models import UserProfile
+from app.db.models import User, UserProfile
 from app.db.session import AsyncSessionLocal
 
 log = structlog.get_logger()
@@ -42,22 +46,62 @@ Steps:
 6. End with a 2-3 sentence summary of the week's focus and what changed vs last week.
 """
 
-    agent = build_agent(task=TaskClass.PLAN_GENERATION)
     settings = get_settings()
-    deps = AgentDeps(session_factory=AsyncSessionLocal, user_id=settings.scheduler_user_id)
+    async with AsyncSessionLocal() as session:
+        users = (
+            await session.execute(select(User).where(User.is_approved == True))  # noqa: E712
+        ).scalars().all()
 
-    try:
-        result = await agent.run(prompt, deps=deps)
-        log.info("Weekly plan generated", summary=result.output[:200])
-    except Exception as e:
-        log.exception("Weekly plan generation failed", error=str(e))
+    for user in users:
+        async with AsyncSessionLocal() as session:
+            profile = (
+                await session.execute(select(UserProfile).where(UserProfile.user_id == user.id))
+            ).scalar_one_or_none()
+        eff = await load_effective_config(user.id)
+        if profile and profile.local_only:
+            provider = Provider.LOCAL
+        else:
+            provider = eff.provider_for(
+                TaskClass.PLAN_GENERATION.value,
+                _env_provider_for(TaskClass.PLAN_GENERATION),
+            )
+            if provider == Provider.ANTHROPIC and not (
+                eff.key_for(provider) or settings.anthropic_api_key
+            ):
+                provider = Provider.LOCAL
+            if provider == Provider.OPENAI and not (
+                eff.key_for(provider) or settings.openai_api_key
+            ):
+                provider = Provider.LOCAL
+
+        agent: Agent[AgentDeps, str] = Agent(
+            model=build_model(provider, api_key=resolve_api_key(provider, eff)),
+            deps_type=AgentDeps,
+            system_prompt=resolve_prompt(
+                TaskClass.PLAN_GENERATION,
+                profile.coach_prompts if profile else None,
+            ),
+        )
+        register_tools(agent)
+        deps = AgentDeps(session_factory=AsyncSessionLocal, user_id=user.id)
+
+        try:
+            result = await agent.run(prompt, deps=deps)
+            log.info(
+                "Weekly plan generated",
+                user_id=str(user.id),
+                provider=provider.value,
+                summary=result.output[:200],
+            )
+        except Exception as e:
+            log.exception("Weekly plan generation failed", user_id=str(user.id), error=str(e))
 
 
 async def purge_old_chat_messages() -> None:
     """Honour each user's ``chat_retention_days`` setting.
 
     Users with a positive integer retention have their chat history rows
-    older than ``today − N days`` hard-deleted. Users with null retention
+    older than ``today - N days`` hard-deleted. Users with null retention
     keep everything. Runs daily at 03:15 local; idempotent — safe to retry.
     """
     async with AsyncSessionLocal() as session:

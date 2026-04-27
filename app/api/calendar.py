@@ -2,13 +2,13 @@
 
 from datetime import datetime, timedelta
 from typing import Annotated
-from uuid import UUID, uuid5, NAMESPACE_URL
+from uuid import NAMESPACE_URL, UUID, uuid5
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
 from sqlmodel import select
 
-from app.api.deps import get_current_user_id
+from app.api.deps import get_approved_user_id
 from app.db.models import MealPlan, PlannedMeal, WorkoutPlan, WorkoutSession
 from app.db.session import AsyncSessionLocal
 
@@ -109,7 +109,7 @@ def _ics_response(filename: str, body: str) -> Response:
 @router.get("/workouts/{plan_id}.ics")
 async def workout_plan_ics(
     plan_id: UUID,
-    user_id: Annotated[UUID, Depends(get_current_user_id)],
+    user_id: Annotated[UUID, Depends(get_approved_user_id)],
 ) -> Response:
     async with AsyncSessionLocal() as session:
         plan = (
@@ -132,7 +132,11 @@ async def workout_plan_ics(
     for s in rows:
         if s.workout_type.value == "rest":
             continue
-        hh, mm = (s.scheduled_time.hour, s.scheduled_time.minute) if s.scheduled_time else _DEFAULT_WORKOUT_TIME
+        hh, mm = (
+            (s.scheduled_time.hour, s.scheduled_time.minute)
+            if s.scheduled_time
+            else _DEFAULT_WORKOUT_TIME
+        )
         start = datetime.combine(s.scheduled_date, datetime.min.time()).replace(hour=hh, minute=mm)
         end = start + timedelta(minutes=max(s.duration_min, 15))
         ex_summary = ", ".join(
@@ -159,7 +163,7 @@ async def workout_plan_ics(
 @router.get("/meals/{plan_id}.ics")
 async def meal_plan_ics(
     plan_id: UUID,
-    user_id: Annotated[UUID, Depends(get_current_user_id)],
+    user_id: Annotated[UUID, Depends(get_approved_user_id)],
 ) -> Response:
     async with AsyncSessionLocal() as session:
         plan = (
@@ -188,10 +192,14 @@ async def meal_plan_ics(
         cook = (m.prep_time_min or 0) + (m.cook_time_min or 0)
         end = start + timedelta(minutes=max(cook or 30, 15))
         macros = []
-        if m.calories: macros.append(f"{m.calories} kcal")
-        if m.protein_g is not None: macros.append(f"{m.protein_g:.0f}P")
-        if m.carbs_g is not None: macros.append(f"{m.carbs_g:.0f}C")
-        if m.fat_g is not None: macros.append(f"{m.fat_g:.0f}F")
+        if m.calories:
+            macros.append(f"{m.calories} kcal")
+        if m.protein_g is not None:
+            macros.append(f"{m.protein_g:.0f}P")
+        if m.carbs_g is not None:
+            macros.append(f"{m.carbs_g:.0f}C")
+        if m.fat_g is not None:
+            macros.append(f"{m.fat_g:.0f}F")
         events.append(
             {
                 "uid": f"meal-{m.id}@fitness-agent",
@@ -211,7 +219,7 @@ async def meal_plan_ics(
 
 @router.get("/upcoming.ics")
 async def upcoming_ics(
-    user_id: Annotated[UUID, Depends(get_current_user_id)],
+    user_id: Annotated[UUID, Depends(get_approved_user_id)],
     days: int = 30,
 ) -> Response:
     """Single feed of all upcoming workouts + meals for the next N days."""
@@ -242,7 +250,11 @@ async def upcoming_ics(
     for s in workouts:
         if s.workout_type.value == "rest":
             continue
-        hh, mm = (s.scheduled_time.hour, s.scheduled_time.minute) if s.scheduled_time else _DEFAULT_WORKOUT_TIME
+        hh, mm = (
+            (s.scheduled_time.hour, s.scheduled_time.minute)
+            if s.scheduled_time
+            else _DEFAULT_WORKOUT_TIME
+        )
         start = datetime.combine(s.scheduled_date, datetime.min.time()).replace(hour=hh, minute=mm)
         events.append(
             {
@@ -255,7 +267,11 @@ async def upcoming_ics(
             }
         )
     for m in meals:
-        hh, mm = (m.scheduled_time.hour, m.scheduled_time.minute) if m.scheduled_time else _DEFAULT_MEAL_TIMES.get(m.slot.value, (12, 0))
+        hh, mm = (
+            (m.scheduled_time.hour, m.scheduled_time.minute)
+            if m.scheduled_time
+            else _DEFAULT_MEAL_TIMES.get(m.slot.value, (12, 0))
+        )
         start = datetime.combine(m.scheduled_date, datetime.min.time()).replace(hour=hh, minute=mm)
         events.append(
             {

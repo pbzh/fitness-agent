@@ -66,8 +66,21 @@ class User(SQLModel, table=True):
     email: str = Field(unique=True, index=True)
     hashed_password: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    is_admin: bool = False
+    is_approved: bool = False
+    approved_at: datetime | None = None
 
     profile: Optional["UserProfile"] = Relationship(back_populates="user")
+
+
+class AdminAuditLog(SQLModel, table=True):
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    actor_user_id: UUID = Field(foreign_key="user.id", index=True)
+    target_user_id: UUID = Field(foreign_key="user.id", index=True)
+    action: str = Field(index=True)
+    before: dict | None = Field(default=None, sa_type=JSONB)
+    after: dict | None = Field(default=None, sa_type=JSONB)
+    created_at: datetime = Field(default_factory=datetime.utcnow, index=True)
 
 
 class UserProfile(SQLModel, table=True):

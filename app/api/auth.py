@@ -5,16 +5,17 @@ from typing import Annotated
 from uuid import UUID
 
 import bcrypt
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from jose import jwt
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
-from app.api.deps import get_current_user_id
+from app.api.deps import get_approved_user_id, get_current_user
 from app.config import get_settings
 from app.db.models import User
 from app.db.session import get_session
+from app.security.rate_limit import check_auth_rate_limit, clear_auth_rate_limit
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -29,9 +30,18 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
 
 
+class RegisterResponse(BaseModel):
+    access_token: str | None = None
+    token_type: str = "bearer"
+    pending_approval: bool = False
+    is_admin: bool = False
+
+
 class UserRead(BaseModel):
     id: UUID
     email: str
+    is_admin: bool = False
+    is_approved: bool = False
 
 
 def _password_bytes(password: str) -> bytes:
@@ -64,22 +74,39 @@ class RegisterRequest(BaseModel):
     password: str = Field(min_length=8, max_length=256)
 
 
-@router.post("/register", response_model=TokenResponse, status_code=201)
+@router.post("/register", response_model=RegisterResponse, status_code=201)
 async def register(
     req: RegisterRequest,
+    request: Request,
     session: Annotated[AsyncSession, Depends(get_session)],
-) -> TokenResponse:
+) -> RegisterResponse:
+    await check_auth_rate_limit(request, req.email)
     result = await session.execute(select(User).where(User.email == req.email))
     if result.scalar_one_or_none() is not None:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="An account with that email already exists",
         )
-    user = User(email=req.email, hashed_password=hash_password(req.password))
+    has_users = (await session.execute(select(User.id).limit(1))).first() is not None
+    is_first_user = not has_users
+    user = User(
+        email=req.email,
+        hashed_password=hash_password(req.password),
+        is_admin=is_first_user,
+        is_approved=is_first_user,
+        approved_at=datetime.utcnow() if is_first_user else None,
+    )
     session.add(user)
     await session.commit()
     await session.refresh(user)
-    return TokenResponse(access_token=create_access_token(user.id))
+    if not user.is_approved:
+        return RegisterResponse(pending_approval=True)
+    await clear_auth_rate_limit(request, req.email)
+    return RegisterResponse(
+        access_token=create_access_token(user.id),
+        pending_approval=False,
+        is_admin=user.is_admin,
+    )
 
 
 class ChangePasswordRequest(BaseModel):
@@ -90,7 +117,7 @@ class ChangePasswordRequest(BaseModel):
 @router.post("/change-password", status_code=200)
 async def change_password(
     req: ChangePasswordRequest,
-    user_id: Annotated[UUID, Depends(get_current_user_id)],
+    user_id: Annotated[UUID, Depends(get_approved_user_id)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> dict[str, bool]:
     result = await session.execute(select(User).where(User.id == user_id))
@@ -109,8 +136,10 @@ async def change_password(
 @router.post("/login", response_model=TokenResponse)
 async def login(
     credentials: LoginRequest,
+    request: Request,
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> TokenResponse:
+    await check_auth_rate_limit(request, credentials.email)
     result = await session.execute(select(User).where(User.email == credentials.email))
     user = result.scalar_one_or_none()
     if not user or not verify_password(credentials.password, user.hashed_password):
@@ -118,5 +147,21 @@ async def login(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password",
         )
+    if not user.is_approved:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account is pending approval",
+        )
 
+    await clear_auth_rate_limit(request, credentials.email)
     return TokenResponse(access_token=create_access_token(user.id))
+
+
+@router.get("/me", response_model=UserRead)
+async def me(user: Annotated[User, Depends(get_current_user)]) -> UserRead:
+    return UserRead(
+        id=user.id,
+        email=user.email,
+        is_admin=user.is_admin,
+        is_approved=user.is_approved,
+    )

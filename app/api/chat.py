@@ -8,14 +8,13 @@ chat history accumulates in one thread regardless of client state.
 
 import asyncio
 from typing import Annotated
-from uuid import UUID, uuid5, NAMESPACE_DNS
+from uuid import NAMESPACE_DNS, UUID, uuid5
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from sqlmodel import select
-
 from pydantic_ai import Agent
+from sqlmodel import select
 
 from app.agent.agent import AgentDeps
 from app.agent.attachments import build_part, has_image
@@ -24,9 +23,10 @@ from app.agent.manager import classify_turn
 from app.agent.prompts import resolve_prompt
 from app.agent.router import Provider, TaskClass, _env_provider_for, build_model
 from app.agent.tools import register_tools
-from app.api.deps import get_current_user_id
+from app.api.deps import get_approved_user_id
 from app.config import get_settings
-from app.db.models import AgentMessage, File as DBFile, UserProfile
+from app.db.models import AgentMessage, UserProfile
+from app.db.models import File as DBFile
 from app.db.session import AsyncSessionLocal
 from app.files import storage
 
@@ -102,7 +102,7 @@ def _is_retryable(exc: Exception) -> bool:
 @router.post("", response_model=ChatResponse)
 async def chat(
     req: ChatRequest,
-    user_id: Annotated[UUID, Depends(get_current_user_id)],
+    user_id: Annotated[UUID, Depends(get_approved_user_id)],
 ) -> ChatResponse:
     convo_id = rolling_conversation_id(user_id)
 
@@ -118,10 +118,14 @@ async def chat(
                     .where(DBFile.user_id == user_id)
                 )
             ).scalars().all()
+        found_ids = {f.id for f in rows}
+        missing_ids = [fid for fid in req.attached_file_ids if fid not in found_ids]
+        if missing_ids:
+            raise HTTPException(status_code=404, detail="One or more attachments were not found")
         for f in rows:
             full = storage.absolute_path(f.storage_path)
             if not full.exists():
-                continue
+                raise HTTPException(status_code=404, detail=f"Attachment file is missing: {f.id}")
             parts.append(build_part(f, full))
             attachment_ids.append(str(f.id))
 
@@ -186,18 +190,29 @@ async def chat(
         def _has_key(p: Provider) -> bool:
             if eff.key_for(p):
                 return True
-            if p == Provider.ANTHROPIC: return bool(settings.anthropic_api_key)
-            if p == Provider.OPENAI:    return bool(settings.openai_api_key)
+            if p == Provider.ANTHROPIC:
+                return bool(settings.anthropic_api_key)
+            if p == Provider.OPENAI:
+                return bool(settings.openai_api_key)
             return True  # local always usable
 
-        if resolved_provider in (Provider.ANTHROPIC, Provider.OPENAI) and not _has_key(resolved_provider):
-            log.warning("Falling back to local: no API key for chosen provider", provider=resolved_provider.value)
+        if resolved_provider in (Provider.ANTHROPIC, Provider.OPENAI) and not _has_key(
+            resolved_provider
+        ):
+            log.warning(
+                "Falling back to local: no API key for chosen provider",
+                provider=resolved_provider.value,
+            )
             resolved_provider = Provider.LOCAL
 
         # If the user attached an image and the task would otherwise route to
         # the local llama.cpp endpoint (not multimodal), bump this single run
         # to Anthropic so the image is actually visible to the model.
-        if has_image(parts) and resolved_provider == Provider.LOCAL and _has_key(Provider.ANTHROPIC):
+        if (
+            has_image(parts)
+            and resolved_provider == Provider.LOCAL
+            and _has_key(Provider.ANTHROPIC)
+        ):
             log.info("Routing image-bearing turn to anthropic", task=resolved_task.value)
             resolved_provider = Provider.ANTHROPIC
 
@@ -276,8 +291,8 @@ async def chat(
 
 @router.get("/history", response_model=list[HistoryMessage])
 async def chat_history(
-    user_id: Annotated[UUID, Depends(get_current_user_id)],
-    limit: int = 200,
+    user_id: Annotated[UUID, Depends(get_approved_user_id)],
+    limit: Annotated[int, Query(ge=1, le=500)] = 200,
 ) -> list[HistoryMessage]:
     """Return the user's rolling conversation, oldest first."""
     convo_id = rolling_conversation_id(user_id)
@@ -330,7 +345,7 @@ async def chat_history(
 
 
 @router.delete("/history", status_code=204)
-async def clear_history(user_id: Annotated[UUID, Depends(get_current_user_id)]) -> None:
+async def clear_history(user_id: Annotated[UUID, Depends(get_approved_user_id)]) -> None:
     """Wipe the rolling conversation for this user."""
     convo_id = rolling_conversation_id(user_id)
     async with AsyncSessionLocal() as session:

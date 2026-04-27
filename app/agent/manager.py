@@ -80,6 +80,6 @@ async def classify_turn(message: str, recent_user_msgs: list[str]) -> TaskClass:
             return TaskClass.CHAT
         log.info("Manager classified turn", task=task.value)
         return task
-    except Exception as exc:  # noqa: BLE001 — classifier must never break chat
+    except Exception as exc:
         log.warning("Manager classifier failed, defaulting to chat", error=str(exc))
         return TaskClass.CHAT
