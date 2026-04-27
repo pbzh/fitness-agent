@@ -1,4 +1,4 @@
-# Fitness Agent
+# coacher
 
 A self-hosted personal coaching agent: workouts, nutrition, mental-health
 check-ins, productivity support, and plan generation, all sharing one rolling
@@ -136,7 +136,7 @@ API keys are never returned to clients — `GET /profile/llm` reports
 ## Repository layout
 
 ```
-fitness-agent/
+coacher/
 ├── app/
 │   ├── main.py              FastAPI entrypoint, local-model probe
 │   ├── config.py            pydantic-settings, loads .env
@@ -181,7 +181,7 @@ Two LXC containers on the Server VLAN:
 | LXC | Purpose | Resources | IP |
 |---|---|---|---|
 | fitness-db | Postgres 17 | 2 vCPU / 2 GB / 16 GB | `10.1.10.10` |
-| fitness-agent | FastAPI app + file store | 2 vCPU / 1 GB / 16 GB | `10.1.10.103` |
+| coacher | FastAPI app + file store | 2 vCPU / 1 GB / 16 GB | `10.1.10.103` |
 
 llama.cpp runs separately on a workstation with a GPU, exposed at
 `:8080`. Anthropic and OpenAI APIs are reached over the internet.
@@ -221,13 +221,14 @@ locale-gen
 update-locale LANG=en_US.UTF-8 LC_TIME=de_CH.UTF-8 LC_NUMERIC=de_CH.UTF-8
 
 # File store
+# Default remains /opt/fitness-agent-data for backward compatibility.
 mkdir -p /opt/fitness-agent-data
 chmod 750 /opt/fitness-agent-data
 
 # Pull and configure
 mkdir -p /opt && cd /opt
-git clone <your-private-repo-url> fitness-agent
-cd fitness-agent
+git clone <your-private-repo-url> coacher
+cd coacher
 cp .env.example .env
 $EDITOR .env  # see Configuration
 
@@ -237,18 +238,18 @@ uv run alembic upgrade head
 
 #### systemd unit
 
-`/etc/systemd/system/fitness-agent.service`:
+`/etc/systemd/system/coacher.service`:
 
 ```ini
 [Unit]
-Description=Fitness Agent API
+Description=coacher API
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/opt/fitness-agent
+WorkingDirectory=/opt/coacher
 Environment="PATH=/root/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 # Optional: pin the encryption key instead of relying on the on-disk file.
 # Generate with: python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())'
@@ -263,8 +264,8 @@ WantedBy=multi-user.target
 
 ```bash
 systemctl daemon-reload
-systemctl enable --now fitness-agent
-journalctl -u fitness-agent -f
+systemctl enable --now coacher
+journalctl -u coacher -f
 ```
 
 ## Configuration
@@ -385,8 +386,8 @@ psql postgresql://fitness:PASSWORD@10.1.10.10:5432/fitness \
 ### Logs
 
 ```bash
-journalctl -u fitness-agent -f
-journalctl -u fitness-agent --since "1 hour ago"
+journalctl -u coacher -f
+journalctl -u coacher --since "1 hour ago"
 ```
 
 ### Database backups
