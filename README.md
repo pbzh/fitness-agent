@@ -1,7 +1,7 @@
 # coacher
 
 <p align="center">
-  <img src="static/logo.svg" alt="coacher logo" width="220">
+  <img src="static/logo.png" alt="coacher logo" width="220">
 </p>
 
 A self-hosted personal coaching agent: workouts, nutrition, mental-health
