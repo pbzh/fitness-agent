@@ -16,6 +16,7 @@ from app.api.deps import get_approved_user_id
 from app.config import get_settings
 from app.db.models import UserProfile
 from app.db.session import AsyncSessionLocal
+from app.inner_team import normalize_inner_team
 from app.security.secrets import encrypt
 
 _MAX_PROMPT_CHARS = 8000
@@ -47,6 +48,7 @@ class ProfileRead(BaseModel):
     macro_targets: dict[str, Any] | None
     notes: str | None
     coach_prompts: dict[str, str] | None
+    inner_team: dict[str, Any] | None
 
 
 class ProfileUpdate(BaseModel):
@@ -195,6 +197,76 @@ class LLMConfigUpdate(BaseModel):
         return cleaned
 
 
+class InnerTeamRole(BaseModel):
+    id: str = Field(min_length=1, max_length=50, pattern=r"^[a-z0-9_-]+$")
+    name: str = Field(min_length=1, max_length=60)
+    description: str = Field(default="", max_length=200)
+    intention: str = Field(default="", max_length=400)
+    strengths: list[str] = Field(default_factory=list, max_length=8)
+    watch_outs: list[str] = Field(default_factory=list, max_length=8)
+    tasks: list[str] = Field(default_factory=list, max_length=8)
+    tone: str = Field(default="", max_length=80)
+    challenge_level: int = Field(default=3, ge=1, le=5)
+    focus_areas: list[str] = Field(default_factory=list, max_length=8)
+    avoid: list[str] = Field(default_factory=list, max_length=8)
+    is_custom: bool = False
+
+    @field_validator("name", "description", "intention", "tone")
+    @classmethod
+    def strip_text(cls, value: str) -> str:
+        return value.strip()
+
+    @field_validator("strengths", "watch_outs", "tasks", "focus_areas", "avoid")
+    @classmethod
+    def clean_short_list(cls, value: list[str]) -> list[str]:
+        cleaned = [item.strip() for item in value if item.strip()]
+        if any(len(item) > 120 for item in cleaned):
+            raise ValueError("List items must be 120 characters or fewer")
+        return cleaned
+
+
+class InnerTeamSuggestion(BaseModel):
+    role_id: str
+    name: str
+    confidence: int
+    reason: str
+
+
+class InnerTeamRead(BaseModel):
+    mode: str
+    active_role_id: str
+    active_reason: str
+    roles: list[InnerTeamRole]
+    suggestions: list[InnerTeamSuggestion] = Field(default_factory=list)
+    updated_at: str | None = None
+
+
+class InnerTeamUpdate(BaseModel):
+    mode: str | None = None
+    active_role_id: str | None = Field(default=None, min_length=1, max_length=50)
+    active_reason: str | None = Field(default=None, max_length=400)
+    roles: list[InnerTeamRole] | None = Field(default=None, min_length=1, max_length=10)
+
+    @field_validator("mode")
+    @classmethod
+    def validate_mode(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        if value not in {"auto", "manual"}:
+            raise ValueError("mode must be 'auto' or 'manual'")
+        return value
+
+    @field_validator("roles")
+    @classmethod
+    def validate_roles(cls, value: list[InnerTeamRole] | None) -> list[InnerTeamRole] | None:
+        if value is None:
+            return None
+        ids = [role.id for role in value]
+        if len(set(ids)) != len(ids):
+            raise ValueError("Role ids must be unique")
+        return value
+
+
 @router.get("/coach-prompts/defaults", response_model=list[CoachPromptDefault])
 async def get_coach_prompt_defaults(
     _: Annotated[UUID, Depends(get_approved_user_id)],
@@ -243,6 +315,12 @@ def _llm_snapshot(profile: UserProfile | None) -> LLMConfigRead:
         local_only=bool(profile.local_only) if profile else False,
         chat_retention_days=profile.chat_retention_days if profile else None,
         preferred_language=profile.preferred_language if profile else None,
+    )
+
+
+def _inner_team_snapshot(profile: UserProfile | None) -> InnerTeamRead:
+    return InnerTeamRead.model_validate(
+        normalize_inner_team(profile.inner_team if profile else None)
     )
 
 
@@ -303,6 +381,61 @@ async def update_llm_config(
         await session.commit()
         await session.refresh(profile)
         return _llm_snapshot(profile)
+
+
+@router.get("/inner-team", response_model=InnerTeamRead)
+async def get_inner_team(
+    user_id: Annotated[UUID, Depends(get_approved_user_id)],
+) -> InnerTeamRead:
+    async with AsyncSessionLocal() as session:
+        profile = (
+            await session.execute(select(UserProfile).where(UserProfile.user_id == user_id))
+        ).scalar_one_or_none()
+    return _inner_team_snapshot(profile)
+
+
+@router.put("/inner-team", response_model=InnerTeamRead)
+async def update_inner_team(
+    body: InnerTeamUpdate,
+    user_id: Annotated[UUID, Depends(get_approved_user_id)],
+) -> InnerTeamRead:
+    async with AsyncSessionLocal() as session:
+        profile = (
+            await session.execute(select(UserProfile).where(UserProfile.user_id == user_id))
+        ).scalar_one_or_none()
+        if not profile:
+            profile = UserProfile(user_id=user_id)
+            session.add(profile)
+
+        settings = normalize_inner_team(profile.inner_team)
+        update = body.model_dump(exclude_unset=True)
+
+        if "mode" in update:
+            settings["mode"] = update["mode"]
+        if "roles" in update:
+            settings["roles"] = update["roles"]
+        if "active_role_id" in update:
+            role_ids = {role["id"] for role in settings["roles"]}
+            if update["active_role_id"] not in role_ids:
+                raise HTTPException(
+                    status_code=422,
+                    detail="active_role_id must match a configured role",
+                )
+            settings["active_role_id"] = update["active_role_id"]
+        if "active_reason" in update:
+            settings["active_reason"] = update["active_reason"] or ""
+
+        role_ids = {role["id"] for role in settings["roles"]}
+        if settings["active_role_id"] not in role_ids:
+            settings["active_role_id"] = settings["roles"][0]["id"]
+            settings["active_reason"] = "Active role reset because the previous role was removed."
+
+        settings["updated_at"] = datetime.utcnow().isoformat()
+        profile.inner_team = settings
+        profile.updated_at = datetime.utcnow()
+        await session.commit()
+        await session.refresh(profile)
+        return _inner_team_snapshot(profile)
 
 
 @router.get("", response_model=ProfileRead)

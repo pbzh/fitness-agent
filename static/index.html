@@ -737,6 +737,99 @@
         @media (max-width: 480px) { .settings-grid { grid-template-columns: 1fr; } }
         .full { grid-column: 1 / -1; }
 
+        /* ── Inner Team view ── */
+        .inner-team-wrap {
+            flex: 1; overflow-y: auto; min-height: 0;
+            padding: 20px 16px;
+            padding-bottom: max(20px, env(safe-area-inset-bottom));
+        }
+        .inner-team-shell {
+            max-width: 1100px; margin: 0 auto;
+            display: grid; grid-template-columns: 260px minmax(0, 1fr);
+            gap: 18px; align-items: start;
+        }
+        @media (max-width: 767px) {
+            .inner-team-shell { display: flex; flex-direction: column; }
+        }
+        .inner-team-sidebar,
+        .inner-team-panel {
+            background: color-mix(in srgb, var(--surface) 92%, var(--surface-2));
+            border: 0.5px solid var(--color-border-tertiary);
+            border-radius: var(--radius-sm);
+        }
+        .inner-team-sidebar { overflow: hidden; }
+        .inner-team-sidebar-head {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 14px 10px; border-bottom: 0.5px solid var(--border);
+        }
+        .inner-team-sidebar-head h3 { font-size: 0.84rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-2); }
+        .inner-role-list { display: flex; flex-direction: column; }
+        .inner-role-row {
+            display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px;
+            width: 100%; padding: 12px 14px; text-align: left;
+            background: transparent; border-bottom: 0.5px solid var(--border);
+            color: var(--text);
+        }
+        .inner-role-row:hover { background: var(--surface-2); }
+        .inner-role-row.active { background: color-mix(in srgb, var(--primary) 9%, var(--surface)); box-shadow: inset 3px 0 0 var(--primary); }
+        .inner-role-index { color: var(--text-2); font-weight: 700; font-size: 0.8rem; padding-top: 2px; }
+        .inner-role-name { font-weight: 700; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .inner-role-desc { color: var(--text-2); font-size: 0.76rem; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .inner-team-main { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+        .inner-team-head {
+            display: flex; justify-content: space-between; gap: 12px; align-items: flex-start;
+            margin-bottom: 2px;
+        }
+        .inner-team-title { font-size: 1.45rem; font-weight: 700; }
+        .inner-team-subtitle { color: var(--text-2); font-size: 0.86rem; margin-top: 3px; }
+        .inner-mode-toggle {
+            display: inline-flex; padding: 3px; gap: 3px;
+            border: 0.5px solid var(--border); border-radius: var(--radius-sm);
+            background: var(--surface);
+        }
+        .inner-mode-toggle button {
+            height: 32px; padding: 0 13px; border-radius: var(--radius-xs);
+            background: transparent; color: var(--text-2); font-weight: 700; font-size: 0.82rem;
+        }
+        .inner-mode-toggle button.active { background: var(--primary); color: #fff; }
+        .inner-team-panel { padding: 18px; }
+        .inner-active-grid {
+            display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.8fr);
+            gap: 16px;
+        }
+        @media (max-width: 900px) { .inner-active-grid { grid-template-columns: 1fr; } }
+        .inner-eyebrow {
+            font-size: 0.72rem; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 0.06em; color: var(--primary); margin-bottom: 6px;
+        }
+        .inner-active-title { font-size: 1.35rem; font-weight: 800; margin-bottom: 4px; }
+        .inner-active-desc { color: var(--text-2); font-size: 0.9rem; line-height: 1.45; }
+        .inner-intention {
+            background: var(--surface-2); border: 0.5px solid var(--border);
+            border-radius: var(--radius-sm); padding: 14px;
+        }
+        .inner-intention strong { display: block; font-size: 0.78rem; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 5px; }
+        .inner-meta-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+        }
+        @media (max-width: 900px) { .inner-meta-grid { grid-template-columns: 1fr; } }
+        .inner-meta-card {
+            background: var(--surface); border: 0.5px solid var(--border);
+            border-radius: var(--radius-sm); padding: 14px;
+        }
+        .inner-meta-card h4 { font-size: 0.86rem; margin-bottom: 8px; }
+        .inner-pill-list { display: flex; flex-wrap: wrap; gap: 6px; }
+        .inner-pill {
+            font-size: 0.76rem; padding: 5px 8px; border-radius: 999px;
+            background: var(--surface-3); color: var(--text-2);
+        }
+        .inner-task-list { display: flex; flex-direction: column; gap: 8px; }
+        .inner-task-list div { font-size: 0.82rem; color: var(--text-2); }
+        .inner-editor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        @media (max-width: 640px) { .inner-editor-grid { grid-template-columns: 1fr; } }
+        .inner-editor-grid .full { grid-column: 1 / -1; }
+        .inner-editor-actions { display: flex; gap: 8px; align-items: center; margin-top: 14px; }
+
         .macro-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
         .macro-row label { text-transform: none; letter-spacing: 0; font-size: 0.76rem; }
 
@@ -935,6 +1028,7 @@
         </div>
         <nav class="nav-tabs hidden" id="nav-tabs-desktop">
             <button class="nav-tab active" data-view="app-view" type="button" data-i18n="nav.chat">Chat</button>
+            <button class="nav-tab" data-view="inner-team-view" type="button" data-i18n="nav.innerTeam">Inner Team</button>
             <button class="nav-tab" data-view="history-view" type="button" data-i18n="nav.history">History</button>
             <button class="nav-tab" data-view="files-view" type="button" data-i18n="nav.files">Files</button>
             <button class="nav-tab" data-view="settings-view" type="button" data-i18n="nav.settings">Settings</button>
@@ -1023,6 +1117,7 @@
                         <div>
                             <div class="panel-title" id="active-coach-title">Boss</div>
                             <p class="chat-subtitle">Routes to Fitness · Nutrition · Mental Health · Productivity</p>
+                            <p class="chat-subtitle" id="chat-inner-role">Inner Team: loading…</p>
                         </div>
                         <button class="manual-btn" id="manual-toggle" type="button">⚙ Manual</button>
                     </div>
@@ -1128,6 +1223,118 @@
                 </div>
             </div>
         </aside>
+    </div>
+
+    <!-- ── Inner Team view ── -->
+    <div class="inner-team-wrap hidden" id="inner-team-view">
+        <div class="inner-team-shell">
+            <aside class="inner-team-sidebar">
+                <div class="inner-team-sidebar-head">
+                    <h3>Inner Team Roles</h3>
+                    <button class="icon-btn" id="inner-add-role-btn" type="button" title="Add custom role">+</button>
+                </div>
+                <div class="inner-role-list" id="inner-role-list"></div>
+            </aside>
+
+            <main class="inner-team-main">
+                <div class="inner-team-head">
+                    <div>
+                        <div class="inner-team-title">Inner Team</div>
+                        <div class="inner-team-subtitle">Shows the role you are currently operating from. Coach chat stays separate.</div>
+                    </div>
+                    <div class="inner-mode-toggle" aria-label="Inner Team mode">
+                        <button id="inner-mode-auto" type="button">Auto</button>
+                        <button id="inner-mode-manual" type="button">Manual</button>
+                    </div>
+                </div>
+
+                <section class="inner-team-panel">
+                    <div class="inner-active-grid">
+                        <div>
+                            <div class="inner-eyebrow">Active role</div>
+                            <div class="inner-active-title" id="inner-active-name">--</div>
+                            <div class="inner-active-desc" id="inner-active-description"></div>
+                        </div>
+                        <div class="inner-intention">
+                            <strong>Why this role is active</strong>
+                            <div id="inner-active-reason">--</div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="inner-meta-grid">
+                    <div class="inner-meta-card">
+                        <h4>Strengths</h4>
+                        <div class="inner-pill-list" id="inner-strengths"></div>
+                    </div>
+                    <div class="inner-meta-card">
+                        <h4>Watch-outs</h4>
+                        <div class="inner-pill-list" id="inner-watch-outs"></div>
+                    </div>
+                    <div class="inner-meta-card">
+                        <h4>Tasks</h4>
+                        <div class="inner-task-list" id="inner-tasks"></div>
+                    </div>
+                </section>
+
+                <section class="inner-team-panel">
+                    <div class="inner-eyebrow">Role settings</div>
+                    <div class="inner-editor-grid">
+                        <div>
+                            <label for="inner-role-name">Name</label>
+                            <input id="inner-role-name" maxlength="60">
+                        </div>
+                        <div>
+                            <label for="inner-role-tone">Tone</label>
+                            <input id="inner-role-tone" maxlength="80">
+                        </div>
+                        <div class="full">
+                            <label for="inner-role-description">Short description</label>
+                            <input id="inner-role-description" maxlength="200">
+                        </div>
+                        <div class="full">
+                            <label for="inner-role-intention">Role intention</label>
+                            <textarea id="inner-role-intention" rows="2" maxlength="400"></textarea>
+                        </div>
+                        <div>
+                            <label for="inner-role-strengths">Strengths</label>
+                            <input id="inner-role-strengths" placeholder="Comma-separated">
+                        </div>
+                        <div>
+                            <label for="inner-role-watch-outs">Watch-outs</label>
+                            <input id="inner-role-watch-outs" placeholder="Comma-separated">
+                        </div>
+                        <div class="full">
+                            <label for="inner-role-tasks">Tasks</label>
+                            <input id="inner-role-tasks" placeholder="Comma-separated">
+                        </div>
+                        <div>
+                            <label for="inner-role-focus">Focus areas</label>
+                            <input id="inner-role-focus" placeholder="Comma-separated">
+                        </div>
+                        <div>
+                            <label for="inner-role-avoid">Avoid</label>
+                            <input id="inner-role-avoid" placeholder="Comma-separated">
+                        </div>
+                        <div>
+                            <label for="inner-role-challenge">Challenge level</label>
+                            <select id="inner-role-challenge">
+                                <option value="1">1 - very gentle</option>
+                                <option value="2">2 - supportive</option>
+                                <option value="3">3 - balanced</option>
+                                <option value="4">4 - direct</option>
+                                <option value="5">5 - demanding</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="inner-editor-actions">
+                        <button class="btn-save" id="inner-save-role-btn" type="button">Save role</button>
+                        <button class="btn-cancel" id="inner-delete-role-btn" type="button">Delete role</button>
+                        <span class="status" id="inner-role-status"></span>
+                    </div>
+                </section>
+            </main>
+        </div>
     </div>
 
     <!-- ── Settings view ── -->
@@ -1757,6 +1964,15 @@
             </svg>
             <span data-i18n="nav.chat">Chat</span>
         </button>
+        <button class="tab-item" data-view="inner-team-view" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="8" cy="9" r="3"></circle>
+                <circle cx="16" cy="9" r="3"></circle>
+                <path d="M3 21a5 5 0 0 1 10 0"></path>
+                <path d="M11 21a5 5 0 0 1 10 0"></path>
+            </svg>
+            <span data-i18n="nav.innerTeam">Inner Team</span>
+        </button>
         <button class="tab-item" data-view="history-view" type="button">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
@@ -1804,7 +2020,7 @@
     const I18N = {
         en: {
             "nav.signedOut": "Signed out", "nav.signOut": "Sign out", "nav.logout": "Logout",
-            "nav.chat": "Chat", "nav.history": "History", "nav.files": "Files",
+            "nav.chat": "Chat", "nav.innerTeam": "Inner Team", "nav.history": "History", "nav.files": "Files",
             "nav.settings": "Settings", "nav.about": "About",
             "login.tagline": "Your AI-powered personal fitness & nutrition coach. Chat with specialized coaches for workouts, meals, progress tracking, and mental wellness.",
             "login.welcomeBack": "Welcome back", "login.subtitle": "Sign in to your fitness coach",
@@ -1842,7 +2058,7 @@
         },
         de: {
             "nav.signedOut": "Abgemeldet", "nav.signOut": "Abmelden", "nav.logout": "Abmelden",
-            "nav.chat": "Chat", "nav.history": "Verlauf", "nav.files": "Dateien",
+            "nav.chat": "Chat", "nav.innerTeam": "Inner Team", "nav.history": "Verlauf", "nav.files": "Dateien",
             "nav.settings": "Einstellungen", "nav.about": "Info",
             "login.tagline": "Dein KI-gestützter persönlicher Fitness- und Ernährungscoach. Chatte mit spezialisierten Coaches für Training, Mahlzeiten, Fortschritt und mentale Gesundheit.",
             "login.welcomeBack": "Willkommen zurück", "login.subtitle": "Melde dich bei deinem Fitness-Coach an",
@@ -1944,6 +2160,7 @@
         email:      localStorage.getItem(emailKey)  || "",
         isAdmin:    false,
         routing:    {},
+        innerTeam:  null,
         showTokens: localStorage.getItem("fitness-agent-tokens") === "1",
         showModels: localStorage.getItem("fitness-agent-models") === "1"
     };
@@ -2009,7 +2226,7 @@
     }
 
     /* ── Navigation ── */
-    const VIEWS = ["app-view", "history-view", "files-view", "settings-view", "admin-view", "about-view"];
+    const VIEWS = ["app-view", "inner-team-view", "history-view", "files-view", "settings-view", "admin-view", "about-view"];
 
     function switchView(viewId) {
         VIEWS.forEach(id => $(id).classList.toggle("hidden", id !== viewId));
@@ -2018,6 +2235,8 @@
         );
         if (viewId === "history-view") {
             fetchHistory().then(renderHistoryView);
+        } else if (viewId === "inner-team-view") {
+            loadInnerTeam();
         } else if (viewId === "files-view") {
             renderFilesView();
         } else if (viewId === "about-view") {
@@ -2239,6 +2458,7 @@
         state.token = "";
         state.userId = "";
         state.isAdmin = false;
+        state.innerTeam = null;
         conversationId = null;
         historyCache = [];
         pendingAttachments = [];
@@ -2294,8 +2514,246 @@
             $("s-diet").value         = (d.dietary_restrictions || []).join(", ");
             await renderCoachPrompts(d.coach_prompts || {});
             await loadLLMConfig();
+            await loadInnerTeam();
         } catch (_) {}
     }
+
+    function activeInnerRole() {
+        const cfg = state.innerTeam || {};
+        return (cfg.roles || []).find(r => r.id === cfg.active_role_id) || null;
+    }
+
+    function renderInnerPills(el, values) {
+        el.replaceChildren();
+        const items = (values || []).filter(Boolean);
+        if (!items.length) {
+            const muted = document.createElement("span");
+            muted.className = "inner-pill";
+            muted.textContent = "Not set";
+            el.appendChild(muted);
+            return;
+        }
+        for (const value of items) {
+            const pill = document.createElement("span");
+            pill.className = "inner-pill";
+            pill.textContent = value;
+            el.appendChild(pill);
+        }
+    }
+
+    function renderInnerTasks(el, values) {
+        el.replaceChildren();
+        const items = (values || []).filter(Boolean);
+        if (!items.length) {
+            const empty = document.createElement("div");
+            empty.textContent = "No tasks defined.";
+            el.appendChild(empty);
+            return;
+        }
+        for (const value of items) {
+            const item = document.createElement("div");
+            item.textContent = `- ${value}`;
+            el.appendChild(item);
+        }
+    }
+
+    function updateChatInnerRole() {
+        const role = activeInnerRole();
+        const el = $("chat-inner-role");
+        if (!el) return;
+        if (!role) {
+            el.textContent = "Inner Team: no active role";
+            return;
+        }
+        const mode = state.innerTeam?.mode === "manual" ? "Manual" : "Auto";
+        el.textContent = `Inner Team: ${role.name} (${mode})`;
+    }
+
+    function renderInnerTeam() {
+        const cfg = state.innerTeam;
+        if (!cfg) return;
+        const roles = cfg.roles || [];
+        const active = activeInnerRole();
+
+        $("inner-mode-auto").classList.toggle("active", cfg.mode === "auto");
+        $("inner-mode-manual").classList.toggle("active", cfg.mode === "manual");
+
+        const list = $("inner-role-list");
+        list.replaceChildren();
+        roles.forEach((role, index) => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "inner-role-row" + (role.id === cfg.active_role_id ? " active" : "");
+            btn.dataset.roleId = role.id;
+            const n = document.createElement("div");
+            n.className = "inner-role-index";
+            n.textContent = String(index + 1);
+            const body = document.createElement("div");
+            const name = document.createElement("div");
+            name.className = "inner-role-name";
+            name.textContent = role.name;
+            const desc = document.createElement("div");
+            desc.className = "inner-role-desc";
+            desc.textContent = role.description || "No description";
+            body.append(name, desc);
+            btn.append(n, body);
+            btn.addEventListener("click", () => selectInnerRole(role.id));
+            list.appendChild(btn);
+        });
+
+        if (!active) return;
+        $("inner-active-name").textContent = active.name;
+        $("inner-active-description").textContent = active.description || "";
+        $("inner-active-reason").textContent = cfg.active_reason || "Selected manually.";
+        renderInnerPills($("inner-strengths"), active.strengths);
+        renderInnerPills($("inner-watch-outs"), active.watch_outs);
+        renderInnerTasks($("inner-tasks"), active.tasks);
+
+        $("inner-role-name").value = active.name || "";
+        $("inner-role-description").value = active.description || "";
+        $("inner-role-intention").value = active.intention || "";
+        $("inner-role-tone").value = active.tone || "";
+        $("inner-role-strengths").value = (active.strengths || []).join(", ");
+        $("inner-role-watch-outs").value = (active.watch_outs || []).join(", ");
+        $("inner-role-tasks").value = (active.tasks || []).join(", ");
+        $("inner-role-focus").value = (active.focus_areas || []).join(", ");
+        $("inner-role-avoid").value = (active.avoid || []).join(", ");
+        $("inner-role-challenge").value = String(active.challenge_level || 3);
+        const deleteBtn = $("inner-delete-role-btn");
+        deleteBtn.disabled = (cfg.roles || []).length <= 1;
+        deleteBtn.title = deleteBtn.disabled ? "At least one role is required" : "Delete this role";
+        updateChatInnerRole();
+    }
+
+    async function loadInnerTeam() {
+        if (!state.token) return;
+        try {
+            const res = await request("/profile/inner-team", { headers: authHeaders() });
+            state.innerTeam = await res.json();
+            renderInnerTeam();
+        } catch (_) {
+            updateChatInnerRole();
+        }
+    }
+
+    async function saveInnerTeam(payload, statusText = "Saved") {
+        const res = await request("/profile/inner-team", {
+            method: "PUT",
+            headers: authHeaders(),
+            body: JSON.stringify(payload),
+        });
+        state.innerTeam = await res.json();
+        renderInnerTeam();
+        if (statusText) flashStatus("inner-role-status", statusText, "success");
+    }
+
+    async function selectInnerRole(roleId) {
+        try {
+            await saveInnerTeam(
+                { mode: "manual", active_role_id: roleId, active_reason: "Selected manually." },
+                "Selected"
+            );
+        } catch (err) {
+            setStatus($("inner-role-status"), err.message, "error");
+        }
+    }
+
+    async function setInnerMode(mode) {
+        try {
+            await saveInnerTeam({ mode }, mode === "auto" ? "Auto mode" : "Manual mode");
+        } catch (err) {
+            setStatus($("inner-role-status"), err.message, "error");
+        }
+    }
+
+    function editableInnerRoleFromForm(role) {
+        return {
+            ...role,
+            name: $("inner-role-name").value.trim(),
+            description: $("inner-role-description").value.trim(),
+            intention: $("inner-role-intention").value.trim(),
+            tone: $("inner-role-tone").value.trim(),
+            strengths: listFromInput("inner-role-strengths"),
+            watch_outs: listFromInput("inner-role-watch-outs"),
+            tasks: listFromInput("inner-role-tasks"),
+            focus_areas: listFromInput("inner-role-focus"),
+            avoid: listFromInput("inner-role-avoid"),
+            challenge_level: Number($("inner-role-challenge").value) || 3,
+        };
+    }
+
+    async function saveActiveInnerRole() {
+        const cfg = state.innerTeam;
+        const active = activeInnerRole();
+        if (!cfg || !active) return;
+        const roles = (cfg.roles || []).map(role =>
+            role.id === active.id ? editableInnerRoleFromForm(role) : role
+        );
+        try {
+            await saveInnerTeam({ roles, active_role_id: active.id }, "Saved");
+        } catch (err) {
+            setStatus($("inner-role-status"), err.message, "error");
+        }
+    }
+
+    async function addInnerRole() {
+        const cfg = state.innerTeam;
+        if (!cfg) return;
+        const roles = cfg.roles || [];
+        if (roles.length >= 10) {
+            setStatus($("inner-role-status"), "Maximum 10 roles", "error");
+            return;
+        }
+        const id = `custom_${Date.now()}`;
+        const role = {
+            id,
+            name: "Custom Role",
+            description: "Define when this role is useful.",
+            intention: "Clarify what this role protects or enables.",
+            strengths: ["Clarity"],
+            watch_outs: ["Overuse"],
+            tasks: ["Define the next useful task"],
+            tone: "plain",
+            challenge_level: 3,
+            focus_areas: [],
+            avoid: [],
+            is_custom: true,
+        };
+        try {
+            await saveInnerTeam(
+                { mode: "manual", active_role_id: id, active_reason: "Created manually.", roles: [...roles, role] },
+                "Role added"
+            );
+        } catch (err) {
+            setStatus($("inner-role-status"), err.message, "error");
+        }
+    }
+
+    async function deleteActiveInnerRole() {
+        const cfg = state.innerTeam;
+        const active = activeInnerRole();
+        if (!cfg || !active) return;
+        if ((cfg.roles || []).length <= 1) {
+            setStatus($("inner-role-status"), "At least one role is required", "error");
+            return;
+        }
+        const roles = (cfg.roles || []).filter(role => role.id !== active.id);
+        const next = roles[0]?.id;
+        try {
+            await saveInnerTeam(
+                { roles, active_role_id: next, active_reason: "Custom role deleted." },
+                "Deleted"
+            );
+        } catch (err) {
+            setStatus($("inner-role-status"), err.message, "error");
+        }
+    }
+
+    $("inner-mode-auto").addEventListener("click", () => setInnerMode("auto"));
+    $("inner-mode-manual").addEventListener("click", () => setInnerMode("manual"));
+    $("inner-add-role-btn").addEventListener("click", addInnerRole);
+    $("inner-save-role-btn").addEventListener("click", saveActiveInnerRole);
+    $("inner-delete-role-btn").addEventListener("click", deleteActiveInnerRole);
 
     /* ── About view (dynamic data-flow table) ── */
     function providerTag(provider) {
@@ -2375,6 +2833,12 @@
                 stored: [["db", "Postgres · userprofile"]],
                 sent:   ["never"],
                 note:   "Sent to a coach only when a tool reads it during a turn.",
+            },
+            {
+                info: "Inner Team roles and active role",
+                stored: [["db", "Postgres · userprofile.inner_team"]],
+                sent:   ["never"],
+                note:   "Updated from chat text by server-side heuristics; displayed as role state, not a separate coach chat.",
             },
             {
                 info: "Workouts, meals, health metrics",
@@ -3725,6 +4189,14 @@
                 if (optimisticUserEl) optimisticUserEl.dataset.msgId = data.user_message_id;
             }
             appendMessage(data.reply, "agent", data.model_used, data.token_usage, true, replyTask, null, data.agent_message_id || null);
+            if (data.inner_team_role && state.innerTeam) {
+                state.innerTeam.active_role_id = data.inner_team_role.id;
+                state.innerTeam.active_reason = data.inner_team_role.active_reason || state.innerTeam.active_reason;
+                state.innerTeam.mode = data.inner_team_role.mode || state.innerTeam.mode;
+                renderInnerTeam();
+            } else {
+                loadInnerTeam();
+            }
             if (data.routed_by_manager) showRoutedCoach(replyTask);
             loadDashboard();
         } catch (err) {

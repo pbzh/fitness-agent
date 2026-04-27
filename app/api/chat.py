@@ -7,6 +7,7 @@ chat history accumulates in one thread regardless of client state.
 """
 
 import asyncio
+from datetime import datetime
 from typing import Annotated
 from uuid import NAMESPACE_DNS, UUID, uuid5
 
@@ -29,6 +30,7 @@ from app.db.models import AgentMessage, UserProfile
 from app.db.models import File as DBFile
 from app.db.session import AsyncSessionLocal
 from app.files import storage
+from app.inner_team import active_role, detect_inner_team_role, normalize_inner_team
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 log = structlog.get_logger()
@@ -54,6 +56,17 @@ class TokenUsage(BaseModel):
     total_tokens: int = 0
 
 
+class InnerTeamRoleInfo(BaseModel):
+    id: str
+    name: str
+    description: str = ""
+    active_reason: str = ""
+    mode: str = "auto"
+    strengths: list[str] = Field(default_factory=list)
+    watch_outs: list[str] = Field(default_factory=list)
+    tasks: list[str] = Field(default_factory=list)
+
+
 class ChatResponse(BaseModel):
     reply: str
     conversation_id: UUID
@@ -63,6 +76,7 @@ class ChatResponse(BaseModel):
     token_usage: TokenUsage | None = None
     user_message_id: UUID | None = None
     agent_message_id: UUID | None = None
+    inner_team_role: InnerTeamRoleInfo | None = None
 
 
 class AttachmentRef(BaseModel):
@@ -86,6 +100,23 @@ class HistoryMessage(BaseModel):
 _RETRYABLE_STATUSES = {429, 502, 503, 504, 529}
 _MAX_RETRIES = 3
 _BASE_BACKOFF_S = 2.0
+
+
+def _inner_team_info(settings: dict | None) -> InnerTeamRoleInfo | None:
+    normalized = normalize_inner_team(settings)
+    role = active_role(normalized)
+    if not role:
+        return None
+    return InnerTeamRoleInfo(
+        id=role["id"],
+        name=role["name"],
+        description=role.get("description", ""),
+        active_reason=normalized.get("active_reason", ""),
+        mode=normalized.get("mode", "auto"),
+        strengths=role.get("strengths", []),
+        watch_outs=role.get("watch_outs", []),
+        tasks=role.get("tasks", []),
+    )
 
 
 def _is_retryable(exc: Exception) -> bool:
@@ -136,6 +167,19 @@ async def chat(
         ).scalar_one_or_none()
     prompt_overrides = profile.coach_prompts if profile else None
     eff = await load_effective_config(user_id)
+    inner_team = normalize_inner_team(profile.inner_team if profile else None)
+    detected_inner_team = detect_inner_team_role(req.message, inner_team)
+    inner_team_role = _inner_team_info(detected_inner_team)
+    if profile and detected_inner_team != inner_team:
+        async with AsyncSessionLocal() as session:
+            db_profile = (
+                await session.execute(select(UserProfile).where(UserProfile.user_id == user_id))
+            ).scalar_one_or_none()
+            if db_profile:
+                db_profile.inner_team = detected_inner_team
+                db_profile.updated_at = datetime.utcnow()
+                await session.commit()
+        profile.inner_team = detected_inner_team
 
     # ── Boss routing: when task_hint=auto, classify and dispatch ──
     routed_by_manager = req.task_hint == TaskClass.AUTO
@@ -159,11 +203,20 @@ async def chat(
         boss_api_key = resolve_api_key(boss_provider, eff)
         # Fall back to local if the resolved cloud provider has no usable key.
         if boss_provider in (Provider.ANTHROPIC, Provider.OPENAI) and not boss_api_key:
-            log.warning("No API key for boss provider, falling back to local", provider=boss_provider.value)
+            log.warning(
+                "No API key for boss provider, falling back to local",
+                provider=boss_provider.value,
+            )
             boss_provider = Provider.LOCAL
             boss_api_key = resolve_api_key(Provider.LOCAL, eff)
         boss_prompt = prompt_overrides.get("auto") if prompt_overrides else None
-        resolved_task = await classify_turn(req.message, recent_user_msgs, boss_provider=boss_provider, prompt_override=boss_prompt or None, api_key=boss_api_key)
+        resolved_task = await classify_turn(
+            req.message,
+            recent_user_msgs,
+            boss_provider=boss_provider,
+            prompt_override=boss_prompt or None,
+            api_key=boss_api_key,
+        )
     else:
         resolved_task = req.task_hint
 
@@ -285,6 +338,7 @@ async def chat(
                 ),
                 user_message_id=user_message_id,
                 agent_message_id=agent_msg.id,
+                inner_team_role=inner_team_role,
             )
         except Exception as e:
             last_exc = e
