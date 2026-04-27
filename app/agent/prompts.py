@@ -144,6 +144,7 @@ _TASK_PROMPT: dict[TaskClass, str] = {
 
 # User-facing labels and editability flags for the Settings UI.
 COACH_META: dict[str, dict] = {
+    TaskClass.AUTO.value:               {"label": "Boss", "editable": False},
     TaskClass.PLAN_GENERATION.value:    {"label": "Fitness", "editable": True},
     TaskClass.NUTRITION_ANALYSIS.value: {"label": "Nutrition", "editable": True},
     TaskClass.PROGRESS_REVIEW.value:    {"label": "Productivity", "editable": True},
@@ -157,7 +158,7 @@ def get_prompt(task: TaskClass) -> str:
 
 def default_prompts() -> dict[str, str]:
     """The built-in default prompt for every editable coach."""
-    return {key: _TASK_PROMPT[TaskClass(key)] for key in COACH_META}
+    return {key: _TASK_PROMPT[TaskClass(key)] for key in COACH_META if COACH_META[key]["editable"]}
 
 
 def resolve_prompt(task: TaskClass, overrides: dict[str, str] | None) -> str:

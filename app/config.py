@@ -42,6 +42,7 @@ class Settings(BaseSettings):
 
     # Per-task provider routing
     provider_for_chat: ProviderName = "local"
+    provider_for_boss: ProviderName = "anthropic"
     provider_for_planning: ProviderName = "anthropic"
     provider_for_nutrition: ProviderName = "anthropic"
     provider_for_progress: ProviderName = "anthropic"

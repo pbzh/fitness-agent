@@ -67,16 +67,19 @@ or ambiguous "what should I do?" requests.
 """
 
 
-async def classify_turn(message: str, recent_user_msgs: list[str]) -> TaskClass:
+async def classify_turn(
+    message: str,
+    recent_user_msgs: list[str],
+    boss_provider: Provider | None = None,
+) -> TaskClass:
     """Return the best dispatchable task for this turn.
 
-    Uses Anthropic (Claude) for the classification — small models occasionally
-    refuse or pad the structured-output literal. Falls back to local if no
-    Anthropic key is configured.
+    ``boss_provider`` is the resolved provider (user override > .env default).
+    Falls back to Anthropic if available, otherwise local.
     """
-    # Prefer Anthropic for routing; fall back gracefully if no key.
-    override = Provider.ANTHROPIC if get_settings().anthropic_api_key else None
-    model = get_model_for_task(TaskClass.CHAT, override_provider=override)
+    if boss_provider is None:
+        boss_provider = Provider.ANTHROPIC if get_settings().anthropic_api_key else Provider.LOCAL
+    model = get_model_for_task(TaskClass.AUTO, override_provider=boss_provider)
     classifier: Agent[None, str] = Agent(
         model=model,
         output_type=_LITERAL,

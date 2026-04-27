@@ -2707,6 +2707,7 @@
         }
         body.replaceChildren();
         for (const c of coachPromptDefaults) {
+            if (!c.editable) continue;
             const block = document.createElement("details");
             block.className = "coach-prompt-block";
             const sum = document.createElement("summary");

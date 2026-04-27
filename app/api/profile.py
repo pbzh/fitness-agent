@@ -115,6 +115,7 @@ class ProfileUpdate(BaseModel):
 class CoachPromptDefault(BaseModel):
     task: str
     label: str
+    editable: bool
     default_prompt: str
 
 
@@ -207,7 +208,8 @@ async def get_coach_prompt_defaults(
         CoachPromptDefault(
             task=key,
             label=meta["label"],
-            default_prompt=defaults[key],
+            editable=meta["editable"],
+            default_prompt=defaults.get(key, ""),
         )
         for key, meta in COACH_META.items()
     ]

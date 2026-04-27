@@ -129,6 +129,14 @@ async def chat(
             parts.append(build_part(f, full))
             attachment_ids.append(str(f.id))
 
+    # Load per-user LLM config early — needed for Boss provider resolution.
+    async with AsyncSessionLocal() as session:
+        profile = (
+            await session.execute(select(UserProfile).where(UserProfile.user_id == user_id))
+        ).scalar_one_or_none()
+    prompt_overrides = profile.coach_prompts if profile else None
+    eff = await load_effective_config(user_id)
+
     # ── Boss routing: when task_hint=auto, classify and dispatch ──
     routed_by_manager = req.task_hint == TaskClass.AUTO
     if routed_by_manager:
@@ -145,7 +153,10 @@ async def chat(
                 )
             ).scalars().all()
             recent_user_msgs = [m.content for m in reversed(recent)]
-        resolved_task = await classify_turn(req.message, recent_user_msgs)
+        settings = get_settings()
+        default_boss = Provider.ANTHROPIC if settings.anthropic_api_key else Provider.LOCAL
+        boss_provider = eff.provider_for("auto", default_boss)
+        resolved_task = await classify_turn(req.message, recent_user_msgs, boss_provider=boss_provider)
     else:
         resolved_task = req.task_hint
 
@@ -163,14 +174,6 @@ async def chat(
             )
         )
         await session.commit()
-
-    # Load per-user prompt overrides + effective LLM config (providers + keys).
-    async with AsyncSessionLocal() as session:
-        profile = (
-            await session.execute(select(UserProfile).where(UserProfile.user_id == user_id))
-        ).scalar_one_or_none()
-    prompt_overrides = profile.coach_prompts if profile else None
-    eff = await load_effective_config(user_id)
 
     # Resolve provider: user override > .env default. Then fall back if the
     # chosen cloud provider has neither user nor .env API key.

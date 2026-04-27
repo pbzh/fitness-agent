@@ -60,10 +60,11 @@ def _env_provider_for(task: TaskClass) -> Provider:
     """The .env-configured provider for ``task``, ignoring user overrides."""
     settings = get_settings()
     task_provider_map = {
-        TaskClass.PLAN_GENERATION: settings.provider_for_planning,
+        TaskClass.AUTO:             settings.provider_for_boss,
+        TaskClass.PLAN_GENERATION:  settings.provider_for_planning,
         TaskClass.NUTRITION_ANALYSIS: settings.provider_for_nutrition,
-        TaskClass.PROGRESS_REVIEW: settings.provider_for_progress,
-        TaskClass.MENTAL_HEALTH: settings.provider_for_mental_health,
+        TaskClass.PROGRESS_REVIEW:  settings.provider_for_progress,
+        TaskClass.MENTAL_HEALTH:    settings.provider_for_mental_health,
     }
     return Provider(task_provider_map.get(task, settings.provider_for_chat))
 
