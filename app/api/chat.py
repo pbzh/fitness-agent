@@ -58,11 +58,11 @@ class ChatResponse(BaseModel):
     reply: str
     conversation_id: UUID
     model_used: str
-    # The coach that actually answered (the manager's resolved task when
-    # task_hint=auto, otherwise just the requested task).
     resolved_task: str
     routed_by_manager: bool = False
     token_usage: TokenUsage | None = None
+    user_message_id: UUID | None = None
+    agent_message_id: UUID | None = None
 
 
 class AttachmentRef(BaseModel):
@@ -164,17 +164,18 @@ async def chat(
     # Persist the user turn (with the *resolved* task tag) before invoking the
     # agent so it survives even if the LLM call fails.
     async with AsyncSessionLocal() as session:
-        session.add(
-            AgentMessage(
-                user_id=user_id,
-                conversation_id=convo_id,
-                role="user",
-                content=req.message,
-                task=resolved_task.value,
-                attached_file_ids=attachment_ids,
-            )
+        user_msg = AgentMessage(
+            user_id=user_id,
+            conversation_id=convo_id,
+            role="user",
+            content=req.message,
+            task=resolved_task.value,
+            attached_file_ids=attachment_ids,
         )
+        session.add(user_msg)
         await session.commit()
+        await session.refresh(user_msg)
+        user_message_id = user_msg.id
 
     # Resolve provider: user override > .env default. Then fall back if the
     # chosen cloud provider has neither user nor .env API key.
@@ -251,19 +252,19 @@ async def chat(
             model_used = str(agent.model)
 
             async with AsyncSessionLocal() as session:
-                session.add(
-                    AgentMessage(
-                        user_id=user_id,
-                        conversation_id=convo_id,
-                        role="assistant",
-                        content=result.output,
-                        task=resolved_task.value,
-                        model_used=model_used,
-                        input_tokens=usage.input_tokens,
-                        output_tokens=usage.output_tokens,
-                    )
+                agent_msg = AgentMessage(
+                    user_id=user_id,
+                    conversation_id=convo_id,
+                    role="assistant",
+                    content=result.output,
+                    task=resolved_task.value,
+                    model_used=model_used,
+                    input_tokens=usage.input_tokens,
+                    output_tokens=usage.output_tokens,
                 )
+                session.add(agent_msg)
                 await session.commit()
+                await session.refresh(agent_msg)
 
             return ChatResponse(
                 reply=result.output,
@@ -276,6 +277,8 @@ async def chat(
                     output_tokens=usage.output_tokens,
                     total_tokens=usage.input_tokens + usage.output_tokens,
                 ),
+                user_message_id=user_message_id,
+                agent_message_id=agent_msg.id,
             )
         except Exception as e:
             last_exc = e
@@ -346,6 +349,26 @@ async def chat_history(
         )
         for m in rows
     ]
+
+
+@router.delete("/messages/{message_id}", status_code=204)
+async def delete_message(
+    message_id: UUID,
+    user_id: Annotated[UUID, Depends(get_approved_user_id)],
+) -> None:
+    """Delete a single chat message by ID (must belong to the requesting user)."""
+    async with AsyncSessionLocal() as session:
+        msg = (
+            await session.execute(
+                select(AgentMessage)
+                .where(AgentMessage.id == message_id)
+                .where(AgentMessage.user_id == user_id)
+            )
+        ).scalar_one_or_none()
+        if not msg:
+            raise HTTPException(status_code=404, detail="Message not found")
+        await session.delete(msg)
+        await session.commit()
 
 
 @router.delete("/history", status_code=204)
