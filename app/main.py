@@ -76,14 +76,14 @@ async def _verify_stored_secrets() -> None:
 async def lifespan(app: FastAPI):
     await _probe_local_model()
     await _verify_stored_secrets()
-    log.info("Starting fitness agent", model_local=settings.local_llm_model)
+    log.info("Starting coacher", model_local=settings.local_llm_model)
     start_scheduler()
     yield
     stop_scheduler()
 
 
 app = FastAPI(
-    title="Fitness Agent API",
+    title="coacher API",
     version="0.1.0",
     lifespan=lifespan,
 )

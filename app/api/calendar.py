@@ -59,7 +59,7 @@ def _build_ics(name: str, events: list[dict]) -> str:
     lines = [
         "BEGIN:VCALENDAR",
         "VERSION:2.0",
-        "PRODID:-//Fitness Agent//EN",
+        "PRODID:-//coacher//EN",
         "CALSCALE:GREGORIAN",
         f"X-WR-CALNAME:{_ics_escape(name)}",
         # Embed Europe/Zurich VTIMEZONE so calendar apps render local time.
@@ -156,7 +156,7 @@ async def workout_plan_ics(
             }
         )
 
-    body = _build_ics(f"Fitness Agent — Workouts (week {plan.week_start})", events)
+    body = _build_ics(f"coacher — Workouts (week {plan.week_start})", events)
     return _ics_response(f"workout-plan-{plan.week_start}.ics", body)
 
 
@@ -213,7 +213,7 @@ async def meal_plan_ics(
             }
         )
 
-    body = _build_ics(f"Fitness Agent — Meals (week {plan.week_start})", events)
+    body = _build_ics(f"coacher — Meals (week {plan.week_start})", events)
     return _ics_response(f"meal-plan-{plan.week_start}.ics", body)
 
 
@@ -285,5 +285,5 @@ async def upcoming_ics(
 
     # Touch the unused import so static analyzers don't trip
     _ = uuid5(NAMESPACE_URL, "upcoming")
-    body = _build_ics("Fitness Agent — Upcoming", events)
-    return _ics_response("fitness-agent-upcoming.ics", body)
+    body = _build_ics("coacher — Upcoming", events)
+    return _ics_response("coacher-upcoming.ics", body)

@@ -135,7 +135,7 @@ async def export_my_data(
         zf.writestr(
             "README.txt",
             (
-                "Fitness Agent — GDPR data export\n"
+                "coacher — GDPR data export\n"
                 f"Exported: {payload['exported_at']}\n"
                 f"User: {payload['user']['email']} ({payload['user']['id']})\n\n"
                 "data.json contains every row you own across the database.\n"
@@ -157,7 +157,7 @@ async def export_my_data(
                 log.warning("Skipping file in export", file_id=str(f.id), error=str(exc))
 
     tmp.seek(0)
-    fname = f"fitness-agent-export-{date.today().isoformat()}.zip"
+    fname = f"coacher-export-{date.today().isoformat()}.zip"
     return StreamingResponse(
         tmp,
         media_type="application/zip",

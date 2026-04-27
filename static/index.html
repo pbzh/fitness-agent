@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Fitness Agent</title>
+    <title>coacher</title>
+    <link rel="icon" type="image/png" href="/logo.png">
     <style>
         :root {
             color-scheme: light;
@@ -131,10 +132,13 @@
             flex-shrink: 0;
         }
         .brand-logo {
-            display: flex; align-items: center;
+            display: flex; align-items: center; gap: 10px;
             padding-right: 28px; flex-shrink: 0;
             border-right: none;
             margin-right: 0;
+        }
+        .brand-logo img {
+            width: 30px; height: 30px; display: block; flex-shrink: 0;
         }
         .brand-wordmark {
             font-size: 0.88rem; font-weight: 600;
@@ -226,12 +230,15 @@
         }
         .login-brand-inner { position: relative; max-width: 340px; }
         .login-brand-icon {
-            width: 56px; height: 56px; border-radius: 14px;
+            width: 72px; height: 72px; border-radius: 18px;
             background: rgba(255,255,255,0.18);
             border: 1px solid rgba(255,255,255,0.3);
             display: grid; place-items: center;
-            font-weight: 900; font-size: 1.1rem; color: #fff;
             margin-bottom: 24px; backdrop-filter: blur(8px);
+            padding: 8px;
+        }
+        .login-brand-icon img {
+            width: 100%; height: 100%; display: block;
         }
         .login-brand-name {
             font-size: 1.8rem; font-weight: 800; color: #fff;
@@ -1024,7 +1031,8 @@
     <!-- ── Topbar ── -->
     <header class="topbar">
         <div class="brand-logo">
-            <span class="brand-wordmark">Fitness Agent</span>
+            <img src="/logo.png" alt="coacher logo">
+            <span class="brand-wordmark">coacher</span>
         </div>
         <nav class="nav-tabs hidden" id="nav-tabs-desktop">
             <button class="nav-tab active" data-view="app-view" type="button" data-i18n="nav.chat">Chat</button>
@@ -1057,8 +1065,8 @@
     <div class="login-wrap" id="login-view">
         <div class="login-brand-panel">
             <div class="login-brand-inner">
-                <div class="login-brand-icon">FA</div>
-                <h1 class="login-brand-name">Fitness Agent</h1>
+                <div class="login-brand-icon"><img src="/logo.png" alt="coacher logo"></div>
+                <h1 class="login-brand-name">coacher</h1>
                 <p class="login-brand-sub" data-i18n="login.tagline">Your AI-powered personal fitness &amp; nutrition coach. Chat with specialized coaches for workouts, meals, progress tracking, and mental wellness.</p>
             </div>
         </div>
@@ -1777,7 +1785,7 @@
     <div class="about-wrap hidden" id="about-view">
         <div class="about-container">
             <div>
-                <div class="settings-heading">About Fitness Agent</div>
+                <div class="settings-heading">About coacher</div>
                 <div class="settings-subheading" id="about-version">Loading version…</div>
                 <div class="settings-subheading" style="margin-top:6px;">
                     <a href="https://github.com/pbzh/fitness-agent" target="_blank" rel="noopener"
@@ -2051,7 +2059,7 @@
             "common.save": "Save", "common.cancel": "Cancel", "common.refresh": "Refresh",
             "privacy.export": "📦 Download my data (.zip)",
             "privacy.delete": "🗑 Delete my account", "privacy.deleteConfirm": "Delete account",
-            "about.title": "About Fitness Agent", "about.what": "What it does",
+            "about.title": "About coacher", "about.what": "What it does",
             "about.where": "Where your data lives",
             "about.routing": "How routing decides per turn", "about.privacy": "Privacy notice (GDPR)",
             "about.deNote": "Long-form privacy and feature text is shown in English only — translating legal text without review would be worse than not translating it.",
@@ -2089,7 +2097,7 @@
             "common.save": "Speichern", "common.cancel": "Abbrechen", "common.refresh": "Aktualisieren",
             "privacy.export": "📦 Meine Daten herunterladen (.zip)",
             "privacy.delete": "🗑 Konto löschen", "privacy.deleteConfirm": "Konto löschen",
-            "about.title": "Über Fitness Agent", "about.what": "Funktionen",
+            "about.title": "Über coacher", "about.what": "Funktionen",
             "about.where": "Wo deine Daten gespeichert werden",
             "about.routing": "Wie das Routing pro Nachricht entscheidet", "about.privacy": "Datenschutzhinweis (DSGVO)",
             "about.deNote": "Ausführliche Datenschutz- und Feature-Texte werden nur auf Englisch angezeigt — eine ungeprüfte Übersetzung von Rechtstexten wäre schlechter als gar keine.",
@@ -3359,7 +3367,7 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
-            a.download = `fitness-agent-export-${new Date().toISOString().slice(0, 10)}.zip`;
+            a.download = `coacher-export-${new Date().toISOString().slice(0, 10)}.zip`;
             a.click();
             URL.revokeObjectURL(url);
             flashStatus("gdpr-export-status", "Downloaded ✓", "success");
@@ -3544,7 +3552,7 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `fitness-agent-history-${new Date().toISOString().slice(0, 10)}.json`;
+        a.download = `coacher-history-${new Date().toISOString().slice(0, 10)}.json`;
         a.click();
         URL.revokeObjectURL(url);
     }
