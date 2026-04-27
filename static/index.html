@@ -544,6 +544,26 @@
         .files-empty h3 { color: var(--text); font-size: 1rem; margin-bottom: 6px; }
         .files-empty p { font-size: 0.86rem; }
 
+        /* ── GDPR actions + delete-confirm modal ── */
+        .gdpr-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+        .modal-backdrop {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+            display: grid; place-items: center; z-index: 1000;
+            padding: 16px;
+        }
+        .modal-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); box-shadow: var(--shadow);
+            width: min(440px, 100%); padding: 22px;
+        }
+        .modal-card h3 { font-size: 1.05rem; margin-bottom: 8px; }
+        .modal-card p { font-size: 0.86rem; color: var(--text-2); margin-bottom: 14px; line-height: 1.5; }
+        .modal-card .field { margin-bottom: 10px; }
+        .modal-actions {
+            display: flex; gap: 10px; justify-content: flex-end; margin-top: 14px;
+        }
+
         /* ── About view ── */
         .about-wrap {
             flex: 1; overflow-y: auto; min-height: 0;
@@ -965,6 +985,29 @@
                 </div>
             </div>
 
+            <!-- Data & Privacy (GDPR) -->
+            <div class="settings-card">
+                <div class="card-header">
+                    <h3>Data &amp; Privacy</h3>
+                    <p>
+                        Exercise your data-subject rights. The export includes every
+                        row you own and every uploaded/generated file. Deletion is
+                        immediate, hard, and irreversible. See the About tab for the
+                        full privacy notice.
+                    </p>
+                </div>
+                <div class="card-body">
+                    <div class="gdpr-actions">
+                        <button class="btn-save" id="gdpr-export-btn" type="button">📦 Download my data (.zip)</button>
+                        <span class="status" id="gdpr-export-status"></span>
+                    </div>
+                    <div class="gdpr-actions" style="margin-top: 14px;">
+                        <button class="btn-danger" id="gdpr-delete-btn" type="button">🗑 Delete my account</button>
+                        <span class="status" id="gdpr-delete-status"></span>
+                    </div>
+                </div>
+            </div>
+
             <!-- Sign out -->
             <div class="settings-card">
                 <div class="card-header">
@@ -1086,6 +1129,106 @@
                         <li>Both turns (yours + the agent's) are written to <code>agentmessage</code> tagged with the resolved coach.</li>
                     </ol>
                 </div>
+            </div>
+
+            <div class="settings-card">
+                <div class="card-header">
+                    <h3>Privacy notice (GDPR)</h3>
+                    <p>What's processed, where it goes, how long it's kept, and how to exercise your rights.</p>
+                </div>
+                <div class="card-body">
+                    <p style="font-size:0.86rem; line-height:1.55; margin-bottom:12px;">
+                        <strong>Controller.</strong> The operator of <em>this</em> instance.
+                        For self-hosted personal use, that is you. If you are a user invited
+                        to someone else's instance, they are the controller; ask them for
+                        their contact details and DPO if applicable.
+                    </p>
+                    <p style="font-size:0.86rem; line-height:1.55; margin-bottom:12px;">
+                        <strong>Lawful basis.</strong> Consent and legitimate interest
+                        (Art. 6(1)(a) and (f) GDPR) for delivering the coaching service.
+                        Health-related metrics (weight, sleep, mood, RPE) fall under Art. 9(2)(a)
+                        — explicit consent — which you give by entering them.
+                    </p>
+                    <p style="font-size:0.86rem; line-height:1.55; margin-bottom:12px;">
+                        <strong>Categories of data.</strong> Authentication (email + bcrypt
+                        password hash), profile (height, weight, goals, equipment, macros),
+                        training and meal data, mood / sleep / HRV metrics, chat messages
+                        with all coaches, uploaded files (e.g. progress photos),
+                        agent-generated images, and per-user settings (system-prompt
+                        overrides, provider routing, encrypted API keys).
+                    </p>
+                    <p style="font-size:0.86rem; line-height:1.55; margin-bottom:12px;">
+                        <strong>Recipients (data processors).</strong> When you route a
+                        coach to a cloud provider, the content of that turn is sent to
+                        that provider for inference only:
+                    </p>
+                    <ul style="font-size:0.84rem; line-height:1.5; padding-left:22px; margin-bottom:12px;">
+                        <li><strong>Anthropic, PBC</strong> — when a coach is routed to Claude. See <a href="https://www.anthropic.com/legal/dpa" target="_blank" rel="noopener">Anthropic DPA</a>.</li>
+                        <li><strong>OpenAI, L.L.C.</strong> — when a coach is routed to GPT, and for image generation. See <a href="https://openai.com/policies/data-processing-addendum" target="_blank" rel="noopener">OpenAI DPA</a>.</li>
+                        <li><strong>Local LLM (your own server)</strong> — no third-party processing.</li>
+                    </ul>
+                    <p style="font-size:0.86rem; line-height:1.55; margin-bottom:12px;">
+                        <strong>International transfers.</strong> Anthropic and OpenAI
+                        process data in the United States. Both publish Standard Contractual
+                        Clauses; using local-LLM routing for any sensitive coach (Mind, in
+                        particular) keeps that data inside your homelab.
+                    </p>
+                    <p style="font-size:0.86rem; line-height:1.55; margin-bottom:12px;">
+                        <strong>Retention.</strong> All data is kept until you delete it.
+                        Use "Clear all" in the History tab to wipe chat, "Delete" on each
+                        file in the Files tab, or the buttons below to export or remove
+                        everything.
+                    </p>
+                    <p style="font-size:0.86rem; line-height:1.55; margin-bottom:12px;">
+                        <strong>Security.</strong> API keys are encrypted at rest with
+                        Fernet (AES-128-CBC + HMAC-SHA256). Passwords are bcrypt-hashed.
+                        Authentication is JWT bearer tokens. Plaintext keys never leave
+                        the server. Run the service over HTTPS in any non-loopback
+                        deployment.
+                    </p>
+                    <p style="font-size:0.86rem; line-height:1.55; margin-bottom:12px;">
+                        <strong>Your rights (Art. 15–22 GDPR).</strong>
+                    </p>
+                    <ul style="font-size:0.84rem; line-height:1.55; padding-left:22px; margin-bottom:12px;">
+                        <li><em>Access &amp; portability</em> — Settings → "Download my data" emits a ZIP with everything in machine-readable JSON plus your files.</li>
+                        <li><em>Rectification</em> — Settings → Account / Body / Training / Nutrition / Coach prompts.</li>
+                        <li><em>Erasure</em> — Settings → "Delete my account" hard-deletes everything (DB rows + on-disk files).</li>
+                        <li><em>Restriction / objection</em> — switch any coach to <code>local</code> in Settings to stop sending its turns to a third party. The Mind coach can run entirely on local LLM.</li>
+                        <li><em>Withdraw consent</em> — same as erasure or restriction; effect is immediate.</li>
+                        <li><em>Lodge a complaint</em> — your national data protection authority (Switzerland: <a href="https://www.edoeb.admin.ch/" target="_blank" rel="noopener">EDÖB</a>; EU: your country's DPA).</li>
+                    </ul>
+                    <p style="font-size:0.86rem; line-height:1.55;">
+                        <strong>Automated decision-making.</strong> The coaches generate
+                        suggestions; they do not make decisions producing legal effects.
+                        You retain full control over what to do with their output.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Delete-account confirm modal ── -->
+    <div class="modal-backdrop hidden" id="delete-modal">
+        <div class="modal-card">
+            <h3>Delete your account</h3>
+            <p>
+                This is irreversible. Every row you own — profile, chat history,
+                workouts, meals, files — is deleted from the database, and your
+                uploaded/generated files are removed from disk. There is no
+                soft-delete and no recovery. Consider exporting your data first.
+            </p>
+            <div class="field">
+                <label for="delete-confirm-email">Type your email to confirm</label>
+                <input id="delete-confirm-email" type="email" autocomplete="off">
+            </div>
+            <div class="field">
+                <label for="delete-confirm-password">Current password</label>
+                <input id="delete-confirm-password" type="password" autocomplete="current-password">
+            </div>
+            <div class="status" id="delete-modal-status"></div>
+            <div class="modal-actions">
+                <button class="text-btn" id="delete-cancel-btn" type="button">Cancel</button>
+                <button class="btn-danger" id="delete-confirm-btn" type="button">Delete account</button>
             </div>
         </div>
     </div>
@@ -1840,6 +1983,76 @@
 
     $("save-coach-prompts-btn").addEventListener("click", saveCoachPrompts);
     $("save-llm-btn").addEventListener("click", saveLLMConfig);
+
+    /* ── GDPR: export + delete ── */
+    async function exportMyData() {
+        const btn = $("gdpr-export-btn");
+        btn.disabled = true;
+        setStatus($("gdpr-export-status"), "Building export…");
+        try {
+            const res = await fetch("/profile/export.zip", {
+                headers: { "Authorization": `Bearer ${state.token}` },
+            });
+            if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `fitness-agent-export-${new Date().toISOString().slice(0, 10)}.zip`;
+            a.click();
+            URL.revokeObjectURL(url);
+            flashStatus("gdpr-export-status", "Downloaded ✓", "success");
+        } catch (err) {
+            setStatus($("gdpr-export-status"), err.message, "error");
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    function openDeleteModal() {
+        $("delete-confirm-email").value = "";
+        $("delete-confirm-password").value = "";
+        setStatus($("delete-modal-status"), "");
+        $("delete-modal").classList.remove("hidden");
+        $("delete-confirm-email").focus();
+    }
+    function closeDeleteModal() { $("delete-modal").classList.add("hidden"); }
+
+    async function confirmDeleteAccount() {
+        const btn = $("delete-confirm-btn");
+        const email = $("delete-confirm-email").value.trim();
+        const password = $("delete-confirm-password").value;
+        if (!email || !password) {
+            setStatus($("delete-modal-status"), "Email and password are both required.", "error");
+            return;
+        }
+        btn.disabled = true;
+        setStatus($("delete-modal-status"), "Deleting account…");
+        try {
+            const res = await fetch("/profile/account", {
+                method: "DELETE",
+                headers: { ...authHeaders() },
+                body: JSON.stringify({ confirm: email, password }),
+            });
+            if (!res.ok) throw new Error((await res.json()).detail || `HTTP ${res.status}`);
+            // Done — wipe local state and bounce to login.
+            closeDeleteModal();
+            logout();
+            alert("Your account and data have been permanently deleted.");
+        } catch (err) {
+            setStatus($("delete-modal-status"), err.message, "error");
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    $("gdpr-export-btn").addEventListener("click", exportMyData);
+    $("gdpr-delete-btn").addEventListener("click", openDeleteModal);
+    $("delete-cancel-btn").addEventListener("click", closeDeleteModal);
+    $("delete-confirm-btn").addEventListener("click", confirmDeleteAccount);
+    $("delete-modal").addEventListener("click", e => {
+        if (e.target.id === "delete-modal") closeDeleteModal();
+    });
 
     /* ── Change password ── */
     $("change-pw-btn").addEventListener("click", async () => {

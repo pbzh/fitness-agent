@@ -8,7 +8,7 @@ import structlog
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from app.api import auth, calendar, chat, config, files, health, profile, workouts
+from app.api import auth, calendar, chat, config, files, gdpr, health, profile, workouts
 from app.config import get_settings
 from app.scheduler.jobs import start_scheduler, stop_scheduler
 
@@ -82,6 +82,7 @@ app.include_router(config.router)
 app.include_router(chat.router)
 app.include_router(workouts.router)
 app.include_router(profile.router)
+app.include_router(gdpr.router)
 app.include_router(files.router)
 app.include_router(calendar.router)
 

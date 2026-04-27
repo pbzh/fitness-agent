@@ -350,6 +350,8 @@ local storage. API clients pass the token as `Authorization: Bearer <token>`.
 | GET  | `/calendar/workouts/{plan_id}.ics` | per-plan workout calendar |
 | GET  | `/calendar/meals/{plan_id}.ics` | per-plan meal calendar |
 | GET  | `/calendar/upcoming.ics?days=30` | rolling combined feed |
+| GET  | `/profile/export.zip` | GDPR Art. 15+20 export — data.json + files |
+| DELETE | `/profile/account` | GDPR Art. 17 erasure (requires password + email confirm) |
 | GET  | `/healthz` | liveness probe |
 
 ## Smoke testing
@@ -438,6 +440,37 @@ session. Every tool must wrap its DB work in
 key changed. Check `/opt/fitness-agent-data/.encryption.key` exists and is
 unchanged, or that `SETTINGS_ENCRYPTION_KEY` env matches what was used
 when the keys were stored.
+
+## GDPR
+
+The app is built to make data-subject rights easy to exercise. The full
+privacy notice is in the WebUI's **About** tab; what's wired up:
+
+| Right | How |
+|---|---|
+| Access + portability (Art. 15, 20) | `GET /profile/export.zip` — Settings → "Download my data". Returns `data.json` (every row you own, with bcrypt hashes and ciphertext stripped) plus `files/<id>/<filename>` for each upload or generated image. |
+| Erasure (Art. 17) | `DELETE /profile/account` — Settings → "Delete my account". Hard-deletes DB rows + on-disk files. Requires the user's current password and a typed-confirm of the email. |
+| Rectification (Art. 16) | `PUT /profile`, `PUT /profile/llm`, `PUT /profile` (`coach_prompts` field). |
+| Restriction / objection (Art. 18, 21) | Switch any coach to `local` in Settings → "LLM providers & API keys". The Mind coach can run end-to-end on local LLM — no third-party processor. |
+| Withdraw consent | Same effect as restriction or erasure; the moment you flip a coach to `local` (or delete the account), processing stops. |
+
+**Recipients (data processors):** Anthropic, PBC and OpenAI, L.L.C. — but
+*only* for turns whose coach you've routed to them. Both publish DPAs:
+
+- [Anthropic DPA](https://www.anthropic.com/legal/dpa)
+- [OpenAI DPA](https://openai.com/policies/data-processing-addendum)
+
+Both process in the United States; Standard Contractual Clauses apply.
+Local-LLM routing keeps everything in your homelab.
+
+**Security at rest:** API keys encrypted with Fernet (AES-128-CBC + HMAC-SHA256);
+passwords bcrypt-hashed. Encryption-key path is logged at startup; back it
+up alongside your DB. Run over HTTPS in any non-loopback deployment.
+
+**Multi-tenant note:** if you invite others onto your instance you become
+a controller. Document the lawful basis (consent, captured at signup), tell
+them you process their data, and respect their export/erasure requests
+through the same endpoints.
 
 ## Roadmap
 
