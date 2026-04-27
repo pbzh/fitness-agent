@@ -14,7 +14,7 @@ import structlog
 from pydantic_ai import Agent
 
 from app.agent.prompts import BOSS_PROMPT
-from app.agent.router import DISPATCHABLE_TASKS, Provider, TaskClass, get_model_for_task
+from app.agent.router import DISPATCHABLE_TASKS, Provider, TaskClass
 from app.config import get_settings
 
 log = structlog.get_logger()
@@ -33,16 +33,19 @@ async def classify_turn(
     recent_user_msgs: list[str],
     boss_provider: Provider | None = None,
     prompt_override: str | None = None,
+    api_key: str | None = None,
 ) -> TaskClass:
     """Return the best dispatchable task for this turn.
 
     ``boss_provider`` is the resolved provider (user override > .env default).
+    ``api_key`` is the user's DB-stored key for that provider (may be None).
     ``prompt_override`` replaces the built-in BOSS_PROMPT when set.
     Falls back to Anthropic if available, otherwise local.
     """
     if boss_provider is None:
         boss_provider = Provider.ANTHROPIC if get_settings().anthropic_api_key else Provider.LOCAL
-    model = get_model_for_task(TaskClass.AUTO, override_provider=boss_provider)
+    from app.agent.router import build_model
+    model = build_model(boss_provider, api_key=api_key)
     classifier: Agent[None, str] = Agent(
         model=model,
         output_type=_LITERAL,
