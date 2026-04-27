@@ -100,6 +100,10 @@ class UserProfile(SQLModel, table=True):
     # provider names: "anthropic" | "openai" | "local". Missing keys fall
     # back to the corresponding .env value.
     api_keys_enc: dict[str, str] | None = Field(default=None, sa_type=JSONB)
+    # Privacy + i18n knobs.
+    local_only: bool = False
+    chat_retention_days: int | None = None  # None = keep forever
+    preferred_language: str | None = None    # "en" | "de" | None=auto
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
     user: User | None = Relationship(back_populates="profile")

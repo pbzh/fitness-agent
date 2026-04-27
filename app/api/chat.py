@@ -171,33 +171,52 @@ async def chat(
     # Resolve provider: user override > .env default. Then fall back if the
     # chosen cloud provider has neither user nor .env API key.
     settings = get_settings()
-    resolved_provider = eff.provider_for(resolved_task.value, _env_provider_for(resolved_task))
+    local_only = bool(profile.local_only) if profile else False
 
-    def _has_key(p: Provider) -> bool:
-        if eff.key_for(p):
-            return True
-        if p == Provider.ANTHROPIC: return bool(settings.anthropic_api_key)
-        if p == Provider.OPENAI:    return bool(settings.openai_api_key)
-        return True  # local always usable
-
-    if resolved_provider in (Provider.ANTHROPIC, Provider.OPENAI) and not _has_key(resolved_provider):
-        log.warning("Falling back to local: no API key for chosen provider", provider=resolved_provider.value)
+    if local_only:
+        # User has flipped the privacy switch: every turn stays on local LLM.
+        # We deliberately ignore the per-coach provider override and the
+        # image→Anthropic auto-bump. Cloud-only features (image gen) get
+        # blocked separately at the tool level.
         resolved_provider = Provider.LOCAL
+        log.info("Local-only mode active — forcing local LLM", task=resolved_task.value)
+    else:
+        resolved_provider = eff.provider_for(resolved_task.value, _env_provider_for(resolved_task))
 
-    # If the user attached an image and the task would otherwise route to the
-    # local llama.cpp endpoint (not multimodal), bump this single run to
-    # Anthropic so the image is actually visible to the model.
-    if has_image(parts) and resolved_provider == Provider.LOCAL and _has_key(Provider.ANTHROPIC):
-        log.info("Routing image-bearing turn to anthropic", task=resolved_task.value)
-        resolved_provider = Provider.ANTHROPIC
+        def _has_key(p: Provider) -> bool:
+            if eff.key_for(p):
+                return True
+            if p == Provider.ANTHROPIC: return bool(settings.anthropic_api_key)
+            if p == Provider.OPENAI:    return bool(settings.openai_api_key)
+            return True  # local always usable
+
+        if resolved_provider in (Provider.ANTHROPIC, Provider.OPENAI) and not _has_key(resolved_provider):
+            log.warning("Falling back to local: no API key for chosen provider", provider=resolved_provider.value)
+            resolved_provider = Provider.LOCAL
+
+        # If the user attached an image and the task would otherwise route to
+        # the local llama.cpp endpoint (not multimodal), bump this single run
+        # to Anthropic so the image is actually visible to the model.
+        if has_image(parts) and resolved_provider == Provider.LOCAL and _has_key(Provider.ANTHROPIC):
+            log.info("Routing image-bearing turn to anthropic", task=resolved_task.value)
+            resolved_provider = Provider.ANTHROPIC
 
     api_key = resolve_api_key(resolved_provider, eff)
     model = build_model(resolved_provider, api_key=api_key)
 
+    # Append a language directive so the agent answers in the user's
+    # preferred language (independent of any prompt overrides).
+    base_prompt = resolve_prompt(resolved_task, prompt_overrides)
+    lang_directive = ""
+    if profile and profile.preferred_language == "de":
+        lang_directive = "\n\nAlways respond in German (Deutsch). Use Swiss spelling where natural."
+    elif profile and profile.preferred_language == "en":
+        lang_directive = "\n\nAlways respond in English."
+
     agent: Agent[AgentDeps, str] = Agent(
         model=model,
         deps_type=AgentDeps,
-        system_prompt=resolve_prompt(resolved_task, prompt_overrides),
+        system_prompt=base_prompt + lang_directive,
     )
     register_tools(agent)
     deps = AgentDeps(session_factory=AsyncSessionLocal, user_id=user_id)

@@ -544,6 +544,22 @@
         .files-empty h3 { color: var(--text); font-size: 1rem; margin-bottom: 6px; }
         .files-empty p { font-size: 0.86rem; }
 
+        /* ── Toggle switch ── */
+        .switch { position: relative; display: inline-block; width: 46px; height: 26px; }
+        .switch input { display: none; }
+        .switch-slider {
+            position: absolute; cursor: pointer; inset: 0;
+            background: var(--surface-3); border: 1px solid var(--border);
+            border-radius: 26px; transition: .2s;
+        }
+        .switch-slider::before {
+            content: ""; position: absolute; left: 2px; top: 2px;
+            width: 20px; height: 20px; border-radius: 50%;
+            background: var(--surface); box-shadow: 0 1px 3px rgba(0,0,0,0.25); transition: .2s;
+        }
+        .switch input:checked + .switch-slider { background: var(--primary); border-color: var(--primary); }
+        .switch input:checked + .switch-slider::before { transform: translateX(20px); }
+
         /* ── GDPR actions + delete-confirm modal ── */
         .gdpr-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
@@ -648,16 +664,17 @@
             <span class="brand-wordmark">Fitness Agent</span>
         </div>
         <nav class="nav-tabs hidden" id="nav-tabs-desktop">
-            <button class="nav-tab active" data-view="app-view" type="button">Chat</button>
-            <button class="nav-tab" data-view="history-view" type="button">History</button>
-            <button class="nav-tab" data-view="files-view" type="button">Files</button>
-            <button class="nav-tab" data-view="settings-view" type="button">Settings</button>
-            <button class="nav-tab" data-view="about-view" type="button">About</button>
+            <button class="nav-tab active" data-view="app-view" type="button" data-i18n="nav.chat">Chat</button>
+            <button class="nav-tab" data-view="history-view" type="button" data-i18n="nav.history">History</button>
+            <button class="nav-tab" data-view="files-view" type="button" data-i18n="nav.files">Files</button>
+            <button class="nav-tab" data-view="settings-view" type="button" data-i18n="nav.settings">Settings</button>
+            <button class="nav-tab" data-view="about-view" type="button" data-i18n="nav.about">About</button>
         </nav>
         <div class="topbar-actions">
-            <span class="session-email" id="session-label">Signed out</span>
+            <span class="session-email" id="session-label" data-i18n="nav.signedOut">Signed out</span>
+            <button class="icon-btn" id="lang-toggle" title="Sprache / Language" type="button">🌐 EN</button>
             <button class="icon-btn" id="theme-toggle" title="Toggle theme">🌙</button>
-            <button class="text-btn hidden" id="logout-button" type="button">Sign out</button>
+            <button class="text-btn hidden" id="logout-button" type="button" data-i18n="nav.signOut">Sign out</button>
         </div>
     </header>
 
@@ -667,49 +684,49 @@
             <div class="login-brand-inner">
                 <div class="login-brand-icon">FA</div>
                 <h1 class="login-brand-name">Fitness Agent</h1>
-                <p class="login-brand-sub">Your AI-powered personal fitness &amp; nutrition coach. Chat with specialized coaches for workouts, meals, progress tracking, and mental wellness.</p>
+                <p class="login-brand-sub" data-i18n="login.tagline">Your AI-powered personal fitness &amp; nutrition coach. Chat with specialized coaches for workouts, meals, progress tracking, and mental wellness.</p>
             </div>
         </div>
         <div class="login-form-panel">
             <div class="login-card">
                 <div class="auth-tabs">
-                    <button class="auth-tab active" id="tab-signin" type="button">Sign in</button>
-                    <button class="auth-tab" id="tab-register" type="button">Create account</button>
+                    <button class="auth-tab active" id="tab-signin" type="button" data-i18n="login.signIn">Sign in</button>
+                    <button class="auth-tab" id="tab-register" type="button" data-i18n="login.createAccount">Create account</button>
                 </div>
 
                 <!-- Sign-in form -->
                 <form id="login-form">
-                    <h2>Welcome back</h2>
-                    <p class="subtitle">Sign in to your fitness coach</p>
+                    <h2 data-i18n="login.welcomeBack">Welcome back</h2>
+                    <p class="subtitle" data-i18n="login.subtitle">Sign in to your fitness coach</p>
                     <div class="field">
-                        <label for="email">Email</label>
+                        <label for="email" data-i18n="login.email">Email</label>
                         <input id="email" name="email" type="email" autocomplete="username" required>
                     </div>
                     <div class="field">
-                        <label for="password">Password</label>
+                        <label for="password" data-i18n="login.password">Password</label>
                         <input id="password" name="password" type="password" autocomplete="current-password" required>
                     </div>
-                    <button class="btn-primary" id="login-button" type="submit">Sign in</button>
+                    <button class="btn-primary" id="login-button" type="submit" data-i18n="login.signIn">Sign in</button>
                     <div class="status" id="login-status"></div>
                 </form>
 
                 <!-- Register form -->
                 <form id="register-form" class="hidden">
-                    <h2>Create account</h2>
-                    <p class="subtitle">Start your fitness journey</p>
+                    <h2 data-i18n="login.createAccount">Create account</h2>
+                    <p class="subtitle" data-i18n="login.regSubtitle">Start your fitness journey</p>
                     <div class="field">
-                        <label for="reg-email">Email</label>
+                        <label for="reg-email" data-i18n="login.email">Email</label>
                         <input id="reg-email" name="email" type="email" autocomplete="email" required>
                     </div>
                     <div class="field">
-                        <label for="reg-password">Password <span style="font-weight:400;text-transform:none">(min 8 chars)</span></label>
+                        <label for="reg-password"><span data-i18n="login.password">Password</span> <span style="font-weight:400;text-transform:none" data-i18n="login.minChars">(min 8 chars)</span></label>
                         <input id="reg-password" name="password" type="password" autocomplete="new-password" minlength="8" required>
                     </div>
                     <div class="field">
-                        <label for="reg-confirm">Confirm password</label>
+                        <label for="reg-confirm" data-i18n="login.confirmPassword">Confirm password</label>
                         <input id="reg-confirm" name="confirm" type="password" autocomplete="new-password" minlength="8" required>
                     </div>
-                    <button class="btn-primary" id="register-button" type="submit">Create account</button>
+                    <button class="btn-primary" id="register-button" type="submit" data-i18n="login.createAccount">Create account</button>
                     <div class="status" id="register-status"></div>
                 </form>
             </div>
@@ -727,12 +744,12 @@
                     </div>
                     <div class="coach-row">
                         <div class="coach-pills">
-                            <button class="coach-btn active" data-task="auto" type="button" title="The manager picks the best coach for each turn">🎯 Auto</button>
-                            <button class="coach-btn" data-task="chat" type="button">💬 Chat</button>
-                            <button class="coach-btn" data-task="plan_generation" type="button">📅 Plan</button>
-                            <button class="coach-btn" data-task="nutrition_analysis" type="button">🥗 Nutrition</button>
-                            <button class="coach-btn" data-task="progress_review" type="button">📊 Progress</button>
-                            <button class="coach-btn" data-task="mental_health" type="button">🧠 Mind</button>
+                            <button class="coach-btn active" data-task="auto" type="button" data-i18n-title="coach.autoTip" title="The manager picks the best coach for each turn">🎯 <span data-i18n="coach.auto">Auto</span></button>
+                            <button class="coach-btn" data-task="chat" type="button">💬 <span data-i18n="coach.chat">Chat</span></button>
+                            <button class="coach-btn" data-task="plan_generation" type="button">📅 <span data-i18n="coach.plan">Plan</span></button>
+                            <button class="coach-btn" data-task="nutrition_analysis" type="button">🥗 <span data-i18n="coach.nutrition">Nutrition</span></button>
+                            <button class="coach-btn" data-task="progress_review" type="button">📊 <span data-i18n="coach.progress">Progress</span></button>
+                            <button class="coach-btn" data-task="mental_health" type="button">🧠 <span data-i18n="coach.mind">Mind</span></button>
                         </div>
                         <span class="provider-wrap local" id="provider-badge">
                             <span class="provider-dot"></span>
@@ -757,7 +774,7 @@
                             <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
                         </svg>
                     </button>
-                    <textarea id="message-input" placeholder="Ask about workouts, meals, recovery… (or just attach a file)" rows="1"></textarea>
+                    <textarea id="message-input" data-i18n-placeholder="composer.placeholder" placeholder="Ask about workouts, meals, recovery… (or just attach a file)" rows="1"></textarea>
                     <button class="send-btn" id="send-button" type="submit" title="Send">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                             <line x1="22" y1="2" x2="11" y2="13"></line>
@@ -785,7 +802,7 @@
             <!-- Account -->
             <div class="settings-card">
                 <div class="card-header">
-                    <h3>Account</h3>
+                    <h3 data-i18n="settings.account">Account</h3>
                     <p>Your identity and personal details</p>
                 </div>
                 <div class="card-body">
@@ -811,7 +828,7 @@
                     </div>
                 </div>
                 <div class="card-footer">
-                    <button class="btn-save" id="save-account-btn" type="button">Save</button>
+                    <button class="btn-save" id="save-account-btn" type="button" data-i18n="common.save">Save</button>
                     <span class="status" id="account-status"></span>
                 </div>
             </div>
@@ -819,7 +836,7 @@
             <!-- Security -->
             <div class="settings-card">
                 <div class="card-header">
-                    <h3>Security</h3>
+                    <h3 data-i18n="settings.security">Security</h3>
                     <p>Change your login password</p>
                 </div>
                 <div class="card-body">
@@ -839,7 +856,7 @@
                     </div>
                 </div>
                 <div class="card-footer">
-                    <button class="btn-save" id="change-pw-btn" type="button">Change password</button>
+                    <button class="btn-save" id="change-pw-btn" type="button" data-i18n="settings.changePassword">Change password</button>
                     <span class="status" id="security-status"></span>
                 </div>
             </div>
@@ -847,7 +864,7 @@
             <!-- Body metrics -->
             <div class="settings-card">
                 <div class="card-header">
-                    <h3>Body metrics</h3>
+                    <h3 data-i18n="settings.body">Body metrics</h3>
                     <p>Used for personalised calorie and training recommendations</p>
                 </div>
                 <div class="card-body">
@@ -867,7 +884,7 @@
                     </div>
                 </div>
                 <div class="card-footer">
-                    <button class="btn-save" id="save-body-btn" type="button">Save</button>
+                    <button class="btn-save" id="save-body-btn" type="button" data-i18n="common.save">Save</button>
                     <span class="status" id="body-status"></span>
                 </div>
             </div>
@@ -875,7 +892,7 @@
             <!-- Training -->
             <div class="settings-card">
                 <div class="card-header">
-                    <h3>Training</h3>
+                    <h3 data-i18n="settings.training">Training</h3>
                     <p>Goals, schedule, and available equipment</p>
                 </div>
                 <div class="card-body">
@@ -899,7 +916,7 @@
                     </div>
                 </div>
                 <div class="card-footer">
-                    <button class="btn-save" id="save-training-btn" type="button">Save</button>
+                    <button class="btn-save" id="save-training-btn" type="button" data-i18n="common.save">Save</button>
                     <span class="status" id="training-status"></span>
                 </div>
             </div>
@@ -907,7 +924,7 @@
             <!-- Nutrition -->
             <div class="settings-card">
                 <div class="card-header">
-                    <h3>Nutrition</h3>
+                    <h3 data-i18n="settings.nutrition">Nutrition</h3>
                     <p>Daily calorie and macro targets, dietary preferences</p>
                 </div>
                 <div class="card-body">
@@ -940,7 +957,7 @@
                     </div>
                 </div>
                 <div class="card-footer">
-                    <button class="btn-save" id="save-nutrition-btn" type="button">Save</button>
+                    <button class="btn-save" id="save-nutrition-btn" type="button" data-i18n="common.save">Save</button>
                     <span class="status" id="nutrition-status"></span>
                 </div>
             </div>
@@ -948,7 +965,7 @@
             <!-- LLM providers + API keys -->
             <div class="settings-card">
                 <div class="card-header">
-                    <h3>LLM providers &amp; API keys</h3>
+                    <h3 data-i18n="settings.llm">LLM providers &amp; API keys</h3>
                     <p>
                         Pick the provider per coach (overrides .env defaults; leave on
                         “Default” to inherit). API keys are encrypted at rest with
@@ -960,15 +977,63 @@
                     <!-- populated by renderLLMConfig() -->
                 </div>
                 <div class="card-footer">
-                    <button class="btn-save" id="save-llm-btn" type="button">Save</button>
+                    <button class="btn-save" id="save-llm-btn" type="button" data-i18n="common.save">Save</button>
                     <span class="status" id="llm-status"></span>
+                </div>
+            </div>
+
+            <!-- Privacy & language toggles -->
+            <div class="settings-card">
+                <div class="card-header">
+                    <h3 data-i18n="settings.privacy">Data & Privacy</h3>
+                    <p data-i18n="settings.privacyToggleDesc">Routing and retention controls. The full GDPR notice and account-management actions are below.</p>
+                </div>
+                <div class="card-body">
+                    <div class="field" style="display:flex;align-items:center;gap:12px;">
+                        <label style="margin:0;flex:1;">
+                            <span data-i18n="settings.localOnly">Local-only mode</span>
+                            <div style="font-weight:400;color:var(--text-2);font-size:0.78rem;text-transform:none;letter-spacing:0;margin-top:3px;" data-i18n="settings.localOnlyDesc">Force every coach onto your local LLM…</div>
+                        </label>
+                        <label class="switch" style="flex-shrink:0;">
+                            <input type="checkbox" id="local-only-toggle">
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="field" style="margin-top:14px;">
+                        <label for="retention-select">
+                            <span data-i18n="settings.retention">Chat retention</span>
+                        </label>
+                        <div style="font-weight:400;color:var(--text-2);font-size:0.78rem;text-transform:none;letter-spacing:0;margin-bottom:6px;" data-i18n="settings.retentionDesc">Auto-delete chat messages older than this many days.</div>
+                        <select id="retention-select">
+                            <option value="0"   data-i18n="settings.retentionForever">Forever</option>
+                            <option value="30"  data-i18n="settings.retention30">30 days</option>
+                            <option value="90"  data-i18n="settings.retention90">90 days</option>
+                            <option value="180" data-i18n="settings.retention180">180 days</option>
+                            <option value="365" data-i18n="settings.retention365">1 year</option>
+                        </select>
+                    </div>
+
+                    <div class="field" style="margin-top:14px;">
+                        <label for="language-select"><span data-i18n="settings.language">Language</span></label>
+                        <div style="font-weight:400;color:var(--text-2);font-size:0.78rem;text-transform:none;letter-spacing:0;margin-bottom:6px;" data-i18n="settings.languageDesc">Drives UI translations and prepends a 'respond in this language' directive.</div>
+                        <select id="language-select">
+                            <option value=""   data-i18n="settings.langAuto">Auto-detect</option>
+                            <option value="en" data-i18n="settings.langEn">English</option>
+                            <option value="de" data-i18n="settings.langDe">Deutsch</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button class="btn-save" id="save-privacy-btn" type="button" data-i18n="common.save">Save</button>
+                    <span class="status" id="privacy-status"></span>
                 </div>
             </div>
 
             <!-- Coach prompts -->
             <div class="settings-card">
                 <div class="card-header">
-                    <h3>Coach prompts</h3>
+                    <h3 data-i18n="settings.prompts">Coach prompts</h3>
                     <p>
                         Override the system prompt used by each coach. Leave a textarea
                         blank to use the built-in default. The Auto/manager prompt is
@@ -980,7 +1045,7 @@
                     <!-- populated by renderCoachPrompts() -->
                 </div>
                 <div class="card-footer">
-                    <button class="btn-save" id="save-coach-prompts-btn" type="button">Save prompts</button>
+                    <button class="btn-save" id="save-coach-prompts-btn" type="button" data-i18n="settings.savePrompts">Save prompts</button>
                     <span class="status" id="coach-prompts-status"></span>
                 </div>
             </div>
@@ -988,7 +1053,7 @@
             <!-- Data & Privacy (GDPR) -->
             <div class="settings-card">
                 <div class="card-header">
-                    <h3>Data &amp; Privacy</h3>
+                    <h3 data-i18n="settings.privacy">Data &amp; Privacy</h3>
                     <p>
                         Exercise your data-subject rights. The export includes every
                         row you own and every uploaded/generated file. Deletion is
@@ -998,11 +1063,11 @@
                 </div>
                 <div class="card-body">
                     <div class="gdpr-actions">
-                        <button class="btn-save" id="gdpr-export-btn" type="button">📦 Download my data (.zip)</button>
+                        <button class="btn-save" id="gdpr-export-btn" type="button" data-i18n="privacy.export">📦 Download my data (.zip)</button>
                         <span class="status" id="gdpr-export-status"></span>
                     </div>
                     <div class="gdpr-actions" style="margin-top: 14px;">
-                        <button class="btn-danger" id="gdpr-delete-btn" type="button">🗑 Delete my account</button>
+                        <button class="btn-danger" id="gdpr-delete-btn" type="button" data-i18n="privacy.delete">🗑 Delete my account</button>
                         <span class="status" id="gdpr-delete-status"></span>
                     </div>
                 </div>
@@ -1011,11 +1076,11 @@
             <!-- Sign out -->
             <div class="settings-card">
                 <div class="card-header">
-                    <h3>Session</h3>
+                    <h3 data-i18n="settings.session">Session</h3>
                     <p>Sign out of this device</p>
                 </div>
                 <div class="card-footer" style="border-top: none; margin-top: 0;">
-                    <button class="btn-danger" id="settings-logout-btn" type="button">Sign out</button>
+                    <button class="btn-danger" id="settings-logout-btn" type="button" data-i18n="nav.signOut">Sign out</button>
                 </div>
             </div>
 
@@ -1068,7 +1133,7 @@
 
             <div class="settings-card">
                 <div class="card-header">
-                    <h3>What it does</h3>
+                    <h3 data-i18n="about.what">What it does</h3>
                     <p>Five coaches sharing one rolling chat thread, plus the tools and integrations they call.</p>
                 </div>
                 <div class="card-body">
@@ -1091,7 +1156,7 @@
 
             <div class="settings-card">
                 <div class="card-header">
-                    <h3>Where your data lives</h3>
+                    <h3 data-i18n="about.where">Where your data lives</h3>
                     <p>What gets stored or sent for each piece of information. Reflects your <em>current</em> per-coach provider settings — change them in Settings → “LLM providers &amp; API keys”.</p>
                 </div>
                 <div class="card-body about-table-wrap">
@@ -1117,7 +1182,7 @@
 
             <div class="settings-card">
                 <div class="card-header">
-                    <h3>How routing decides per turn</h3>
+                    <h3 data-i18n="about.routing">How routing decides per turn</h3>
                 </div>
                 <div class="card-body">
                     <ol class="about-steps">
@@ -1133,7 +1198,7 @@
 
             <div class="settings-card">
                 <div class="card-header">
-                    <h3>Privacy notice (GDPR)</h3>
+                    <h3 data-i18n="about.privacy">Privacy notice (GDPR)</h3>
                     <p>What's processed, where it goes, how long it's kept, and how to exercise your rights.</p>
                 </div>
                 <div class="card-body">
@@ -1227,8 +1292,8 @@
             </div>
             <div class="status" id="delete-modal-status"></div>
             <div class="modal-actions">
-                <button class="text-btn" id="delete-cancel-btn" type="button">Cancel</button>
-                <button class="btn-danger" id="delete-confirm-btn" type="button">Delete account</button>
+                <button class="text-btn" id="delete-cancel-btn" type="button" data-i18n="common.cancel">Cancel</button>
+                <button class="btn-danger" id="delete-confirm-btn" type="button" data-i18n="privacy.deleteConfirm">Delete account</button>
             </div>
         </div>
     </div>
@@ -1239,27 +1304,27 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
             </svg>
-            Chat
+            <span data-i18n="nav.chat">Chat</span>
         </button>
         <button class="tab-item" data-view="history-view" type="button">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
                 <polyline points="12 6 12 12 16 14"></polyline>
             </svg>
-            History
+            <span data-i18n="nav.history">History</span>
         </button>
         <button class="tab-item" data-view="files-view" type="button">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
             </svg>
-            Files
+            <span data-i18n="nav.files">Files</span>
         </button>
         <button class="tab-item" data-view="settings-view" type="button">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="3"></circle>
                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
             </svg>
-            Settings
+            <span data-i18n="nav.settings">Settings</span>
         </button>
         <button class="tab-item" data-view="about-view" type="button">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1267,7 +1332,7 @@
                 <line x1="12" y1="16" x2="12" y2="12"></line>
                 <line x1="12" y1="8" x2="12.01" y2="8"></line>
             </svg>
-            About
+            <span data-i18n="nav.about">About</span>
         </button>
     </nav>
 
@@ -1275,6 +1340,122 @@
 <script>
     const tokenKey = "fitness-agent-token";
     const emailKey = "fitness-agent-email";
+    const langKey  = "fitness-agent-lang";
+
+    /* ── i18n ─────────────────────────────────────────────────── */
+    const I18N = {
+        en: {
+            "nav.signedOut": "Signed out", "nav.signOut": "Sign out", "nav.logout": "Logout",
+            "nav.chat": "Chat", "nav.history": "History", "nav.files": "Files",
+            "nav.settings": "Settings", "nav.about": "About",
+            "login.tagline": "Your AI-powered personal fitness & nutrition coach. Chat with specialized coaches for workouts, meals, progress tracking, and mental wellness.",
+            "login.welcomeBack": "Welcome back", "login.subtitle": "Sign in to your fitness coach",
+            "login.regSubtitle": "Start your fitness journey",
+            "login.email": "Email", "login.password": "Password",
+            "login.minChars": "(min 8 chars)", "login.confirmPassword": "Confirm password",
+            "login.signIn": "Sign in", "login.createAccount": "Create account",
+            "coach.auto": "Auto", "coach.autoTip": "The manager picks the best coach for each turn",
+            "coach.chat": "Chat", "coach.plan": "Plan", "coach.nutrition": "Nutrition",
+            "coach.progress": "Progress", "coach.mind": "Mind",
+            "composer.placeholder": "Ask about workouts, meals, recovery… (or just attach a file)",
+            "settings.account": "Account", "settings.security": "Security",
+            "settings.body": "Body metrics", "settings.training": "Training",
+            "settings.nutrition": "Nutrition",
+            "settings.llm": "LLM providers & API keys", "settings.prompts": "Coach prompts",
+            "settings.privacy": "Data & Privacy", "settings.session": "Session",
+            "settings.savePrompts": "Save prompts", "settings.changePassword": "Change password",
+            "settings.localOnly": "Local-only mode",
+            "settings.localOnlyDesc": "Force every coach onto your local LLM. No turn is ever sent to Anthropic or OpenAI. Image generation is disabled while this is on (it requires OpenAI).",
+            "settings.retention": "Chat retention",
+            "settings.retentionDesc": "Auto-delete chat messages older than this many days. 'Forever' keeps everything.",
+            "settings.retentionForever": "Forever",
+            "settings.retention30": "30 days", "settings.retention90": "90 days",
+            "settings.retention180": "180 days", "settings.retention365": "1 year",
+            "settings.language": "Language",
+            "settings.languageDesc": "Drives UI translations and prepends a 'respond in this language' directive to every coach.",
+            "settings.langAuto": "Auto-detect", "settings.langEn": "English", "settings.langDe": "Deutsch",
+            "common.save": "Save", "common.cancel": "Cancel", "common.refresh": "Refresh",
+            "privacy.export": "📦 Download my data (.zip)",
+            "privacy.delete": "🗑 Delete my account", "privacy.deleteConfirm": "Delete account",
+            "about.title": "About Fitness Agent", "about.what": "What it does",
+            "about.where": "Where your data lives",
+            "about.routing": "How routing decides per turn", "about.privacy": "Privacy notice (GDPR)",
+            "about.deNote": "Long-form privacy and feature text is shown in English only — translating legal text without review would be worse than not translating it.",
+        },
+        de: {
+            "nav.signedOut": "Abgemeldet", "nav.signOut": "Abmelden", "nav.logout": "Abmelden",
+            "nav.chat": "Chat", "nav.history": "Verlauf", "nav.files": "Dateien",
+            "nav.settings": "Einstellungen", "nav.about": "Info",
+            "login.tagline": "Dein KI-gestützter persönlicher Fitness- und Ernährungscoach. Chatte mit spezialisierten Coaches für Training, Mahlzeiten, Fortschritt und mentale Gesundheit.",
+            "login.welcomeBack": "Willkommen zurück", "login.subtitle": "Melde dich bei deinem Fitness-Coach an",
+            "login.regSubtitle": "Starte deine Fitness-Reise",
+            "login.email": "E-Mail", "login.password": "Passwort",
+            "login.minChars": "(min. 8 Zeichen)", "login.confirmPassword": "Passwort bestätigen",
+            "login.signIn": "Anmelden", "login.createAccount": "Konto erstellen",
+            "coach.auto": "Auto", "coach.autoTip": "Der Manager wählt für jede Nachricht den passenden Coach",
+            "coach.chat": "Chat", "coach.plan": "Plan", "coach.nutrition": "Ernährung",
+            "coach.progress": "Fortschritt", "coach.mind": "Mental",
+            "composer.placeholder": "Frag zu Training, Mahlzeiten, Erholung… (oder häng einfach eine Datei an)",
+            "settings.account": "Konto", "settings.security": "Sicherheit",
+            "settings.body": "Körperdaten", "settings.training": "Training",
+            "settings.nutrition": "Ernährung",
+            "settings.llm": "LLM-Anbieter & API-Schlüssel", "settings.prompts": "Coach-Prompts",
+            "settings.privacy": "Daten & Datenschutz", "settings.session": "Sitzung",
+            "settings.savePrompts": "Prompts speichern", "settings.changePassword": "Passwort ändern",
+            "settings.localOnly": "Nur-Lokal-Modus",
+            "settings.localOnlyDesc": "Erzwingt für jeden Coach das lokale LLM. Keine Nachricht wird je an Anthropic oder OpenAI gesendet. Bildgenerierung ist in diesem Modus deaktiviert (benötigt OpenAI).",
+            "settings.retention": "Chat-Aufbewahrung",
+            "settings.retentionDesc": "Lösche Chat-Nachrichten, die älter als diese Anzahl Tage sind. „Für immer“ behält alles.",
+            "settings.retentionForever": "Für immer",
+            "settings.retention30": "30 Tage", "settings.retention90": "90 Tage",
+            "settings.retention180": "180 Tage", "settings.retention365": "1 Jahr",
+            "settings.language": "Sprache",
+            "settings.languageDesc": "Steuert UI-Übersetzungen und stellt jedem Coach eine „antworte in dieser Sprache“-Anweisung voran.",
+            "settings.langAuto": "Automatisch erkennen", "settings.langEn": "English", "settings.langDe": "Deutsch",
+            "common.save": "Speichern", "common.cancel": "Abbrechen", "common.refresh": "Aktualisieren",
+            "privacy.export": "📦 Meine Daten herunterladen (.zip)",
+            "privacy.delete": "🗑 Konto löschen", "privacy.deleteConfirm": "Konto löschen",
+            "about.title": "Über Fitness Agent", "about.what": "Funktionen",
+            "about.where": "Wo deine Daten gespeichert werden",
+            "about.routing": "Wie das Routing pro Nachricht entscheidet", "about.privacy": "Datenschutzhinweis (DSGVO)",
+            "about.deNote": "Ausführliche Datenschutz- und Feature-Texte werden nur auf Englisch angezeigt — eine ungeprüfte Übersetzung von Rechtstexten wäre schlechter als gar keine.",
+        },
+    };
+
+    function detectLang() {
+        const stored = localStorage.getItem(langKey);
+        if (stored && I18N[stored]) return stored;
+        const nav = (navigator.language || "en").toLowerCase();
+        return nav.startsWith("de") ? "de" : "en";
+    }
+    function t(key) {
+        const lang = window._lang || "en";
+        return (I18N[lang] && I18N[lang][key]) || I18N.en[key] || key;
+    }
+    function applyI18n() {
+        document.documentElement.lang = window._lang || "en";
+        document.querySelectorAll("[data-i18n]").forEach(el => {
+            const v = t(el.getAttribute("data-i18n"));
+            if (v !== undefined) el.textContent = v;
+        });
+        document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
+            const v = t(el.getAttribute("data-i18n-placeholder"));
+            if (v !== undefined) el.placeholder = v;
+        });
+        document.querySelectorAll("[data-i18n-title]").forEach(el => {
+            const v = t(el.getAttribute("data-i18n-title"));
+            if (v !== undefined) el.title = v;
+        });
+        const btn = document.getElementById("lang-toggle");
+        if (btn) btn.textContent = "🌐 " + ((window._lang || "en").toUpperCase());
+    }
+    function setLanguage(lang) {
+        if (!I18N[lang]) lang = "en";
+        window._lang = lang;
+        localStorage.setItem(langKey, lang);
+        applyI18n();
+    }
+
     const themeKey = "fitness-agent-theme";
 
     let conversationId          = null;
@@ -1314,6 +1495,9 @@
         $("theme-toggle").textContent = t === "dark" ? "☀️" : "🌙";
         localStorage.setItem(themeKey, t);
     }
+    $("lang-toggle").addEventListener("click", () => {
+        setLanguage((window._lang || "en") === "en" ? "de" : "en");
+    });
     $("theme-toggle").addEventListener("click", () =>
         applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark")
     );
@@ -1698,8 +1882,53 @@
     async function loadLLMConfig() {
         try {
             const res = await request("/profile/llm", { headers: authHeaders() });
-            renderLLMConfig(await res.json());
+            const cfg = await res.json();
+            renderLLMConfig(cfg);
+            renderPrivacyToggles(cfg);
         } catch (_) {}
+    }
+
+    function renderPrivacyToggles(cfg) {
+        const tog = $("local-only-toggle");
+        if (tog) tog.checked = !!cfg.local_only;
+        const ret = $("retention-select");
+        if (ret) {
+            // Snap to nearest known option, else fall back to Forever.
+            const known = ["0", "30", "90", "180", "365"];
+            const v = String(cfg.chat_retention_days || 0);
+            ret.value = known.includes(v) ? v : "0";
+        }
+        const lang = $("language-select");
+        if (lang) lang.value = cfg.preferred_language || "";
+    }
+
+    async function savePrivacyToggles() {
+        const btn = $("save-privacy-btn");
+        btn.disabled = true;
+        setStatus($("privacy-status"), "…");
+        const payload = {
+            local_only: $("local-only-toggle").checked,
+            chat_retention_days: parseInt($("retention-select").value, 10) || 0,
+            preferred_language: $("language-select").value,  // "" clears server-side
+        };
+        try {
+            const res = await request("/profile/llm", {
+                method: "PUT",
+                headers: authHeaders(),
+                body: JSON.stringify(payload),
+            });
+            const cfg = await res.json();
+            renderPrivacyToggles(cfg);
+            // If the user picked a language, also flip the UI immediately.
+            if (cfg.preferred_language && I18N[cfg.preferred_language]) {
+                setLanguage(cfg.preferred_language);
+            }
+            flashStatus("privacy-status", "✓", "success");
+        } catch (err) {
+            setStatus($("privacy-status"), err.message, "error");
+        } finally {
+            btn.disabled = false;
+        }
     }
 
     function renderLLMConfig(cfg) {
@@ -1983,6 +2212,7 @@
 
     $("save-coach-prompts-btn").addEventListener("click", saveCoachPrompts);
     $("save-llm-btn").addEventListener("click", saveLLMConfig);
+    $("save-privacy-btn").addEventListener("click", savePrivacyToggles);
 
     /* ── GDPR: export + delete ── */
     async function exportMyData() {
@@ -2584,6 +2814,7 @@
     $("chat-form").addEventListener("submit", sendMessage);
 
     /* ── Boot ── */
+    setLanguage(detectLang());
     applyTheme(localStorage.getItem(themeKey) || "dark");
     $("email").value = state.email;
     showApp(Boolean(state.token));

@@ -130,6 +130,9 @@ class LLMConfigRead(BaseModel):
     env_providers: dict[str, str]      # task -> .env default (read-only)
     api_keys_set: dict[str, bool]      # provider -> "set in DB?"
     api_keys_env: dict[str, bool]      # provider -> "set in .env?"
+    local_only: bool                   # if true, every coach forced to local
+    chat_retention_days: int | None    # null = keep forever
+    preferred_language: str | None     # "en" | "de" | null=auto
 
 
 class LLMConfigUpdate(BaseModel):
@@ -137,6 +140,18 @@ class LLMConfigUpdate(BaseModel):
     coach_providers: dict[str, str] | None = None
     # provider -> plaintext API key. Empty string clears that key.
     api_keys: dict[str, str] | None = None
+    local_only: bool | None = None
+    chat_retention_days: int | None = Field(default=None, ge=0, le=3650)
+    preferred_language: str | None = None  # "en"|"de"|"" (cleared)
+
+    @field_validator("preferred_language")
+    @classmethod
+    def validate_lang(cls, v: str | None) -> str | None:
+        if v is None or v == "":
+            return v
+        if v not in {"en", "de"}:
+            raise ValueError("preferred_language must be 'en', 'de', or empty")
+        return v
 
     @field_validator("coach_providers")
     @classmethod
@@ -214,6 +229,9 @@ def _llm_snapshot(profile: UserProfile | None) -> LLMConfigRead:
             "openai":    bool(settings.openai_api_key),
             "local":     bool(settings.local_llm_api_key and settings.local_llm_api_key != "not-needed"),
         },
+        local_only=bool(profile.local_only) if profile else False,
+        chat_retention_days=profile.chat_retention_days if profile else None,
+        preferred_language=profile.preferred_language if profile else None,
     )
 
 
@@ -258,6 +276,17 @@ async def update_llm_config(
                 else:
                     merged[provider] = encrypt(plaintext)
             profile.api_keys_enc = merged or None
+
+        if body.local_only is not None:
+            profile.local_only = body.local_only
+
+        if body.chat_retention_days is not None:
+            # 0 = "keep forever" (clears the limit); positive int = N-day window.
+            profile.chat_retention_days = body.chat_retention_days or None
+
+        # preferred_language: empty string clears (sets to null = auto).
+        if body.preferred_language is not None:
+            profile.preferred_language = body.preferred_language or None
 
         profile.updated_at = datetime.utcnow()
         await session.commit()

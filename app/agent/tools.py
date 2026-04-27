@@ -276,8 +276,27 @@ def register_tools(agent: Agent[AgentDeps, str]) -> None:
 
         Saves the PNG to the file store and returns its file id and URL so you
         can reference it in your reply (e.g. ![plan](/files/<id>))."""
+        from sqlmodel import select as _select
+
         from app.agent.image_gen import generate_image
+        from app.db.models import UserProfile
         from app.files import storage
+
+        # Respect local-only mode — image gen requires OpenAI.
+        async with ctx.deps.session_factory() as _s:
+            _profile = (
+                await _s.execute(
+                    _select(UserProfile).where(UserProfile.user_id == ctx.deps.user_id)
+                )
+            ).scalar_one_or_none()
+        if _profile and _profile.local_only:
+            return {
+                "error": (
+                    "Image generation is disabled in local-only mode. Disable "
+                    "'Local-only mode' in Settings to use it (image generation "
+                    "requires OpenAI's gpt-image-1)."
+                ),
+            }
 
         img = await generate_image(prompt)
         filename = f"{kind}-{date.today().isoformat()}.png"

@@ -467,6 +467,23 @@ Local-LLM routing keeps everything in your homelab.
 passwords bcrypt-hashed. Encryption-key path is logged at startup; back it
 up alongside your DB. Run over HTTPS in any non-loopback deployment.
 
+**Privacy controls in the UI:**
+
+- **Local-only mode** (Settings → "Data & Privacy"): forces every coach onto
+  the local LLM, ignoring per-coach overrides and the image-attachment
+  auto-bump to Anthropic. Image generation is disabled while it's on (since
+  it requires OpenAI). Fastest path to "no third-party processing for
+  any of my data".
+- **Chat retention**: pick Forever / 30 / 90 / 180 / 365 days. A daily
+  systemd-style APScheduler job at 03:15 hard-deletes `agentmessage` rows
+  older than the cutoff for users who opted in. Idempotent.
+- **Language**: UI strings ship in **English** and **Deutsch**, with a
+  language toggle in the topbar (🌐). Your selection is persisted to your
+  profile and prepended as a "respond in this language" directive to every
+  coach turn. Long-form privacy and feature prose stays in English in both
+  languages — translating legal text without review would be worse than
+  not translating it.
+
 **Multi-tenant note:** if you invite others onto your instance you become
 a controller. Document the lawful basis (consent, captured at signup), tell
 them you process their data, and respect their export/erasure requests
