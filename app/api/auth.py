@@ -11,9 +11,10 @@ from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
+from app.agent.prompts import COACH_META, default_prompts
 from app.api.deps import get_approved_user_id, get_current_user
 from app.config import get_settings
-from app.db.models import User
+from app.db.models import User, UserProfile
 from app.db.session import get_session
 from app.security.rate_limit import check_auth_rate_limit, clear_auth_rate_limit
 
@@ -74,6 +75,22 @@ class RegisterRequest(BaseModel):
     password: str = Field(min_length=8, max_length=256)
 
 
+async def _ensure_default_profile(session: AsyncSession, user_id: UUID) -> None:
+    """Create a UserProfile with safe defaults if one doesn't exist yet."""
+    existing = (
+        await session.execute(select(UserProfile).where(UserProfile.user_id == user_id))
+    ).scalar_one_or_none()
+    if existing:
+        return
+    profile = UserProfile(
+        user_id=user_id,
+        coach_providers={task: "local" for task in COACH_META},
+        coach_prompts=default_prompts(),
+    )
+    session.add(profile)
+    await session.commit()
+
+
 @router.post("/register", response_model=RegisterResponse, status_code=201)
 async def register(
     req: RegisterRequest,
@@ -101,6 +118,7 @@ async def register(
     await session.refresh(user)
     if not user.is_approved:
         return RegisterResponse(pending_approval=True)
+    await _ensure_default_profile(session, user.id)
     await clear_auth_rate_limit(request, req.email)
     return RegisterResponse(
         access_token=create_access_token(user.id),
@@ -153,6 +171,7 @@ async def login(
             detail="Account is pending approval",
         )
 
+    await _ensure_default_profile(session, user.id)
     await clear_auth_rate_limit(request, credentials.email)
     return TokenResponse(access_token=create_access_token(user.id))
 

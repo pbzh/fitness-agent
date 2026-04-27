@@ -371,6 +371,50 @@ def register_tools(agent: Agent[AgentDeps, str]) -> None:
         return f"Logged: {logged} at {now.isoformat(timespec='minutes')}Z"
 
     @agent.tool
+    async def update_body_metrics(
+        ctx: RunContext[AgentDeps],
+        weight_kg: float | None = Field(default=None, ge=20, le=350, description="Current body weight in kg"),
+        height_cm: float | None = Field(default=None, ge=50, le=250, description="Height in cm"),
+        target_weight_kg: float | None = Field(default=None, ge=20, le=350, description="Goal weight in kg"),
+        primary_goal: str | None = Field(default=None, max_length=80, description="e.g. 'lose fat', 'build strength', 'maintain'"),
+        weekly_workout_target: int | None = Field(default=None, ge=0, le=14, description="Target training sessions per week"),
+        daily_calorie_target: int | None = Field(default=None, ge=800, le=8000, description="Daily kcal target"),
+    ) -> str:
+        """Update the user's body metrics or fitness goals in their profile.
+        Only provide the fields the user has explicitly stated. Leave others as None."""
+        if all(v is None for v in (weight_kg, height_cm, target_weight_kg, primary_goal, weekly_workout_target, daily_calorie_target)):
+            return "Nothing to update — provide at least one metric."
+        async with ctx.deps.session_factory() as session:
+            result = await session.execute(
+                select(UserProfile).where(UserProfile.user_id == ctx.deps.user_id)
+            )
+            profile = result.scalar_one_or_none()
+            if not profile:
+                profile = UserProfile(user_id=ctx.deps.user_id)
+                session.add(profile)
+            if weight_kg is not None:
+                profile.weight_kg = weight_kg
+            if height_cm is not None:
+                profile.height_cm = height_cm
+            if target_weight_kg is not None:
+                profile.target_weight_kg = target_weight_kg
+            if primary_goal is not None:
+                profile.primary_goal = primary_goal
+            if weekly_workout_target is not None:
+                profile.weekly_workout_target = weekly_workout_target
+            if daily_calorie_target is not None:
+                profile.daily_calorie_target = daily_calorie_target
+            profile.updated_at = datetime.utcnow()
+            await session.commit()
+        updated = [k for k, v in {
+            "weight_kg": weight_kg, "height_cm": height_cm,
+            "target_weight_kg": target_weight_kg, "primary_goal": primary_goal,
+            "weekly_workout_target": weekly_workout_target,
+            "daily_calorie_target": daily_calorie_target,
+        }.items() if v is not None]
+        return f"Updated profile: {', '.join(updated)}."
+
+    @agent.tool
     async def get_recent_health_metrics(
         ctx: RunContext[AgentDeps],
         metric_type: str = Field(
