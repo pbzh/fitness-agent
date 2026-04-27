@@ -42,7 +42,7 @@ def rolling_conversation_id(user_id: UUID) -> UUID:
 class ChatRequest(BaseModel):
     message: str
     conversation_id: UUID | None = None  # ignored — kept for client compat
-    # Default is now AUTO: the manager picks the right sub-coach. Clients can
+    # Default is now AUTO: Boss picks the right sub-coach. Clients can
     # still force a specific coach by setting this explicitly.
     task_hint: TaskClass = TaskClass.AUTO
     attached_file_ids: list[UUID] = Field(default_factory=list)
@@ -129,7 +129,7 @@ async def chat(
             parts.append(build_part(f, full))
             attachment_ids.append(str(f.id))
 
-    # ── Manager routing: when task_hint=auto, classify and dispatch ──
+    # ── Boss routing: when task_hint=auto, classify and dispatch ──
     routed_by_manager = req.task_hint == TaskClass.AUTO
     if routed_by_manager:
         recent_user_msgs: list[str] = []

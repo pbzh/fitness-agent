@@ -40,9 +40,9 @@ class TaskClass(StrEnum):
     MENTAL_HEALTH = "mental_health"
 
 
-# Tasks the router/manager is allowed to dispatch to.
+# Tasks Boss is allowed to dispatch to. TaskClass.CHAT remains for older rows
+# and internal fallback paths, but it is no longer exposed as a coach.
 DISPATCHABLE_TASKS: tuple[TaskClass, ...] = (
-    TaskClass.CHAT,
     TaskClass.PLAN_GENERATION,
     TaskClass.NUTRITION_ANALYSIS,
     TaskClass.PROGRESS_REVIEW,

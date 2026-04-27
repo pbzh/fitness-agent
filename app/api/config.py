@@ -17,7 +17,6 @@ router = APIRouter(prefix="/config", tags=["config"])
 _ENV_FILE = Path(__file__).resolve().parent.parent.parent / ".env"
 
 _TASK_ENV_KEY: dict[TaskClass, str] = {
-    TaskClass.CHAT:               "PROVIDER_FOR_CHAT",
     TaskClass.PLAN_GENERATION:    "PROVIDER_FOR_PLANNING",
     TaskClass.NUTRITION_ANALYSIS: "PROVIDER_FOR_NUTRITION",
     TaskClass.PROGRESS_REVIEW:    "PROVIDER_FOR_PROGRESS",

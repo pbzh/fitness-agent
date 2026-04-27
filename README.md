@@ -1,14 +1,14 @@
 # Fitness Agent
 
 A self-hosted personal coaching agent: workouts, nutrition, mental-health
-check-ins, progress review, and plan generation, all sharing one rolling
+check-ins, productivity support, and plan generation, all sharing one rolling
 chat thread. API-first, designed for homelab deployment with a future iOS
 client in mind.
 
 ```
 You → "I'm wrecked, can't get myself to train"
             ↓
-   🎯 Manager (Anthropic) classifies the turn
+   🧭 Boss (Anthropic) classifies the turn
             ↓
    🧠 Mental-health coach picks it up, correlates against
       your sleep + RPE history, suggests one small action,
@@ -16,15 +16,15 @@ You → "I'm wrecked, can't get myself to train"
 
 You → "Build me a hangboard plan for tomorrow at 7am"
             ↓
-   🎯 Manager → 📅 Plan coach → create_workout_session
+   🧭 Boss → 🏋️ Fitness coach → create_workout_session
    tool fires → row lands on your calendar.
 ```
 
 ## What it does
 
-- **One chat, five coaches.** A small "manager" classifies each turn and
-  routes it to the right specialist (chat / plan / nutrition / progress /
-  mind). You can also pin a coach manually.
+- **One chat, four coaches.** Boss classifies each turn and
+  routes it to the right specialist (fitness / nutrition / mental health /
+  productivity). You can also pin a coach manually.
 - **Persistent rolling thread.** Every message — including which coach
   answered — is stored in Postgres and restored on login.
 - **Multimodal attachments.** Drop in images (meal photo → log it),
@@ -71,8 +71,8 @@ Postgres    PydanticAI      APScheduler
                 │
        ┌────────┼────────┬─────────────┐
        ▼        ▼        ▼             ▼
-   Manager   Coaches   Tools         Files
-  (router) (5 personas)│        (/opt/fitness-agent-data
+Boss       Coaches   Tools         Files
+  (router) (4 personas)│        (/opt/fitness-agent-data
                 ┌──────┤            + encrypted keys)
                 ▼      ▼
         Provider     11 tools
@@ -82,19 +82,18 @@ Postgres    PydanticAI      APScheduler
                   log_mental_state, …)
 ```
 
-### The manager (auto-router)
+### Boss
 
 A small classifier (Claude by default, configurable) labels each turn into
-one of the five sub-coach tasks and dispatches accordingly. The resolved
+one of the four sub-coach tasks and dispatches accordingly. The resolved
 coach is returned to the client so the UI can show the right chip.
 
 | Coach | Triggers (examples) |
 |---|---|
-| 💬 Chat | small talk, generic Q&A |
-| 📅 Plan | "build me a workout / weekly plan", scheduling |
+| 🏋️ Fitness | "build me a workout / weekly plan", scheduling |
 | 🥗 Nutrition | meals, recipes, macros, "I just ate X" |
-| 📊 Progress | trends, weight, sleep / HRV / RPE patterns |
-| 🧠 Mind | mood, stress, motivation, burnout, sleep *quality* |
+| ✅ Productivity | prioritization, goals, schedule conflicts, next actions |
+| 🧠 Mental Health | mood, stress, motivation, burnout, sleep *quality* |
 
 The Mental-health coach has explicit safety guardrails: it never tries to
 handle a crisis itself, and routes to the Swiss emergency line **143** /
@@ -112,9 +111,9 @@ actually sees the picture.
 
 ### Per-coach prompt overrides
 
-Each user can override the system prompt for any of the five coaches in
+Each user can override the system prompt for any of the four coaches in
 Settings → "Coach prompts" (8 KB cap per prompt). Empty textarea = use the
-built-in default. The manager prompt itself is *not* user-editable — it's
+built-in default. The Boss prompt itself is *not* user-editable — it's
 a structured classifier and free-form prose silently breaks routing.
 
 ### Encrypted API keys
@@ -340,7 +339,7 @@ local storage. API clients pass the token as `Authorization: Bearer <token>`.
 | GET  | `/profile/llm` | provider overrides + `set/unset` key state |
 | PUT  | `/profile/llm` | merge-update; empty-string clears |
 | GET  | `/profile/coach-prompts/defaults` | built-in defaults for each coach |
-| POST | `/chat` | `task_hint` defaults to `auto` (manager picks) |
+| POST | `/chat` | `task_hint` defaults to `auto` (Boss picks) |
 | GET  | `/chat/history` | rolling thread, oldest → newest |
 | DELETE | `/chat/history` | wipe the rolling thread |
 | GET  | `/files` | list user's files |
@@ -366,7 +365,7 @@ TOKEN=$(curl -s -X POST http://10.1.10.103:8000/auth/login \
   -d '{"email":"you@example.com","password":"<strong-password>"}' \
   | python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])')
 
-# Auto-routed chat (manager picks the coach)
+# Boss-routed chat
 curl -X POST http://10.1.10.103:8000/chat \
   -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
   -d '{"message":"Build me a 45-min hangboard session for Tuesday at 7am"}'
@@ -451,7 +450,7 @@ privacy notice is in the WebUI's **About** tab; what's wired up:
 | Access + portability (Art. 15, 20) | `GET /profile/export.zip` — Settings → "Download my data". Returns `data.json` (every row you own, with bcrypt hashes and ciphertext stripped) plus `files/<id>/<filename>` for each upload or generated image. |
 | Erasure (Art. 17) | `DELETE /profile/account` — Settings → "Delete my account". Hard-deletes DB rows + on-disk files. Requires the user's current password and a typed-confirm of the email. |
 | Rectification (Art. 16) | `PUT /profile`, `PUT /profile/llm`, `PUT /profile` (`coach_prompts` field). |
-| Restriction / objection (Art. 18, 21) | Switch any coach to `local` in Settings → "LLM providers & API keys". The Mind coach can run end-to-end on local LLM — no third-party processor. |
+| Restriction / objection (Art. 18, 21) | Switch any coach to `local` in Settings → "LLM providers & API keys". The Mental Health coach can run end-to-end on local LLM — no third-party processor. |
 | Withdraw consent | Same effect as restriction or erasure; the moment you flip a coach to `local` (or delete the account), processing stops. |
 
 **Recipients (data processors):** Anthropic, PBC and OpenAI, L.L.C. — but
@@ -497,7 +496,7 @@ through the same endpoints.
 - [x] Real JWT auth + user registration + change-password
 - [x] Rolling chat thread, server-side history
 - [x] Mental-health coach with safety guardrails
-- [x] Manager auto-router (one chat, five coaches)
+- [x] Boss router (one chat, four coaches)
 - [x] File uploads + multimodal chat (images, PDFs, DOCX, text)
 - [x] Image generation (gpt-image-1) with on-disk store
 - [x] ICS calendar export (Europe/Zurich VTIMEZONE)

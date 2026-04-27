@@ -4,15 +4,21 @@ from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
+import structlog
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from sqlalchemy import func, text
 from sqlmodel import select
 
+from app.api.auth import hash_password
 from app.api.deps import get_current_admin_user
 from app.db.models import AdminAuditLog, User
+from app.db.models import File as DBFile
 from app.db.session import AsyncSessionLocal
+from app.files import storage
 
 router = APIRouter(prefix="/admin", tags=["admin"])
+log = structlog.get_logger()
 
 
 class AdminUserRead(BaseModel):
@@ -27,6 +33,10 @@ class AdminUserRead(BaseModel):
 class AdminUserUpdate(BaseModel):
     is_admin: bool | None = None
     is_approved: bool | None = None
+
+
+class AdminPasswordResetRequest(BaseModel):
+    new_password: str = Field(min_length=8, max_length=256)
 
 
 class AdminAuditRead(BaseModel):
@@ -59,6 +69,59 @@ def _audit_state(user: User) -> dict:
         "is_approved": user.is_approved,
         "approved_at": user.approved_at.isoformat() if user.approved_at else None,
     }
+
+
+async def _delete_user_owned_data(session, user_id: UUID) -> list[str]:
+    files = (
+        await session.execute(select(DBFile).where(DBFile.user_id == user_id))
+    ).scalars().all()
+    file_paths = [f.storage_path for f in files]
+
+    await session.execute(
+        text("UPDATE workoutsession SET image_file_id=NULL WHERE user_id=:u"),
+        {"u": str(user_id)},
+    )
+    await session.execute(
+        text("UPDATE plannedmeal SET image_file_id=NULL WHERE user_id=:u"),
+        {"u": str(user_id)},
+    )
+    await session.execute(
+        text("UPDATE meallog SET image_file_id=NULL WHERE user_id=:u"),
+        {"u": str(user_id)},
+    )
+    await session.execute(
+        text("UPDATE workoutplan SET image_file_id=NULL WHERE user_id=:u"),
+        {"u": str(user_id)},
+    )
+    await session.execute(
+        text("UPDATE mealplan SET image_file_id=NULL WHERE user_id=:u"),
+        {"u": str(user_id)},
+    )
+
+    for table in (
+        "agentmessage",
+        "file",
+        "workoutsession",
+        "plannedmeal",
+        "meallog",
+        "healthmetric",
+        "workoutplan",
+        "mealplan",
+        "userprofile",
+    ):
+        await session.execute(
+            text(f"DELETE FROM {table} WHERE user_id=:u"),
+            {"u": str(user_id)},
+        )
+    await session.execute(
+        text(
+            "DELETE FROM adminauditlog "
+            "WHERE actor_user_id=:u OR target_user_id=:u"
+        ),
+        {"u": str(user_id)},
+    )
+    await session.execute(text('DELETE FROM "user" WHERE id=:u'), {"u": str(user_id)})
+    return file_paths
 
 
 @router.get("/users", response_model=list[AdminUserRead])
@@ -123,6 +186,84 @@ async def update_user(
         await session.commit()
         await session.refresh(user)
         return _to_read(user)
+
+
+@router.post("/users/{user_id}/password", status_code=status.HTTP_204_NO_CONTENT)
+async def reset_user_password(
+    user_id: UUID,
+    body: AdminPasswordResetRequest,
+    admin: Annotated[User, Depends(get_current_admin_user)],
+) -> None:
+    async with AsyncSessionLocal() as session:
+        user = (
+            await session.execute(select(User).where(User.id == user_id))
+        ).scalar_one_or_none()
+        if not user:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+        before = _audit_state(user)
+        user.hashed_password = hash_password(body.new_password)
+        session.add(user)
+        session.add(
+            AdminAuditLog(
+                actor_user_id=admin.id,
+                target_user_id=user.id,
+                action="reset_password",
+                before=before,
+                after={**_audit_state(user), "password_reset_at": datetime.utcnow().isoformat()},
+            )
+        )
+        await session.commit()
+
+
+@router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_user(
+    user_id: UUID,
+    admin: Annotated[User, Depends(get_current_admin_user)],
+) -> None:
+    if user_id == admin.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You cannot delete your own account from the admin page",
+        )
+
+    async with AsyncSessionLocal() as session:
+        user = (
+            await session.execute(select(User).where(User.id == user_id))
+        ).scalar_one_or_none()
+        if not user:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+        if user.is_admin:
+            admin_count = (
+                await session.execute(
+                    select(func.count()).select_from(User).where(User.is_admin.is_(True))
+                )
+            ).scalar_one()
+            if admin_count <= 1:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="You cannot delete the last admin user",
+                )
+
+        before = _audit_state(user)
+        file_paths = await _delete_user_owned_data(session, user.id)
+        session.add(
+            AdminAuditLog(
+                actor_user_id=admin.id,
+                target_user_id=admin.id,
+                action="delete_user",
+                before=before,
+                after={"deleted_user_id": str(user.id), "deleted_email": user.email},
+            )
+        )
+        await session.commit()
+
+    for path in file_paths:
+        try:
+            storage.delete(path)
+        except Exception as exc:
+            log.warning("Could not delete admin-removed user's file", path=path, error=str(exc))
 
 
 @router.get("/audit", response_model=list[AdminAuditRead])

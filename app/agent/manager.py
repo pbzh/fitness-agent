@@ -1,8 +1,8 @@
-"""The 'manager' coach: classify a user turn into the right sub-coach.
+"""Boss coach: classify a user turn into the right sub-coach.
 
-Runs a lightweight, structured-output agent against the chat-task model
+Runs a lightweight, structured-output agent against the internal chat model
 (usually the local llama.cpp endpoint) so routing is fast and free. Falls
-back to TaskClass.CHAT on any error — the worst case is "wrong coach
+back to TaskClass.PLAN_GENERATION on any error — the worst case is "wrong coach
 answered", never "request 500s".
 """
 
@@ -20,7 +20,6 @@ log = structlog.get_logger()
 
 
 _LITERAL = Literal[
-    "chat",
     "plan_generation",
     "nutrition_analysis",
     "progress_review",
@@ -28,25 +27,43 @@ _LITERAL = Literal[
 ]
 
 
-CLASSIFIER_PROMPT = """You are a routing classifier for a fitness coaching app.
-Given the user's latest message and brief context, output exactly ONE label
+CLASSIFIER_PROMPT = """You are Boss, the Orchestrator managing multiple specialized coaches:
+- Fitness
+- Nutrition
+- Mental Health
+- Productivity
+
+Your role:
+- Route user requests to the correct coach(s)
+- Combine outputs into a coherent plan
+- Resolve conflicts between coaches (e.g., training vs recovery)
+
+Rules:
+- Do not duplicate information
+- Prioritize user goals and constraints
+- Keep responses structured and concise
+
+When multiple domains are involved:
+- Merge outputs into a single actionable plan
+- Highlight trade-offs clearly
+
+This app currently dispatches one primary coach per turn. Given the user's
+latest message and brief context, output exactly ONE internal routing label
 from this list — nothing else, no explanation:
 
-- chat: small talk, generic Q&A, anything that doesn't fit a category below
-- plan_generation: user wants a workout / weekly plan / training schedule
-  built or modified, or asks "what should I do this week?"
-- nutrition_analysis: meals, recipes, macros, calories, hunger, food logging,
-  supplements, hydration
-- progress_review: trends, weight change, lifts going up, sleep / HRV / RPE
-  patterns, "how am I doing?" style questions
-- mental_health: mood, stress, anxiety, motivation slumps, burnout, sleep
-  *quality* (vs duration), self-talk, frustration, identity around training,
-  feelings, pressure, overwhelm
+- plan_generation: Fitness. Workouts, weekly plans, training schedules,
+  exercise selection, recovery days, strength, climbing, mobility.
+- nutrition_analysis: Nutrition. Meals, recipes, macros, calories, hunger,
+  food logging, supplements, hydration.
+- mental_health: Mental Health. Mood, stress, anxiety, motivation, burnout,
+  self-talk, feelings, pressure, overwhelm, sleep quality.
+- progress_review: Productivity. Prioritization, planning non-training tasks,
+  habit systems, goal review, schedule conflicts, "what should I focus on?"
 
-Bias toward `chat` when in doubt. Bias toward `mental_health` whenever the
-message is about how the user *feels* (not what their body did). Bias toward
-`plan_generation` when the user uses imperative verbs about training
-(\"build me\", \"make me a plan\", \"what should I lift today\").
+Bias toward `mental_health` whenever the message is about how the user feels.
+Bias toward `plan_generation` when the user asks for training plans or workout
+changes. Bias toward `progress_review` for general planning, task management,
+or ambiguous "what should I do?" requests.
 """
 
 
@@ -77,9 +94,9 @@ async def classify_turn(message: str, recent_user_msgs: list[str]) -> TaskClass:
         result = await classifier.run(prompt)
         task = TaskClass(result.output)
         if task not in DISPATCHABLE_TASKS:
-            return TaskClass.CHAT
-        log.info("Manager classified turn", task=task.value)
+            return TaskClass.PLAN_GENERATION
+        log.info("Boss classified turn", task=task.value)
         return task
     except Exception as exc:
-        log.warning("Manager classifier failed, defaulting to chat", error=str(exc))
-        return TaskClass.CHAT
+        log.warning("Boss classifier failed, defaulting to fitness", error=str(exc))
+        return TaskClass.PLAN_GENERATION

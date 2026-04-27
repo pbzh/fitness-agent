@@ -468,7 +468,8 @@
         }
         .agent-content { min-width: 0; }
         .agent-body { font-size: 0.9rem; line-height: 1.6; }
-        .message .meta { display: block; font-size: 0.7rem; opacity: 0.55; margin-top: 5px; }
+        .message .meta { display: none; font-size: 0.7rem; opacity: 0.55; margin-top: 5px; }
+        .dev-mode .message .meta { display: block; }
         .message .coach-chip {
             display: block;
             font-size: 0.74rem; font-weight: 500;
@@ -543,6 +544,38 @@
             max-width: 620px; width: 100%; margin: 0 auto 8px;
             text-align: center; color: var(--color-text-tertiary); font-size: 0.68rem;
         }
+        .chat-empty-state {
+            margin: auto;
+            max-width: 620px;
+            width: 100%;
+            text-align: center;
+            padding: 28px 0;
+        }
+        .chat-empty-state h2 {
+            font-size: 1.38rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .prompt-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 18px;
+        }
+        @media (max-width: 640px) { .prompt-grid { grid-template-columns: 1fr 1fr; } }
+        .prompt-card {
+            min-height: 72px;
+            padding: 12px;
+            border-radius: var(--border-radius-md);
+            background: var(--color-background-primary);
+            border: 0.5px solid var(--color-border-tertiary);
+            color: var(--color-text-primary);
+            text-align: left;
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+        .prompt-card:hover { border-color: var(--color-text-info); color: var(--color-text-info); }
+        .empty-hint { margin-top: 12px; font-size: 0.75rem; color: var(--color-text-tertiary); }
         .pending-attachments:empty { display: none; }
         .attach-chip {
             display: inline-flex; align-items: center; gap: 6px;
@@ -577,13 +610,38 @@
             padding-bottom: max(20px, env(safe-area-inset-bottom));
         }
         .settings-container {
-            max-width: 640px; margin: 0 auto;
-            display: flex; flex-direction: column; gap: 16px;
+            max-width: 900px; margin: 0 auto;
+            display: grid; grid-template-columns: 200px minmax(0, 640px);
+            gap: 28px; align-items: start;
+        }
+        @media (max-width: 767px) {
+            .settings-container { display: flex; flex-direction: column; gap: 16px; }
+        }
+        .settings-sidebar {
+            position: sticky; top: 20px;
+            display: flex; flex-direction: column; gap: 4px;
+        }
+        .settings-nav-btn {
+            height: 34px; padding: 0 10px; border-radius: var(--border-radius-md);
+            background: transparent; color: var(--color-text-secondary);
+            text-align: left; font-size: 0.82rem; font-weight: 500;
+        }
+        .settings-nav-btn:hover { background: var(--color-background-primary); color: var(--color-text-primary); }
+        .settings-nav-btn.active {
+            background: var(--color-background-primary);
+            color: var(--color-text-info);
+            box-shadow: inset 2px 0 0 var(--color-text-info);
+        }
+        .settings-main {
+            display: flex; flex-direction: column; gap: 16px; min-width: 0;
         }
         .settings-heading {
-            font-size: 1.2rem; font-weight: 800; margin-bottom: 4px;
+            font-size: 1.38rem; font-weight: 600; margin-bottom: 4px;
         }
         .settings-subheading { font-size: 0.84rem; color: var(--text-2); margin-bottom: 8px; }
+        .field-help {
+            font-size: 0.74rem; color: var(--color-text-tertiary); margin-top: 5px;
+        }
 
         .llm-row {
             display: grid; grid-template-columns: 1fr 1fr;
@@ -636,21 +694,30 @@
         .coach-prompt-status { font-size: 0.74rem; color: var(--text-2); margin-left: auto; align-self: center; }
 
         .settings-card {
-            background: var(--surface); border: 1px solid var(--border);
+            background: color-mix(in srgb, var(--surface) 92%, var(--surface-2));
+            border: 0.5px solid var(--color-border-tertiary);
             border-radius: var(--radius-sm); box-shadow: none; overflow: hidden;
-            border-bottom: 1px solid var(--border);
         }
+        .settings-main > .settings-card { display: none; }
+        .settings-main > .settings-card.active { display: block; }
         .card-header {
             padding: 18px 22px 0;
         }
-        .card-header h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 3px; }
+        .card-header h3 { font-size: 1.05rem; font-weight: 600; margin-bottom: 3px; }
         .card-header p { font-size: 0.81rem; color: var(--text-2); margin-bottom: 16px; }
         .card-body { padding: 0 22px; }
         .card-footer {
             display: flex; align-items: center; gap: 10px;
             padding: 14px 22px; margin-top: 14px;
-            border-top: 1px solid var(--border);
+            border-top: 0.5px solid var(--color-border-tertiary);
             background: var(--surface-2);
+        }
+        .card-footer .status:empty::before { content: "Not saved"; color: var(--color-text-tertiary); }
+        .btn-cancel {
+            height: 38px; padding: 0 16px;
+            background: transparent; color: var(--color-text-secondary);
+            border: 0.5px solid var(--color-border-tertiary);
+            border-radius: var(--radius-sm); font-weight: 600; font-size: 0.87rem;
         }
 
         .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -871,7 +938,9 @@
                 <div class="account-menu-email" id="account-menu-email"></div>
                 <button id="account-settings-btn" type="button">Settings</button>
                 <button id="account-lang-btn" type="button">Language: EN</button>
-                <button id="account-theme-btn" type="button">Toggle theme</button>
+                <button id="account-theme-light-btn" type="button">Theme: Light</button>
+                <button id="account-theme-dark-btn" type="button">Theme: Dark</button>
+                <button id="account-theme-system-btn" type="button">Theme: System</button>
                 <button id="logout-button" type="button" data-i18n="nav.signOut">Sign out</button>
             </div>
         </div>
@@ -939,19 +1008,18 @@
                 <div class="panel-header">
                     <div class="chat-header-top">
                         <div>
-                            <div class="panel-title" id="active-coach-title">Chat Coach</div>
-                            <p class="chat-subtitle">Auto-routing · 5 specialists available</p>
+                            <div class="panel-title" id="active-coach-title">Boss</div>
+                            <p class="chat-subtitle">Routes to Fitness · Nutrition · Mental Health · Productivity</p>
                         </div>
                         <button class="manual-btn" id="manual-toggle" type="button">⚙ Manual</button>
                     </div>
                     <div class="coach-row">
                         <div class="coach-pills">
-                            <button class="coach-btn active" data-task="auto" type="button" data-i18n-title="coach.autoTip" title="The manager picks the best coach for each turn">🎯 <span data-i18n="coach.auto">Auto</span></button>
-                            <button class="coach-btn" data-task="chat" type="button">💬 <span data-i18n="coach.chat">Chat</span></button>
-                            <button class="coach-btn" data-task="plan_generation" type="button">📅 <span data-i18n="coach.plan">Plan</span></button>
+                            <button class="coach-btn active" data-task="auto" type="button" data-i18n-title="coach.autoTip" title="Boss picks the best coach for each turn">🧭 <span data-i18n="coach.auto">Boss</span></button>
+                            <button class="coach-btn" data-task="plan_generation" type="button">🏋️ <span data-i18n="coach.plan">Fitness</span></button>
                             <button class="coach-btn" data-task="nutrition_analysis" type="button">🥗 <span data-i18n="coach.nutrition">Nutrition</span></button>
-                            <button class="coach-btn" data-task="progress_review" type="button">📊 <span data-i18n="coach.progress">Progress</span></button>
-                            <button class="coach-btn" data-task="mental_health" type="button">🧠 <span data-i18n="coach.mind">Mind</span></button>
+                            <button class="coach-btn" data-task="progress_review" type="button">✅ <span data-i18n="coach.progress">Productivity</span></button>
+                            <button class="coach-btn" data-task="mental_health" type="button">🧠 <span data-i18n="coach.mind">Mental Health</span></button>
                         </div>
                         <span class="provider-wrap local" id="provider-badge">
                             <span class="provider-dot"></span>
@@ -990,7 +1058,7 @@
                         </svg>
                     </button>
                 </form>
-                <p class="composer-hint">Auto-routes to Plan · Nutrition · Progress · Mind · Chat</p>
+                <p class="composer-hint">Boss routes to Fitness · Nutrition · Mental Health · Productivity. Manual mode shows only that coach's thread.</p>
             </div>
         </div>
         <aside class="side-pane" id="dashboard-panel">
@@ -1052,13 +1120,24 @@
     <!-- ── Settings view ── -->
     <div class="settings-wrap hidden" id="settings-view">
         <div class="settings-container">
-            <div>
-                <div class="settings-heading">Settings</div>
-                <div class="settings-subheading">Manage your account, security, and coaching preferences</div>
-            </div>
+            <aside class="settings-sidebar">
+                <button class="settings-nav-btn active" type="button" data-settings-target="account">Account</button>
+                <button class="settings-nav-btn" type="button" data-settings-target="security">Security</button>
+                <button class="settings-nav-btn" type="button" data-settings-target="body">Body metrics</button>
+                <button class="settings-nav-btn" type="button" data-settings-target="coaches">Coaches & API keys</button>
+                <button class="settings-nav-btn" type="button" data-settings-target="calendar">Calendar export</button>
+                <button class="settings-nav-btn" type="button" data-settings-target="appearance">Appearance</button>
+                <button class="settings-nav-btn" type="button" data-settings-target="developer">Developer</button>
+            </aside>
+
+            <main class="settings-main">
+                <div>
+                    <div class="settings-heading" id="settings-section-title">Settings</div>
+                    <div class="settings-subheading" id="settings-section-subtitle">Manage your account, security, and coaching preferences</div>
+                </div>
 
             <!-- Account -->
-            <div class="settings-card">
+            <div class="settings-card active" data-settings-section="account">
                 <div class="card-header">
                     <h3 data-i18n="settings.account">Account</h3>
                     <p>Your identity and personal details</p>
@@ -1068,6 +1147,7 @@
                         <div class="field full">
                             <label>Email</label>
                             <input id="s-email" type="email" readonly tabindex="-1">
+                            <div class="field-help">Used for sign-in and account recovery.</div>
                         </div>
                         <div class="field">
                             <label for="s-birth-date">Date of birth</label>
@@ -1087,12 +1167,13 @@
                 </div>
                 <div class="card-footer">
                     <button class="btn-save" id="save-account-btn" type="button" data-i18n="common.save">Save</button>
+                    <button class="btn-cancel" type="button" data-settings-cancel>Cancel</button>
                     <span class="status" id="account-status"></span>
                 </div>
             </div>
 
             <!-- Security -->
-            <div class="settings-card">
+            <div class="settings-card" data-settings-section="security">
                 <div class="card-header">
                     <h3 data-i18n="settings.security">Security</h3>
                     <p>Change your login password</p>
@@ -1115,12 +1196,13 @@
                 </div>
                 <div class="card-footer">
                     <button class="btn-save" id="change-pw-btn" type="button" data-i18n="settings.changePassword">Change password</button>
+                    <button class="btn-cancel" type="button" data-settings-cancel>Cancel</button>
                     <span class="status" id="security-status"></span>
                 </div>
             </div>
 
             <!-- Body metrics -->
-            <div class="settings-card">
+            <div class="settings-card" data-settings-section="body">
                 <div class="card-header">
                     <h3 data-i18n="settings.body">Body metrics</h3>
                     <p>Used for personalised calorie and training recommendations</p>
@@ -1143,12 +1225,13 @@
                 </div>
                 <div class="card-footer">
                     <button class="btn-save" id="save-body-btn" type="button" data-i18n="common.save">Save</button>
+                    <button class="btn-cancel" type="button" data-settings-cancel>Cancel</button>
                     <span class="status" id="body-status"></span>
                 </div>
             </div>
 
             <!-- Training -->
-            <div class="settings-card">
+            <div class="settings-card" data-settings-section="body">
                 <div class="card-header">
                     <h3 data-i18n="settings.training">Training</h3>
                     <p>Goals, schedule, and available equipment</p>
@@ -1175,12 +1258,13 @@
                 </div>
                 <div class="card-footer">
                     <button class="btn-save" id="save-training-btn" type="button" data-i18n="common.save">Save</button>
+                    <button class="btn-cancel" type="button" data-settings-cancel>Cancel</button>
                     <span class="status" id="training-status"></span>
                 </div>
             </div>
 
             <!-- Nutrition -->
-            <div class="settings-card">
+            <div class="settings-card" data-settings-section="body">
                 <div class="card-header">
                     <h3 data-i18n="settings.nutrition">Nutrition</h3>
                     <p>Daily calorie and macro targets, dietary preferences</p>
@@ -1216,12 +1300,13 @@
                 </div>
                 <div class="card-footer">
                     <button class="btn-save" id="save-nutrition-btn" type="button" data-i18n="common.save">Save</button>
+                    <button class="btn-cancel" type="button" data-settings-cancel>Cancel</button>
                     <span class="status" id="nutrition-status"></span>
                 </div>
             </div>
 
             <!-- LLM providers + API keys -->
-            <div class="settings-card">
+            <div class="settings-card" data-settings-section="coaches">
                 <div class="card-header">
                     <h3 data-i18n="settings.llm">LLM providers &amp; API keys</h3>
                     <p>
@@ -1236,12 +1321,13 @@
                 </div>
                 <div class="card-footer">
                     <button class="btn-save" id="save-llm-btn" type="button" data-i18n="common.save">Save</button>
+                    <button class="btn-cancel" type="button" data-settings-cancel>Cancel</button>
                     <span class="status" id="llm-status"></span>
                 </div>
             </div>
 
             <!-- Privacy & language toggles -->
-            <div class="settings-card">
+            <div class="settings-card" data-settings-section="appearance">
                 <div class="card-header">
                     <h3 data-i18n="settings.privacy">Data & Privacy</h3>
                     <p data-i18n="settings.privacyToggleDesc">Routing and retention controls. The full GDPR notice and account-management actions are below.</p>
@@ -1284,17 +1370,18 @@
                 </div>
                 <div class="card-footer">
                     <button class="btn-save" id="save-privacy-btn" type="button" data-i18n="common.save">Save</button>
+                    <button class="btn-cancel" type="button" data-settings-cancel>Cancel</button>
                     <span class="status" id="privacy-status"></span>
                 </div>
             </div>
 
             <!-- Coach prompts -->
-            <div class="settings-card">
+            <div class="settings-card" data-settings-section="coaches">
                 <div class="card-header">
                     <h3 data-i18n="settings.prompts">Coach prompts</h3>
                     <p>
                         Override the system prompt used by each coach. Leave a textarea
-                        blank to use the built-in default. The Auto/manager prompt is
+                        blank to use the built-in default. The Boss prompt is
                         not editable — it's a classifier and free-form edits will
                         silently break routing.
                     </p>
@@ -1304,12 +1391,28 @@
                 </div>
                 <div class="card-footer">
                     <button class="btn-save" id="save-coach-prompts-btn" type="button" data-i18n="settings.savePrompts">Save prompts</button>
+                    <button class="btn-cancel" type="button" data-settings-cancel>Cancel</button>
                     <span class="status" id="coach-prompts-status"></span>
                 </div>
             </div>
 
+            <div class="settings-card" data-settings-section="calendar">
+                <div class="card-header">
+                    <h3>Calendar export</h3>
+                    <p>Subscribe to upcoming workouts and meals from your calendar app.</p>
+                </div>
+                <div class="card-body">
+                    <div class="field full">
+                        <label>Upcoming feed</label>
+                        <input value="/calendar/upcoming.ics" readonly tabindex="-1">
+                        <div class="field-help">Use this authenticated feed from the History tab download button, or copy the URL for clients that support bearer-auth feeds.</div>
+                    </div>
+                    <a class="text-btn" href="/calendar/upcoming.ics" download style="display:inline-flex;align-items:center;text-decoration:none;height:38px;padding:0 12px;">Download .ics</a>
+                </div>
+            </div>
+
             <!-- Data & Privacy (GDPR) -->
-            <div class="settings-card">
+            <div class="settings-card" data-settings-section="account">
                 <div class="card-header">
                     <h3 data-i18n="settings.privacy">Data &amp; Privacy</h3>
                     <p>
@@ -1332,7 +1435,7 @@
             </div>
 
             <!-- Developer -->
-            <div class="settings-card">
+            <div class="settings-card" data-settings-section="developer">
                 <div class="card-header">
                     <h3>Developer</h3>
                     <p>Diagnostics shown only when you need to inspect model behavior.</p>
@@ -1348,11 +1451,39 @@
                             <span class="switch-slider"></span>
                         </label>
                     </div>
+                    <div class="field" style="display:flex;align-items:center;gap:12px;">
+                        <label style="margin:0;flex:1;">
+                            <span>Show model identifiers only</span>
+                            <div class="field-help">Useful when comparing local, Anthropic, and OpenAI routing.</div>
+                        </label>
+                        <label class="switch" style="flex-shrink:0;">
+                            <input type="checkbox" id="developer-models-toggle">
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                    <div class="settings-grid">
+                        <div class="field full">
+                            <label>Data directory</label>
+                            <input value="/opt/fitness-agent-data" readonly tabindex="-1">
+                        </div>
+                        <div class="field">
+                            <label>Scheduler</label>
+                            <input value="Enabled" readonly tabindex="-1">
+                        </div>
+                        <div class="field">
+                            <label>Version</label>
+                            <input value="0.1.0" readonly tabindex="-1">
+                        </div>
+                        <div class="field full">
+                            <label>Repository</label>
+                            <a href="https://github.com/pbzh/fitness-agent" target="_blank" rel="noopener" style="color:var(--primary);font-size:0.86rem;">github.com/pbzh/fitness-agent</a>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <!-- Sign out -->
-            <div class="settings-card">
+            <div class="settings-card" data-settings-section="account">
                 <div class="card-header">
                     <h3 data-i18n="settings.session">Session</h3>
                     <p>Sign out of this device</p>
@@ -1362,6 +1493,7 @@
                 </div>
             </div>
 
+            </main>
         </div>
     </div>
 
@@ -1441,16 +1573,15 @@
             <div class="settings-card">
                 <div class="card-header">
                     <h3 data-i18n="about.what">What it does</h3>
-                    <p>Five coaches sharing one rolling chat thread, plus the tools and integrations they call.</p>
+                    <p>Four coaches sharing one rolling chat thread, plus the tools and integrations they call.</p>
                 </div>
                 <div class="card-body">
                     <ul class="about-features" id="about-features">
-                        <li><strong>🎯 Manager</strong> — classifies each turn and routes to the right coach. Falls back to Chat on any error.</li>
-                        <li><strong>💬 Chat</strong> — small talk, generic Q&amp;A.</li>
-                        <li><strong>📅 Plan</strong> — builds workouts; calls <code>create_workout_session</code> to land them on your calendar.</li>
+                        <li><strong>🧭 Boss</strong> — classifies each turn and routes to the right coach. Falls back to Fitness on any error.</li>
+                        <li><strong>🏋️ Fitness</strong> — builds workouts; calls <code>create_workout_session</code> to land them on your calendar.</li>
                         <li><strong>🥗 Nutrition</strong> — meals, recipes, macros. Logs with <code>log_meal</code>.</li>
-                        <li><strong>📊 Progress</strong> — trend synthesis over your stored workouts, meals, and health metrics.</li>
-                        <li><strong>🧠 Mind</strong> — mental-health coach with crisis safety guardrails (Swiss 143 / EU 112). Logs mood snapshots via <code>log_mental_state</code>.</li>
+                        <li><strong>✅ Productivity</strong> — prioritization, goal review, schedule conflicts, and actionable next steps.</li>
+                        <li><strong>🧠 Mental Health</strong> — mental-health coach with crisis safety guardrails (Swiss 143 / EU 112). Logs mood snapshots via <code>log_mental_state</code>.</li>
                         <li><strong>📎 Multimodal attachments</strong> — drop images, PDFs, DOCX, or text into chat. Images go to Claude as binary; the rest is text-extracted (capped at 20 000 chars per file).</li>
                         <li><strong>🎨 Image generation</strong> — coaches can call <code>generate_plan_image</code> (OpenAI <code>gpt-image-1</code>); PNG saved to the file store and inlined.</li>
                         <li><strong>📆 ICS calendar export</strong> — per-plan or rolling 30-day feed with Europe/Zurich VTIMEZONE. Drag into your calendar app.</li>
@@ -1494,7 +1625,7 @@
                 <div class="card-body">
                     <ol class="about-steps">
                         <li>You send a message (and optionally attachments).</li>
-                        <li>If the coach is <strong>Auto</strong>, the manager classifier (Anthropic by default) picks one of the five sub-coaches based on the message + recent context.</li>
+                        <li>If the coach is <strong>Boss</strong>, the classifier (Anthropic by default) picks one of the four sub-coaches based on the message + recent context.</li>
                         <li>The chosen coach's provider is resolved: your per-user override → <code>.env</code> default → fall back to local if no API key.</li>
                         <li>If you attached an image and the resolved provider is local (not multimodal), this single turn is bumped to Anthropic so the model actually sees the image.</li>
                         <li>The agent runs with the resolved system prompt (your override if set, else the built-in default) and tools.</li>
@@ -1542,8 +1673,8 @@
                     <p style="font-size:0.86rem; line-height:1.55; margin-bottom:12px;">
                         <strong>International transfers.</strong> Anthropic and OpenAI
                         process data in the United States. Both publish Standard Contractual
-                        Clauses; using local-LLM routing for any sensitive coach (Mind, in
-                        particular) keeps that data inside your homelab.
+                        Clauses; using local-LLM routing for any sensitive coach (Mental Health,
+                        in particular) keeps that data inside your homelab.
                     </p>
                     <p style="font-size:0.86rem; line-height:1.55; margin-bottom:12px;">
                         <strong>Retention.</strong> All data is kept until you delete it.
@@ -1565,7 +1696,7 @@
                         <li><em>Access &amp; portability</em> — Settings → "Download my data" emits a ZIP with everything in machine-readable JSON plus your files.</li>
                         <li><em>Rectification</em> — Settings → Account / Body / Training / Nutrition / Coach prompts.</li>
                         <li><em>Erasure</em> — Settings → "Delete my account" hard-deletes everything (DB rows + on-disk files).</li>
-                        <li><em>Restriction / objection</em> — switch any coach to <code>local</code> in Settings to stop sending its turns to a third party. The Mind coach can run entirely on local LLM.</li>
+                        <li><em>Restriction / objection</em> — switch any coach to <code>local</code> in Settings to stop sending its turns to a third party. The Mental Health coach can run entirely on local LLM.</li>
                         <li><em>Withdraw consent</em> — same as erasure or restriction; effect is immediate.</li>
                         <li><em>Lodge a complaint</em> — your national data protection authority (Switzerland: <a href="https://www.edoeb.admin.ch/" target="_blank" rel="noopener">EDÖB</a>; EU: your country's DPA).</li>
                     </ul>
@@ -1668,9 +1799,9 @@
             "login.email": "Email", "login.password": "Password",
             "login.minChars": "(min 8 chars)", "login.confirmPassword": "Confirm password",
             "login.signIn": "Sign in", "login.createAccount": "Create account",
-            "coach.auto": "Auto", "coach.autoTip": "The manager picks the best coach for each turn",
-            "coach.chat": "Chat", "coach.plan": "Plan", "coach.nutrition": "Nutrition",
-            "coach.progress": "Progress", "coach.mind": "Mind",
+            "coach.auto": "Boss", "coach.autoTip": "Boss picks the best coach for each turn",
+            "coach.chat": "Fitness", "coach.plan": "Fitness", "coach.nutrition": "Nutrition",
+            "coach.progress": "Productivity", "coach.mind": "Mental Health",
             "composer.placeholder": "Ask about workouts, meals, recovery… (or just attach a file)",
             "settings.account": "Account", "settings.security": "Security",
             "settings.body": "Body metrics", "settings.training": "Training",
@@ -1706,9 +1837,9 @@
             "login.email": "E-Mail", "login.password": "Passwort",
             "login.minChars": "(min. 8 Zeichen)", "login.confirmPassword": "Passwort bestätigen",
             "login.signIn": "Anmelden", "login.createAccount": "Konto erstellen",
-            "coach.auto": "Auto", "coach.autoTip": "Der Manager wählt für jede Nachricht den passenden Coach",
-            "coach.chat": "Chat", "coach.plan": "Plan", "coach.nutrition": "Ernährung",
-            "coach.progress": "Fortschritt", "coach.mind": "Mental",
+            "coach.auto": "Boss", "coach.autoTip": "Boss wählt für jede Nachricht den passenden Coach",
+            "coach.chat": "Fitness", "coach.plan": "Fitness", "coach.nutrition": "Ernährung",
+            "coach.progress": "Produktivität", "coach.mind": "Mentale Gesundheit",
             "composer.placeholder": "Frag zu Training, Mahlzeiten, Erholung… (oder häng einfach eine Datei an)",
             "settings.account": "Konto", "settings.security": "Sicherheit",
             "settings.body": "Körperdaten", "settings.training": "Training",
@@ -1773,7 +1904,7 @@
     const themeKey = "fitness-agent-theme";
 
     let conversationId          = null;
-    let currentTask             = "auto";  // manager picks the coach by default
+    let currentTask             = "auto";  // Boss picks the coach by default
     let currentAbortController  = null;
     // pending attachments for the next chat send
     // shape: [{ id, filename, mime_type, uploading: bool }]
@@ -1782,12 +1913,12 @@
     let coachPromptDefaults     = [];
 
     const COACH_META = {
-        auto:               { icon: "🎯", label: "Auto" },
-        chat:               { icon: "💬", label: "Chat" },
-        plan_generation:    { icon: "📅", label: "Plan" },
+        auto:               { icon: "🧭", label: "Boss" },
+        chat:               { icon: "🏋️", label: "Fitness" },
+        plan_generation:    { icon: "🏋️", label: "Fitness" },
         nutrition_analysis: { icon: "🥗", label: "Nutrition" },
-        progress_review:    { icon: "📊", label: "Progress" },
-        mental_health:      { icon: "🧠", label: "Mind" },
+        progress_review:    { icon: "✅", label: "Productivity" },
+        mental_health:      { icon: "🧠", label: "Mental Health" },
     };
     function coachLabel(task) {
         const c = COACH_META[task];
@@ -1796,25 +1927,30 @@
 
     const state = {
         token:      localStorage.getItem(tokenKey)  || "",
+        userId:     "",
         email:      localStorage.getItem(emailKey)  || "",
         isAdmin:    false,
         routing:    {},
-        showTokens: localStorage.getItem("fitness-agent-tokens") === "1"
+        showTokens: localStorage.getItem("fitness-agent-tokens") === "1",
+        showModels: localStorage.getItem("fitness-agent-models") === "1"
     };
 
     const $ = id => document.getElementById(id);
 
     /* ── Theme ── */
     function applyTheme(t) {
-        document.documentElement.dataset.theme = t;
+        const resolved = t === "system"
+            ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+            : t;
+        document.documentElement.dataset.theme = resolved;
         localStorage.setItem(themeKey, t);
     }
     $("account-lang-btn").addEventListener("click", () => {
         setLanguage((window._lang || "en") === "en" ? "de" : "en");
     });
-    $("account-theme-btn").addEventListener("click", () =>
-        applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark")
-    );
+    $("account-theme-light-btn").addEventListener("click", () => applyTheme("light"));
+    $("account-theme-dark-btn").addEventListener("click", () => applyTheme("dark"));
+    $("account-theme-system-btn").addEventListener("click", () => applyTheme("system"));
     $("avatar-menu-btn").addEventListener("click", () => {
         $("account-menu").classList.toggle("hidden");
     });
@@ -1880,6 +2016,35 @@
         }
     }
 
+    const SETTINGS_TITLES = {
+        account: ["Account", "Identity, data export, and session controls"],
+        security: ["Security", "Change your password"],
+        body: ["Body metrics", "Body, training, and nutrition inputs for coaching"],
+        coaches: ["Coaches & API keys", "Provider routing, encrypted keys, and custom prompts"],
+        calendar: ["Calendar export", "Download calendar feeds"],
+        appearance: ["Appearance", "Language, theme, privacy, and retention"],
+        developer: ["Developer", "Diagnostics and implementation details"],
+    };
+
+    function switchSettingsSection(section) {
+        document.querySelectorAll("[data-settings-section]").forEach(card =>
+            card.classList.toggle("active", card.dataset.settingsSection === section)
+        );
+        document.querySelectorAll("[data-settings-target]").forEach(btn =>
+            btn.classList.toggle("active", btn.dataset.settingsTarget === section)
+        );
+        const [title, subtitle] = SETTINGS_TITLES[section] || SETTINGS_TITLES.account;
+        $("settings-section-title").textContent = title;
+        $("settings-section-subtitle").textContent = subtitle;
+    }
+
+    document.querySelectorAll("[data-settings-target]").forEach(btn =>
+        btn.addEventListener("click", () => switchSettingsSection(btn.dataset.settingsTarget))
+    );
+    document.querySelectorAll("[data-settings-cancel]").forEach(btn =>
+        btn.addEventListener("click", () => loadProfile())
+    );
+
     function showApp(isSignedIn) {
         $("login-view").classList.toggle("hidden", isSignedIn);
         if (!isSignedIn) VIEWS.forEach(id => $(id).classList.add("hidden"));
@@ -1927,7 +2092,10 @@
     async function loadRouting() {
         try {
             const res = await fetch("/config/routing");
-            if (res.ok) { state.routing = await res.json(); updateProviderBadge(currentTask); }
+            if (res.ok) {
+                state.routing = await res.json();
+                updateProviderBadge(currentTask === "auto" ? "plan_generation" : currentTask);
+            }
         } catch (_) {}
     }
 
@@ -1939,24 +2107,37 @@
                 headers: authHeaders(),
                 body: JSON.stringify({ task: currentTask, provider })
             });
-            if (res.ok) { state.routing = await res.json(); updateProviderBadge(currentTask); }
+            if (res.ok) {
+                state.routing = await res.json();
+                updateProviderBadge(currentTask === "auto" ? "plan_generation" : currentTask);
+            }
         } catch (_) {}
     }
 
     /* ── Token toggle ── */
     function applyTokenToggle() {
         $("chat-history").classList.toggle("show-tokens", state.showTokens);
-        document.documentElement.classList.toggle("dev-mode", state.showTokens);
+        document.documentElement.classList.toggle("dev-mode", state.showModels);
         const toggle = $("developer-details-toggle");
         if (toggle) toggle.checked = state.showTokens;
+        const modelToggle = $("developer-models-toggle");
+        if (modelToggle) modelToggle.checked = state.showModels;
     }
     function setDeveloperDetails(enabled) {
         state.showTokens = enabled;
         localStorage.setItem("fitness-agent-tokens", state.showTokens ? "1" : "0");
         applyTokenToggle();
     }
+    function setDeveloperModels(enabled) {
+        state.showModels = enabled;
+        localStorage.setItem("fitness-agent-models", state.showModels ? "1" : "0");
+        applyTokenToggle();
+    }
     $("developer-details-toggle").addEventListener("change", e => {
         setDeveloperDetails(e.target.checked);
+    });
+    $("developer-models-toggle").addEventListener("change", e => {
+        setDeveloperModels(e.target.checked);
     });
     document.addEventListener("keydown", e => {
         if (e.altKey && e.key.toLowerCase() === "d") {
@@ -1984,11 +2165,12 @@
         const title = $("active-coach-title");
         if (title) {
             title.textContent = task === "auto"
-                ? "🎯 Auto — manager picks the coach"
+                ? "🧭 Boss — picks the coach"
                 : `${coachLabel(task)} Coach`;
         }
         // The provider badge is meaningless for auto (resolved per turn).
-        updateProviderBadge(task === "auto" ? "chat" : task);
+        updateProviderBadge(task === "auto" ? "plan_generation" : task);
+        renderCurrentChatThread();
     }
 
     // Briefly show which coach the manager routed this turn to, without
@@ -1996,7 +2178,7 @@
     function showRoutedCoach(task) {
         const title = $("active-coach-title");
         if (!title) return;
-        title.textContent = `🎯 Auto → ${coachLabel(task)}`;
+        title.textContent = `🧭 Boss → ${coachLabel(task)}`;
         updateProviderBadge(task);
     }
 
@@ -2043,6 +2225,7 @@
 
     function logout() {
         state.token = "";
+        state.userId = "";
         state.isAdmin = false;
         conversationId = null;
         historyCache = [];
@@ -2059,6 +2242,7 @@
         try {
             const res = await request("/auth/me", { headers: authHeaders() });
             const me = await res.json();
+            state.userId = me.id;
             state.email = me.email;
             state.isAdmin = !!me.is_admin;
             localStorage.setItem(emailKey, state.email);
@@ -2142,13 +2326,13 @@
 
         const rows = [
             {
-                info: "Chat messages (your turns)",
+                info: "Legacy chat messages",
                 stored: [["db", "Postgres · agentmessage"]],
                 sent:   [providerForCoach("chat")],
-                note:   "Tagged with the coach that handled the turn.",
+                note:   "Older internal fallback rows; new manual coaches are listed below.",
             },
             {
-                info: "Plan-coach turns",
+                info: "Fitness-coach turns",
                 stored: [["db", "Postgres · agentmessage"]],
                 sent:   [providerForCoach("plan_generation")],
             },
@@ -2158,21 +2342,21 @@
                 sent:   [providerForCoach("nutrition_analysis")],
             },
             {
-                info: "Progress-coach turns",
+                info: "Productivity-coach turns",
                 stored: [["db", "Postgres · agentmessage"]],
                 sent:   [providerForCoach("progress_review")],
             },
             {
-                info: "Mind-coach turns",
+                info: "Mental Health-coach turns",
                 stored: [["db", "Postgres · agentmessage"]],
                 sent:   [providerForCoach("mental_health")],
                 note:   "Includes mood snapshots logged via log_mental_state.",
             },
             {
-                info: "🎯 Manager classifier",
+                info: "🧭 Boss classifier",
                 stored: [["never", "not stored"]],
                 sent:   ["anthropic"],
-                note:   "Falls back to Chat label on any error.",
+                note:   "Falls back to Fitness on any error.",
             },
             {
                 info: "Profile (height, weight, goals, equipment, macros)",
@@ -2500,7 +2684,7 @@
             renderLLMConfig(await res.json());
             // Re-fetch routing badge data so the chat tab reflects the change.
             await loadRouting();
-            updateProviderBadge(currentTask === "auto" ? "chat" : currentTask);
+            updateProviderBadge(currentTask === "auto" ? "plan_generation" : currentTask);
             flashStatus("llm-status", "Saved ✓", "success");
         } catch (err) {
             setStatus($("llm-status"), err.message, "error");
@@ -2994,6 +3178,21 @@
         return await res.json();
     }
 
+    async function resetAdminUserPassword(userId, newPassword) {
+        await request("/admin/users/" + userId + "/password", {
+            method: "POST",
+            headers: authHeaders(),
+            body: JSON.stringify({ new_password: newPassword }),
+        });
+    }
+
+    async function deleteAdminUser(userId) {
+        await request("/admin/users/" + userId, {
+            method: "DELETE",
+            headers: authHeaders(),
+        });
+    }
+
     async function renderAdminUsers() {
         if (!state.isAdmin) return;
         const list = $("admin-users-list");
@@ -3005,6 +3204,7 @@
             const users = await fetchAdminUsers();
             setStatus($("admin-status"), `${users.length} user${users.length === 1 ? "" : "s"}`);
             for (const u of users) {
+                const isSelf = u.id === state.userId;
                 const item = document.createElement("div");
                 item.className = "history-item";
 
@@ -3017,6 +3217,11 @@
                 const created = document.createElement("span");
                 created.textContent = "· joined " + formatTs(u.created_at);
                 head.appendChild(created);
+                if (isSelf) {
+                    const self = document.createElement("span");
+                    self.textContent = "· you";
+                    head.appendChild(self);
+                }
                 item.appendChild(head);
 
                 const badges = document.createElement("div");
@@ -3041,9 +3246,15 @@
                 approvalBtn.style.height = "32px";
                 approvalBtn.style.padding = "0 10px";
                 approvalBtn.textContent = u.is_approved ? "Revoke approval" : "Approve";
+                approvalBtn.disabled = isSelf;
+                if (isSelf) approvalBtn.title = "You cannot revoke your own approval";
                 approvalBtn.addEventListener("click", async () => {
-                    await updateAdminUser(u.id, { is_approved: !u.is_approved });
-                    renderAdminUsers();
+                    try {
+                        await updateAdminUser(u.id, { is_approved: !u.is_approved });
+                        renderAdminUsers();
+                    } catch (err) {
+                        setStatus($("admin-status"), err.message, "error");
+                    }
                 });
 
                 const adminBtn = document.createElement("button");
@@ -3051,12 +3262,70 @@
                 adminBtn.style.height = "32px";
                 adminBtn.style.padding = "0 10px";
                 adminBtn.textContent = u.is_admin ? "Remove admin" : "Make admin";
+                adminBtn.disabled = isSelf;
+                if (isSelf) adminBtn.title = "You cannot remove your own admin role";
                 adminBtn.addEventListener("click", async () => {
-                    await updateAdminUser(u.id, { is_admin: !u.is_admin });
-                    renderAdminUsers();
+                    try {
+                        await updateAdminUser(u.id, { is_admin: !u.is_admin });
+                        renderAdminUsers();
+                    } catch (err) {
+                        setStatus($("admin-status"), err.message, "error");
+                    }
                 });
 
-                actions.append(approvalBtn, adminBtn);
+                const resetBtn = document.createElement("button");
+                resetBtn.className = "text-btn";
+                resetBtn.style.height = "32px";
+                resetBtn.style.padding = "0 10px";
+                resetBtn.textContent = "Reset password";
+                resetBtn.addEventListener("click", async () => {
+                    const password = prompt(`New password for ${u.email} (minimum 8 characters)`);
+                    if (password === null) return;
+                    if (password.length < 8) {
+                        setStatus($("admin-status"), "Password must be at least 8 characters", "error");
+                        return;
+                    }
+                    const confirmPassword = prompt("Type the same password again");
+                    if (confirmPassword === null) return;
+                    if (password !== confirmPassword) {
+                        setStatus($("admin-status"), "Passwords do not match", "error");
+                        return;
+                    }
+                    try {
+                        await resetAdminUserPassword(u.id, password);
+                        setStatus($("admin-status"), `Password reset for ${u.email}`, "success");
+                        renderAdminUsers();
+                    } catch (err) {
+                        setStatus($("admin-status"), err.message, "error");
+                    }
+                });
+
+                const deleteBtn = document.createElement("button");
+                deleteBtn.className = "btn-danger";
+                deleteBtn.style.height = "32px";
+                deleteBtn.style.padding = "0 10px";
+                deleteBtn.textContent = "Delete user";
+                deleteBtn.disabled = isSelf;
+                if (isSelf) deleteBtn.title = "Use account deletion from Settings for your own account";
+                deleteBtn.addEventListener("click", async () => {
+                    const confirmEmail = prompt(
+                        `Delete ${u.email} and all of their data? Type their email to confirm.`
+                    );
+                    if (confirmEmail === null) return;
+                    if (confirmEmail !== u.email) {
+                        setStatus($("admin-status"), "Delete cancelled: email did not match", "error");
+                        return;
+                    }
+                    try {
+                        await deleteAdminUser(u.id);
+                        setStatus($("admin-status"), `Deleted ${u.email}`, "success");
+                        renderAdminUsers();
+                    } catch (err) {
+                        setStatus($("admin-status"), err.message, "error");
+                    }
+                });
+
+                actions.append(approvalBtn, adminBtn, resetBtn, deleteBtn);
                 item.appendChild(actions);
                 list.appendChild(item);
             }
@@ -3082,7 +3351,10 @@
                     item.appendChild(head);
                     const body = document.createElement("div");
                     body.className = "history-item-text";
-                    body.textContent = `${a.actor_email || a.actor_user_id} → ${a.target_email || a.target_user_id}`;
+                    const target = a.action === "delete_user" && a.after?.deleted_email
+                        ? `${a.after.deleted_email} (deleted)`
+                        : (a.target_email || a.target_user_id);
+                    body.textContent = `${a.actor_email || a.actor_user_id} → ${target}`;
                     item.appendChild(body);
                     auditList.appendChild(item);
                 }
@@ -3168,29 +3440,86 @@
 
     function appendMessage(text, sender, meta, usage, alsoCache = true, task = null, attachments = null) {
         const history = $("chat-history");
-        history.appendChild(renderMessage(text, sender, meta, usage, task, attachments));
-        history.scrollTop = history.scrollHeight;
-        if (alsoCache) {
-            historyCache.push({
-                text, sender,
-                meta: meta || null, usage: usage || null,
-                task: task || null,
-                attachments: attachments || [],
-                ts: new Date().toISOString(),
-            });
+        const message = { text, sender, meta: meta || null, usage: usage || null, task: task || null, attachments: attachments || [] };
+        if (isVisibleInCurrentChat(message)) {
+            history.appendChild(renderMessage(text, sender, meta, usage, task, attachments));
+            history.scrollTop = history.scrollHeight;
         }
+        if (alsoCache) {
+            historyCache.push({ ...message, ts: new Date().toISOString() });
+        }
+        return message;
+    }
+
+    function isVisibleInCurrentChat(message) {
+        if (currentTask === "auto") return true;
+        if (message.meta === "Error") return true;
+        return message.task === currentTask;
+    }
+
+    function visibleChatMessages() {
+        return historyCache.filter(isVisibleInCurrentChat);
+    }
+
+    function renderCurrentChatThread() {
+        const history = $("chat-history");
+        history.replaceChildren();
+        const visible = visibleChatMessages();
+        if (visible.length === 0) {
+            renderChatEmptyState();
+            return;
+        }
+        for (const m of visible) {
+            history.appendChild(renderMessage(m.text, m.sender, m.meta, m.usage, m.task, m.attachments));
+        }
+        history.scrollTop = history.scrollHeight;
     }
 
     async function restoreHistory() {
+        await fetchHistory();
+        renderCurrentChatThread();
+    }
+
+    function renderChatEmptyState() {
         const history = $("chat-history");
         history.replaceChildren();
-        await fetchHistory();
-        if (historyCache.length === 0) {
-            appendMessage("Ready when you are.", "agent", "System", null, false);
-        } else {
-            for (const m of historyCache) history.appendChild(renderMessage(m.text, m.sender, m.meta, m.usage, m.task, m.attachments));
-            history.scrollTop = history.scrollHeight;
+        const wrap = document.createElement("div");
+        wrap.className = "chat-empty-state";
+        const title = document.createElement("h2");
+        title.textContent = currentTask === "auto"
+            ? "What do you need today?"
+            : `No ${COACH_META[currentTask]?.label || "coach"} messages yet`;
+        const grid = document.createElement("div");
+        grid.className = "prompt-grid";
+        const prompts = [
+            ["Plan next week", "Plan next week for me based on my recent training."],
+            ["Log a meal", "Help me log a meal I just ate: "],
+            ["Check my progress", "How's my progress this week?"],
+            ["Quick mental check-in", "I want a quick mental check-in."],
+            ["Recipe ideas", "Give me recipe ideas that fit my macros."],
+            ["Log today's weight", "Log my current weight: "],
+        ];
+        for (const [label, prompt] of prompts) {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "prompt-card";
+            btn.textContent = label;
+            btn.addEventListener("click", () => sendPrompt(prompt));
+            grid.appendChild(btn);
         }
+        const hint = document.createElement("div");
+        hint.className = "empty-hint";
+        hint.textContent = currentTask === "auto"
+            ? "Or just type — Boss will route to the right coach."
+            : "Manual mode shows only messages handled by this coach.";
+        wrap.append(title, grid, hint);
+        history.appendChild(wrap);
+    }
+
+    function sendPrompt(prompt) {
+        $("message-input").value = prompt;
+        $("message-input").dispatchEvent(new Event("input"));
+        $("chat-form").requestSubmit();
     }
 
     function showTyping() {
@@ -3290,7 +3619,10 @@
         pendingAttachments = [];
         renderPendingAttachments();
 
-        appendMessage(text, "user", "", null, true, sentTask, sentAttachments);
+        $("chat-history").querySelector(".chat-empty-state")?.remove();
+        const optimisticUserMessage = appendMessage(
+            text, "user", "", null, true, sentTask, sentAttachments
+        );
         input.value = "";
         input.style.height = "";
         setInFlight(true);
@@ -3313,6 +3645,7 @@
             conversationId = data.conversation_id;
             removeTyping();
             const replyTask = data.resolved_task || sentTask;
+            if (sentTask === "auto") optimisticUserMessage.task = replyTask;
             appendMessage(data.reply, "agent", data.model_used, data.token_usage, true, replyTask);
             if (data.routed_by_manager) showRoutedCoach(replyTask);
             loadDashboard();
@@ -3346,7 +3679,7 @@
             await clearServerHistory();
             $("chat-history").replaceChildren();
             renderHistoryView();
-            appendMessage("Ready when you are.", "agent", "System", null, false);
+            renderChatEmptyState();
         } catch (err) {
             alert("Failed to clear history: " + err.message);
         }
@@ -3426,7 +3759,7 @@
 
     /* ── Boot ── */
     setLanguage(detectLang());
-    applyTheme(localStorage.getItem(themeKey) || "dark");
+    applyTheme(localStorage.getItem(themeKey) || "system");
     $("email").value = state.email;
     showApp(Boolean(state.token));
 </script>
