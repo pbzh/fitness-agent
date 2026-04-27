@@ -1381,9 +1381,9 @@
                     <h3 data-i18n="settings.prompts">Coach prompts</h3>
                     <p>
                         Override the system prompt used by each coach. Leave a textarea
-                        blank to use the built-in default. The Boss prompt is
-                        not editable — it's a classifier and free-form edits will
-                        silently break routing.
+                        blank to use the built-in default. The Boss prompt controls
+                        routing — if you edit it, keep the four routing labels intact
+                        or classification will silently fall back to Fitness.
                     </p>
                 </div>
                 <div class="card-body" id="coach-prompts-body">
@@ -2707,7 +2707,6 @@
         }
         body.replaceChildren();
         for (const c of coachPromptDefaults) {
-            if (!c.editable) continue;
             const block = document.createElement("details");
             block.className = "coach-prompt-block";
             const sum = document.createElement("summary");

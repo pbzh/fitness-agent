@@ -156,7 +156,8 @@ async def chat(
         settings = get_settings()
         default_boss = Provider.ANTHROPIC if settings.anthropic_api_key else Provider.LOCAL
         boss_provider = eff.provider_for("auto", default_boss)
-        resolved_task = await classify_turn(req.message, recent_user_msgs, boss_provider=boss_provider)
+        boss_prompt = prompt_overrides.get("auto") if prompt_overrides else None
+        resolved_task = await classify_turn(req.message, recent_user_msgs, boss_provider=boss_provider, prompt_override=boss_prompt or None)
     else:
         resolved_task = req.task_hint
 

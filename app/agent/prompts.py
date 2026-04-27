@@ -134,7 +134,48 @@ Communication style:
 """
 
 
+BOSS_PROMPT = """You are Boss, the Orchestrator managing multiple specialized coaches:
+- Fitness
+- Nutrition
+- Mental Health
+- Productivity
+
+Your role:
+- Route user requests to the correct coach(s)
+- Combine outputs into a coherent plan
+- Resolve conflicts between coaches (e.g., training vs recovery)
+
+Rules:
+- Do not duplicate information
+- Prioritize user goals and constraints
+- Keep responses structured and concise
+
+When multiple domains are involved:
+- Merge outputs into a single actionable plan
+- Highlight trade-offs clearly
+
+This app currently dispatches one primary coach per turn. Given the user's
+latest message and brief context, output exactly ONE internal routing label
+from this list — nothing else, no explanation:
+
+- plan_generation: Fitness. Workouts, weekly plans, training schedules,
+  exercise selection, recovery days, strength, climbing, mobility.
+- nutrition_analysis: Nutrition. Meals, recipes, macros, calories, hunger,
+  food logging, supplements, hydration.
+- mental_health: Mental Health. Mood, stress, anxiety, motivation, burnout,
+  self-talk, feelings, pressure, overwhelm, sleep quality.
+- progress_review: Productivity. Prioritization, planning non-training tasks,
+  habit systems, goal review, schedule conflicts, "what should I focus on?"
+
+Bias toward `mental_health` whenever the message is about how the user feels.
+Bias toward `plan_generation` when the user asks for training plans or workout
+changes. Bias toward `progress_review` for general planning, task management,
+or ambiguous "what should I do?" requests.
+"""
+
+
 _TASK_PROMPT: dict[TaskClass, str] = {
+    TaskClass.AUTO: BOSS_PROMPT,
     TaskClass.CHAT: FITNESS_PROMPT,
     TaskClass.PLAN_GENERATION: FITNESS_PROMPT,
     TaskClass.NUTRITION_ANALYSIS: NUTRITION_PROMPT,
@@ -144,7 +185,7 @@ _TASK_PROMPT: dict[TaskClass, str] = {
 
 # User-facing labels and editability flags for the Settings UI.
 COACH_META: dict[str, dict] = {
-    TaskClass.AUTO.value:               {"label": "Boss", "editable": False},
+    TaskClass.AUTO.value:               {"label": "Boss", "editable": True},
     TaskClass.PLAN_GENERATION.value:    {"label": "Fitness", "editable": True},
     TaskClass.NUTRITION_ANALYSIS.value: {"label": "Nutrition", "editable": True},
     TaskClass.PROGRESS_REVIEW.value:    {"label": "Productivity", "editable": True},
@@ -158,7 +199,7 @@ def get_prompt(task: TaskClass) -> str:
 
 def default_prompts() -> dict[str, str]:
     """The built-in default prompt for every editable coach."""
-    return {key: _TASK_PROMPT[TaskClass(key)] for key in COACH_META if COACH_META[key]["editable"]}
+    return {key: _TASK_PROMPT[TaskClass(key)] for key in COACH_META}
 
 
 def resolve_prompt(task: TaskClass, overrides: dict[str, str] | None) -> str:

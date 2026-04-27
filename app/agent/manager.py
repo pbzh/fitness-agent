@@ -13,6 +13,7 @@ from typing import Literal
 import structlog
 from pydantic_ai import Agent
 
+from app.agent.prompts import BOSS_PROMPT
 from app.agent.router import DISPATCHABLE_TASKS, Provider, TaskClass, get_model_for_task
 from app.config import get_settings
 
@@ -27,54 +28,16 @@ _LITERAL = Literal[
 ]
 
 
-CLASSIFIER_PROMPT = """You are Boss, the Orchestrator managing multiple specialized coaches:
-- Fitness
-- Nutrition
-- Mental Health
-- Productivity
-
-Your role:
-- Route user requests to the correct coach(s)
-- Combine outputs into a coherent plan
-- Resolve conflicts between coaches (e.g., training vs recovery)
-
-Rules:
-- Do not duplicate information
-- Prioritize user goals and constraints
-- Keep responses structured and concise
-
-When multiple domains are involved:
-- Merge outputs into a single actionable plan
-- Highlight trade-offs clearly
-
-This app currently dispatches one primary coach per turn. Given the user's
-latest message and brief context, output exactly ONE internal routing label
-from this list — nothing else, no explanation:
-
-- plan_generation: Fitness. Workouts, weekly plans, training schedules,
-  exercise selection, recovery days, strength, climbing, mobility.
-- nutrition_analysis: Nutrition. Meals, recipes, macros, calories, hunger,
-  food logging, supplements, hydration.
-- mental_health: Mental Health. Mood, stress, anxiety, motivation, burnout,
-  self-talk, feelings, pressure, overwhelm, sleep quality.
-- progress_review: Productivity. Prioritization, planning non-training tasks,
-  habit systems, goal review, schedule conflicts, "what should I focus on?"
-
-Bias toward `mental_health` whenever the message is about how the user feels.
-Bias toward `plan_generation` when the user asks for training plans or workout
-changes. Bias toward `progress_review` for general planning, task management,
-or ambiguous "what should I do?" requests.
-"""
-
-
 async def classify_turn(
     message: str,
     recent_user_msgs: list[str],
     boss_provider: Provider | None = None,
+    prompt_override: str | None = None,
 ) -> TaskClass:
     """Return the best dispatchable task for this turn.
 
     ``boss_provider`` is the resolved provider (user override > .env default).
+    ``prompt_override`` replaces the built-in BOSS_PROMPT when set.
     Falls back to Anthropic if available, otherwise local.
     """
     if boss_provider is None:
@@ -83,7 +46,7 @@ async def classify_turn(
     classifier: Agent[None, str] = Agent(
         model=model,
         output_type=_LITERAL,
-        system_prompt=CLASSIFIER_PROMPT,
+        system_prompt=prompt_override or BOSS_PROMPT,
     )
 
     context = ""
