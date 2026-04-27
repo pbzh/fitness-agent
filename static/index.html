@@ -2,330 +2,563 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Fitness Agent</title>
     <style>
         :root {
             color-scheme: light;
-            --bg: #f6f7fb;
+            --bg: #f0f4f8;
             --surface: #ffffff;
-            --surface-soft: #eef1f7;
-            --text: #1f2937;
-            --muted: #667085;
-            --border: #d9deea;
-            --primary: #2563eb;
-            --primary-hover: #1d4ed8;
-            --accent: #059669;
-            --danger: #dc2626;
-            --shadow: 0 12px 30px rgba(31, 41, 55, 0.08);
+            --surface-2: #f7f9fc;
+            --surface-3: #eef2f7;
+            --text: #0f172a;
+            --text-2: #64748b;
+            --border: #e2e8f0;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --accent: #10b981;
+            --danger: #ef4444;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.07);
+            --shadow: 0 4px 16px rgba(0,0,0,0.08);
+            --radius: 14px;
+            --radius-sm: 9px;
+            --local-bg: #f1f5f9;    --local-text: #475569;
+            --claude-bg: #faf5ff;   --claude-text: #7c3aed;
+            --openai-bg: #f0fdf4;   --openai-text: #059669;
         }
-
         [data-theme="dark"] {
             color-scheme: dark;
-            --bg: #111318;
-            --surface: #191d24;
-            --surface-soft: #232936;
-            --text: #eef2f7;
-            --muted: #a7b0bf;
-            --border: #343b49;
+            --bg: #0c1117;
+            --surface: #161b24;
+            --surface-2: #1e2530;
+            --surface-3: #252d3a;
+            --text: #f1f5f9;
+            --text-2: #94a3b8;
+            --border: #2d3748;
             --primary: #60a5fa;
             --primary-hover: #3b82f6;
-            --accent: #34d399;
-            --danger: #f87171;
-            --shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+            --shadow: 0 4px 20px rgba(0,0,0,0.35);
+            --local-bg: #1e2530;    --local-text: #94a3b8;
+            --claude-bg: #1e1a2e;   --claude-text: #a78bfa;
+            --openai-bg: #0d1f17;   --openai-text: #34d399;
         }
 
-        * { box-sizing: border-box; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            margin: 0;
-            min-height: 100vh;
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
             background: var(--bg);
             color: var(--text);
-            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            height: 100vh; height: 100dvh;
+            overflow: hidden;
         }
 
         button, input, select, textarea { font: inherit; }
-
-        button {
-            border: 0;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 700;
-        }
-
-        button:disabled { cursor: wait; opacity: 0.72; }
+        button { border: none; cursor: pointer; }
+        button:disabled { opacity: 0.55; cursor: wait; }
 
         input, select, textarea {
-            width: 100%;
-            border: 1px solid var(--border);
-            border-radius: 8px;
             background: var(--surface);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
             color: var(--text);
             outline: none;
+            width: 100%;
+            transition: border-color 0.15s;
+        }
+        input:focus, select:focus, textarea:focus { border-color: var(--primary); }
+        input[readonly] { background: var(--surface-2); color: var(--text-2); cursor: default; }
+        input, select { height: 44px; padding: 0 12px; }
+        textarea { padding: 10px 12px; resize: vertical; }
+
+        label {
+            display: block;
+            font-size: 0.78rem; font-weight: 600;
+            color: var(--text-2);
+            margin-bottom: 5px;
+            text-transform: uppercase; letter-spacing: 0.04em;
         }
 
-        input, select { height: 42px; padding: 0 12px; }
-        textarea { min-height: 90px; padding: 12px; resize: vertical; }
-        label { display: block; color: var(--muted); font-size: 0.84rem; font-weight: 700; margin-bottom: 6px; }
+        /* ── App shell ── */
+        .app { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
 
-        .shell {
-            width: min(1220px, calc(100vw - 32px));
-            margin: 0 auto;
-            padding: 18px 0;
-        }
-
+        /* ── Topbar ── */
         .topbar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 16px;
-            margin-bottom: 18px;
-        }
-
-        .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
-        .mark {
-            display: grid;
-            place-items: center;
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
-            background: var(--primary);
-            color: #fff;
-            font-weight: 900;
-        }
-
-        .brand h1 { margin: 0; font-size: 1.15rem; line-height: 1.2; }
-        .brand p { margin: 2px 0 0; color: var(--muted); font-size: 0.86rem; }
-
-        .top-actions { display: flex; gap: 10px; align-items: center; }
-        .icon-button, .secondary-button {
-            height: 40px;
-            border: 1px solid var(--border);
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 16px;
             background: var(--surface);
-            color: var(--text);
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
         }
-
-        .icon-button { width: 42px; font-size: 1rem; }
-        .secondary-button { padding: 0 14px; }
-        .primary-button {
-            height: 42px;
-            padding: 0 16px;
-            background: var(--primary);
-            color: #fff;
+        .brand-mark {
+            width: 34px; height: 34px; border-radius: 9px;
+            background: var(--primary); color: #fff;
+            display: grid; place-items: center;
+            font-weight: 900; font-size: 0.85rem; flex-shrink: 0;
         }
-        .primary-button:hover { background: var(--primary-hover); }
-
-        .login-view {
-            display: grid;
-            min-height: calc(100vh - 120px);
-            place-items: center;
+        .brand-text { flex: 1; min-width: 0; }
+        .brand-text strong { display: block; font-size: 0.92rem; line-height: 1.2; }
+        .brand-text span { font-size: 0.75rem; color: var(--text-2); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .topbar-actions { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+        .icon-btn {
+            width: 34px; height: 34px; border-radius: var(--radius-sm);
+            background: var(--surface-2); border: 1px solid var(--border);
+            color: var(--text); font-size: 1rem;
+            display: grid; place-items: center; transition: background 0.15s;
         }
+        .icon-btn:hover { background: var(--border); }
+        .icon-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
 
-        .login-panel {
-            width: min(420px, 100%);
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            box-shadow: var(--shadow);
-            padding: 26px;
+        /* ── Desktop nav tabs (in topbar) ── */
+        .nav-tabs { display: none; gap: 4px; flex: 1; justify-content: center; }
+        @media (min-width: 768px) { .nav-tabs { display: flex; } }
+        .nav-tab {
+            height: 34px; padding: 0 14px; border-radius: var(--radius-sm);
+            background: transparent; border: 1px solid transparent;
+            color: var(--text-2); font-size: 0.85rem; font-weight: 600;
+            display: inline-flex; align-items: center; gap: 6px;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
         }
+        .nav-tab:hover { background: var(--surface-2); color: var(--text); }
+        .nav-tab.active {
+            background: var(--surface-2); color: var(--primary);
+            border-color: var(--border);
+        }
+        .nav-tab svg { width: 16px; height: 16px; }
+        .text-btn {
+            height: 34px; padding: 0 12px; border-radius: var(--radius-sm);
+            background: var(--surface-2); border: 1px solid var(--border);
+            color: var(--text); font-size: 0.82rem; font-weight: 600;
+            transition: background 0.15s;
+        }
+        .text-btn:hover { background: var(--border); }
 
-        .login-panel h2 { margin: 0 0 8px; font-size: 1.35rem; }
-        .login-panel p { margin: 0 0 22px; color: var(--muted); }
+        /* ── Login ── */
+        .login-wrap { flex: 1; display: grid; place-items: center; padding: 24px 16px; overflow-y: auto; }
+        .login-card {
+            width: min(400px, 100%);
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); box-shadow: var(--shadow); padding: 28px 24px;
+        }
+        .login-card h2 { font-size: 1.4rem; margin-bottom: 4px; }
+        .login-card .subtitle { color: var(--text-2); font-size: 0.88rem; margin-bottom: 24px; }
         .field { margin-bottom: 14px; }
-        .status { min-height: 22px; color: var(--muted); font-size: 0.9rem; margin-top: 12px; }
+        .btn-primary {
+            width: 100%; height: 44px;
+            background: var(--primary); color: #fff;
+            border-radius: var(--radius-sm); font-weight: 700; font-size: 0.95rem;
+            transition: background 0.15s; margin-top: 4px;
+        }
+        .btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+        .status { min-height: 20px; font-size: 0.84rem; color: var(--text-2); margin-top: 10px; }
         .status.error { color: var(--danger); }
         .status.success { color: var(--accent); }
 
-        .app-view {
-            display: grid;
-            grid-template-columns: minmax(0, 1.8fr) minmax(320px, 0.9fr);
-            gap: 18px;
-            min-height: calc(100vh - 96px);
-        }
+        /* ── Chat view ── */
+        .content { flex: 1; overflow: hidden; display: flex; min-height: 0; }
+        @media (min-width: 768px) { .content { padding: 18px; } }
+
+        .chat-pane { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 
         .panel {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            box-shadow: var(--shadow);
-            min-width: 0;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); box-shadow: var(--shadow-sm);
+            display: flex; flex-direction: column; overflow: hidden; flex: 1; min-height: 0;
         }
+        @media (max-width: 767px) { .panel { border-radius: 0; border: none; box-shadow: none; } }
 
-        .chat-panel { display: grid; grid-template-rows: auto 1fr auto; min-height: 620px; }
-        .panel-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            padding: 16px;
-            border-bottom: 1px solid var(--border);
+        .panel-header { padding: 12px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+        .panel-title { font-size: 0.95rem; font-weight: 700; margin-bottom: 10px; }
+
+        .coach-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .coach-pills { display: flex; gap: 5px; flex-wrap: wrap; flex: 1; }
+        .coach-btn {
+            padding: 5px 11px; border-radius: 20px;
+            font-size: 0.8rem; font-weight: 600;
+            background: var(--surface-2); border: 1.5px solid var(--border);
+            color: var(--text-2); transition: all 0.15s; white-space: nowrap;
         }
-        .panel-header h2 { margin: 0; font-size: 1rem; }
+        .coach-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
 
+        /* ── Chat header extras ── */
+        .chat-header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+        .chat-header-top .panel-title { margin-bottom: 0; }
+        .token-toggle-btn { width: 28px; height: 28px; font-size: 0.78rem; border-radius: 7px; }
+        .token-toggle-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .model-label {
+            font-size: 0.68rem; color: var(--text-2);
+            font-family: 'Menlo', 'Monaco', 'Consolas', monospace;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            max-width: 160px; flex-shrink: 1;
+        }
+        .token-usage { display: none; font-size: 0.69rem; opacity: 0.6; margin-top: 3px; }
+        .show-tokens .token-usage { display: block; }
+
+        /* ── Provider selector ── */
+        .provider-wrap {
+            display: inline-flex; align-items: center; gap: 5px;
+            font-size: 0.73rem; font-weight: 700;
+            padding: 3px 8px; border-radius: 20px;
+            white-space: nowrap; flex-shrink: 0; transition: background 0.2s, color 0.2s;
+        }
+        .provider-wrap.local     { background: var(--local-bg);  color: var(--local-text); }
+        .provider-wrap.anthropic { background: var(--claude-bg); color: var(--claude-text); }
+        .provider-wrap.openai    { background: var(--openai-bg); color: var(--openai-text); }
+        .provider-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+        .provider-wrap select {
+            appearance: none; -webkit-appearance: none;
+            background: transparent; border: none; outline: none;
+            color: inherit; font: inherit; font-weight: 700; font-size: 0.73rem;
+            cursor: pointer; padding: 0; width: auto; height: auto;
+        }
+        .provider-chevron { font-size: 0.65rem; line-height: 1; opacity: 0.7; }
+
+        /* ── Chat messages ── */
         .chat-history {
-            padding: 18px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
+            flex: 1; overflow-y: auto; min-height: 0;
+            padding: 16px; display: flex; flex-direction: column; gap: 10px;
         }
-
         .message {
-            max-width: min(76%, 760px);
-            padding: 12px 14px;
-            border-radius: 8px;
-            white-space: pre-wrap;
-            line-height: 1.45;
-            overflow-wrap: anywhere;
+            max-width: min(82%, 640px); padding: 10px 14px; border-radius: 16px;
+            line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.9rem;
+        }
+        .message.user { align-self: flex-end; background: var(--primary); color: #fff; border-bottom-right-radius: 4px; }
+        .message.agent { align-self: flex-start; background: var(--surface-2); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+        .message .meta { display: block; font-size: 0.7rem; opacity: 0.6; margin-top: 5px; }
+        .message .coach-chip {
+            display: inline-block;
+            font-size: 0.66rem; font-weight: 700;
+            padding: 2px 7px; border-radius: 10px;
+            background: var(--surface-3); color: var(--text-2);
+            margin-bottom: 6px; letter-spacing: 0.02em;
+        }
+        .message.user .coach-chip { background: rgba(255,255,255,0.22); color: #fff; }
+
+        .typing { display: flex; gap: 4px; align-items: center; padding: 2px 0; }
+        .typing span {
+            width: 7px; height: 7px; border-radius: 50%; background: var(--text-2);
+            animation: bounce 1.2s infinite ease-in-out;
+        }
+        .typing span:nth-child(2) { animation-delay: 0.18s; }
+        .typing span:nth-child(3) { animation-delay: 0.36s; }
+        @keyframes bounce {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+            30% { transform: translateY(-6px); opacity: 1; }
         }
 
-        .message.user {
-            align-self: flex-end;
-            background: var(--primary);
-            color: #fff;
-        }
-
-        .message.agent {
-            align-self: flex-start;
-            background: var(--surface-soft);
-            color: var(--text);
-        }
-
-        .message .meta {
-            display: block;
-            margin-top: 6px;
-            color: inherit;
-            opacity: 0.68;
-            font-size: 0.75rem;
-        }
-
+        /* ── Composer ── */
         .composer {
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) auto;
-            gap: 10px;
-            padding: 14px;
-            border-top: 1px solid var(--border);
+            padding: 10px 12px; border-top: 1px solid var(--border);
+            background: var(--surface); display: flex; gap: 8px; align-items: flex-end;
+            flex-shrink: 0; padding-bottom: max(10px, env(safe-area-inset-bottom));
+        }
+        .composer textarea { flex: 1; width: auto; min-height: 42px; max-height: 130px; border-radius: 20px; padding: 10px 14px; line-height: 1.4; }
+        .send-btn {
+            width: 42px; height: 42px; flex-shrink: 0; border-radius: 50%;
+            background: var(--primary); color: #fff; display: grid; place-items: center;
+            transition: background 0.15s, transform 0.1s;
+        }
+        .send-btn:hover:not(:disabled) { background: var(--primary-hover); }
+        .send-btn:active:not(:disabled) { transform: scale(0.93); }
+        .send-btn svg { width: 17px; height: 17px; }
+
+        .stop-btn {
+            width: 42px; height: 42px; flex-shrink: 0; border-radius: 50%;
+            background: var(--danger); color: #fff; display: grid; place-items: center;
+            transition: filter 0.15s, transform 0.1s;
+        }
+        .stop-btn:hover { filter: brightness(0.85); }
+        .stop-btn:active { transform: scale(0.93); }
+        .stop-btn svg { width: 14px; height: 14px; }
+
+        .attach-btn {
+            width: 42px; height: 42px; flex-shrink: 0; border-radius: 50%;
+            background: var(--surface-2); color: var(--text); border: 1px solid var(--border);
+            display: grid; place-items: center; transition: background 0.15s;
+        }
+        .attach-btn:hover { background: var(--border); }
+        .attach-btn svg { width: 18px; height: 18px; }
+
+        .pending-attachments {
+            display: flex; flex-wrap: wrap; gap: 6px;
+            padding: 8px 12px 0;
             background: var(--surface);
         }
+        .pending-attachments:empty { display: none; }
+        .attach-chip {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 0.78rem; padding: 4px 10px; border-radius: 14px;
+            background: var(--surface-3); color: var(--text);
+            border: 1px solid var(--border);
+        }
+        .attach-chip .x {
+            cursor: pointer; color: var(--text-2);
+            font-weight: 700; line-height: 1;
+        }
+        .attach-chip .x:hover { color: var(--danger); }
+        .attach-chip.uploading { opacity: 0.6; }
 
-        .composer textarea { min-height: 42px; max-height: 160px; }
+        .message-attachments {
+            display: flex; flex-direction: column; gap: 6px;
+            margin-top: 8px;
+        }
+        .message-attachments img {
+            max-width: 320px; max-height: 320px;
+            border-radius: 8px; display: block;
+        }
+        .message-attachments a {
+            font-size: 0.78rem; color: inherit;
+            text-decoration: underline; opacity: 0.8;
+        }
 
-        .profile-panel { padding: 16px; overflow-y: auto; }
-        .profile-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+        /* ── Settings view ── */
+        .settings-wrap {
+            flex: 1; overflow-y: auto; min-height: 0;
+            padding: 20px 16px;
+            padding-bottom: max(20px, env(safe-area-inset-bottom));
+        }
+        .settings-container {
+            max-width: 640px; margin: 0 auto;
+            display: flex; flex-direction: column; gap: 16px;
+        }
+        .settings-heading {
+            font-size: 1.2rem; font-weight: 800; margin-bottom: 4px;
+        }
+        .settings-subheading { font-size: 0.84rem; color: var(--text-2); margin-bottom: 8px; }
+
+        .settings-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); box-shadow: var(--shadow-sm); overflow: hidden;
+        }
+        .card-header {
+            padding: 16px 20px 0;
+        }
+        .card-header h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 3px; }
+        .card-header p { font-size: 0.81rem; color: var(--text-2); margin-bottom: 14px; }
+        .card-body { padding: 0 20px; }
+        .card-footer {
+            display: flex; align-items: center; gap: 10px;
+            padding: 14px 20px; margin-top: 14px;
+            border-top: 1px solid var(--border);
+            background: var(--surface-2);
+        }
+
+        .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        @media (max-width: 480px) { .settings-grid { grid-template-columns: 1fr; } }
         .full { grid-column: 1 / -1; }
 
-        .profile-actions {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 14px;
+        .macro-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+        .macro-row label { text-transform: none; letter-spacing: 0; font-size: 0.76rem; }
+
+        .btn-save {
+            height: 38px; padding: 0 18px;
+            background: var(--primary); color: #fff;
+            border-radius: var(--radius-sm); font-weight: 700; font-size: 0.88rem;
+            transition: background 0.15s;
         }
+        .btn-save:hover:not(:disabled) { background: var(--primary-hover); }
+
+        .btn-danger {
+            height: 38px; padding: 0 18px;
+            background: transparent; color: var(--danger);
+            border: 1.5px solid var(--danger);
+            border-radius: var(--radius-sm); font-weight: 700; font-size: 0.88rem;
+            transition: background 0.15s, color 0.15s;
+        }
+        .btn-danger:hover:not(:disabled) { background: var(--danger); color: #fff; }
+
+        /* ── History view ── */
+        .history-wrap, .files-wrap {
+            flex: 1; overflow-y: auto; min-height: 0;
+            padding: 20px 16px;
+            padding-bottom: max(20px, env(safe-area-inset-bottom));
+        }
+        .history-container, .files-container {
+            max-width: 800px; margin: 0 auto;
+            display: flex; flex-direction: column; gap: 14px;
+        }
+        .history-toolbar {
+            display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+        }
+        .history-toolbar input[type="search"] { flex: 1; min-width: 180px; height: 38px; }
+        .history-list {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); box-shadow: var(--shadow-sm);
+            display: flex; flex-direction: column; overflow: hidden;
+        }
+        .history-empty { padding: 40px 20px; text-align: center; color: var(--text-2); font-size: 0.9rem; }
+        .history-item {
+            padding: 12px 16px; border-bottom: 1px solid var(--border);
+            display: flex; flex-direction: column; gap: 4px;
+        }
+        .history-item:last-child { border-bottom: none; }
+        .history-item-head {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.04em; color: var(--text-2);
+        }
+        .history-item-head .role-user  { color: var(--primary); }
+        .history-item-head .role-agent { color: var(--accent); }
+        .history-item-text {
+            font-size: 0.9rem; line-height: 1.5; color: var(--text);
+            white-space: pre-wrap; overflow-wrap: anywhere;
+        }
+        .history-stats { font-size: 0.8rem; color: var(--text-2); padding: 0 4px; }
+
+        /* ── Files view ── */
+        .files-empty {
+            background: var(--surface); border: 1px dashed var(--border);
+            border-radius: var(--radius); padding: 40px 20px;
+            text-align: center; color: var(--text-2);
+        }
+        .files-empty h3 { color: var(--text); font-size: 1rem; margin-bottom: 6px; }
+        .files-empty p { font-size: 0.86rem; }
+
+        /* ── Bottom tab bar (mobile only) ── */
+        .tab-bar {
+            display: flex; background: var(--surface);
+            border-top: 1px solid var(--border); flex-shrink: 0;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        .tab-item {
+            flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
+            padding: 9px 0; color: var(--text-2);
+            font-size: 0.68rem; font-weight: 600;
+            background: none; border: none; cursor: pointer; transition: color 0.15s;
+        }
+        .tab-item.active { color: var(--primary); }
+        .tab-item svg { width: 22px; height: 22px; }
+
+        @media (min-width: 768px) { .tab-bar { display: none !important; } }
 
         .hidden { display: none !important; }
-
-        @media (max-width: 860px) {
-            .app-view { grid-template-columns: 1fr; }
-            .chat-panel { min-height: 520px; }
-            .composer { grid-template-columns: 1fr; }
-            .profile-grid { grid-template-columns: 1fr; }
-            .message { max-width: 92%; }
-        }
     </style>
 </head>
 <body>
-    <div class="shell">
-        <header class="topbar">
-            <div class="brand">
-                <div class="mark">FA</div>
-                <div>
-                    <h1>Fitness Agent</h1>
-                    <p id="session-label">Signed out</p>
-                </div>
-            </div>
-            <div class="top-actions">
-                <button class="icon-button" id="theme-toggle" type="button" title="Toggle dark mode">D</button>
-                <button class="secondary-button hidden" id="logout-button" type="button">Logout</button>
-            </div>
-        </header>
+<div class="app">
 
-        <main class="login-view" id="login-view">
-            <form class="login-panel" id="login-form">
-                <h2>Login</h2>
-                <p>Use the account created by the bootstrap script.</p>
-                <div class="field">
-                    <label for="email">Email</label>
-                    <input id="email" name="email" type="email" autocomplete="username" required>
-                </div>
-                <div class="field">
-                    <label for="password">Password</label>
-                    <input id="password" name="password" type="password" autocomplete="current-password" required>
-                </div>
-                <button class="primary-button" id="login-button" type="submit">Login</button>
-                <div class="status" id="login-status"></div>
-            </form>
-        </main>
+    <!-- ── Topbar ── -->
+    <header class="topbar">
+        <div class="brand-mark">FA</div>
+        <div class="brand-text">
+            <strong>Fitness Agent</strong>
+            <span id="session-label">Signed out</span>
+        </div>
+        <nav class="nav-tabs hidden" id="nav-tabs-desktop">
+            <button class="nav-tab active" data-view="app-view" type="button">💬 Chat</button>
+            <button class="nav-tab" data-view="history-view" type="button">🕘 History</button>
+            <button class="nav-tab" data-view="files-view" type="button">📁 Files</button>
+            <button class="nav-tab" data-view="settings-view" type="button">⚙️ Settings</button>
+        </nav>
+        <div class="topbar-actions">
+            <button class="icon-btn" id="theme-toggle" title="Toggle theme">🌙</button>
+            <button class="text-btn hidden" id="logout-button" type="button">Logout</button>
+        </div>
+    </header>
 
-        <main class="app-view hidden" id="app-view">
-            <section class="panel chat-panel">
+    <!-- ── Login ── -->
+    <div class="login-wrap" id="login-view">
+        <form class="login-card" id="login-form">
+            <h2>Welcome back</h2>
+            <p class="subtitle">Sign in to your fitness coach</p>
+            <div class="field">
+                <label for="email">Email</label>
+                <input id="email" name="email" type="email" autocomplete="username" required>
+            </div>
+            <div class="field">
+                <label for="password">Password</label>
+                <input id="password" name="password" type="password" autocomplete="current-password" required>
+            </div>
+            <button class="btn-primary" id="login-button" type="submit">Sign in</button>
+            <div class="status" id="login-status"></div>
+        </form>
+    </div>
+
+    <!-- ── Chat view ── -->
+    <div class="content hidden" id="app-view">
+        <div class="chat-pane">
+            <div class="panel">
                 <div class="panel-header">
-                    <h2>Coach</h2>
-                    <select id="task-hint" aria-label="Task">
-                        <option value="chat">Chat</option>
-                        <option value="plan_generation">Plan</option>
-                        <option value="nutrition_analysis">Nutrition</option>
-                        <option value="progress_review">Progress</option>
-                    </select>
+                    <div class="chat-header-top">
+                        <div class="panel-title" id="active-coach-title">💬 Chat Coach</div>
+                        <button class="icon-btn token-toggle-btn" id="token-toggle" type="button" title="Show / hide token usage">⧉</button>
+                    </div>
+                    <div class="coach-row">
+                        <div class="coach-pills">
+                            <button class="coach-btn active" data-task="chat" type="button">💬 Chat</button>
+                            <button class="coach-btn" data-task="plan_generation" type="button">📅 Plan</button>
+                            <button class="coach-btn" data-task="nutrition_analysis" type="button">🥗 Nutrition</button>
+                            <button class="coach-btn" data-task="progress_review" type="button">📊 Progress</button>
+                            <button class="coach-btn" data-task="mental_health" type="button">🧠 Mind</button>
+                        </div>
+                        <span class="provider-wrap local" id="provider-badge">
+                            <span class="provider-dot"></span>
+                            <select id="provider-select" title="Change LLM provider">
+                                <option value="local">Local LLM</option>
+                                <option value="anthropic">Claude</option>
+                                <option value="openai">GPT</option>
+                            </select>
+                            <span class="provider-chevron">▾</span>
+                        </span>
+                        <span class="model-label" id="model-label"></span>
+                    </div>
                 </div>
                 <div class="chat-history" id="chat-history"></div>
+                <div class="pending-attachments" id="pending-attachments"></div>
                 <form class="composer" id="chat-form">
-                    <textarea id="message-input" placeholder="Ask about workouts, meals, recovery, or scheduling..." required></textarea>
-                    <button class="primary-button" id="send-button" type="submit">Send</button>
+                    <input type="file" id="chat-file-input" multiple
+                           accept="image/*,application/pdf,.pdf,.docx,.doc,.txt,.md,.csv,.tsv,.json"
+                           style="display:none;">
+                    <button class="attach-btn" id="chat-attach-btn" type="button" title="Attach files">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                        </svg>
+                    </button>
+                    <textarea id="message-input" placeholder="Ask about workouts, meals, recovery… (or just attach a file)" rows="1"></textarea>
+                    <button class="send-btn" id="send-button" type="submit" title="Send">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                    <button class="stop-btn hidden" id="stop-button" type="button" title="Stop generation">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <rect x="4" y="4" width="16" height="16" rx="2"/>
+                        </svg>
+                    </button>
                 </form>
-            </section>
+            </div>
+        </div>
+    </div>
 
-            <aside class="panel profile-panel">
-                <div class="panel-header">
-                    <h2>Profile</h2>
+    <!-- ── Settings view ── -->
+    <div class="settings-wrap hidden" id="settings-view">
+        <div class="settings-container">
+            <div>
+                <div class="settings-heading">Settings</div>
+                <div class="settings-subheading">Manage your account, security, and coaching preferences</div>
+            </div>
+
+            <!-- Account -->
+            <div class="settings-card">
+                <div class="card-header">
+                    <h3>Account</h3>
+                    <p>Your identity and personal details</p>
                 </div>
-                <form id="profile-form">
-                    <div class="profile-grid">
-                        <div class="field">
-                            <label for="p-height">Height (cm)</label>
-                            <input type="number" id="p-height" min="50" max="250" step="0.1">
-                        </div>
-                        <div class="field">
-                            <label for="p-weight">Weight (kg)</label>
-                            <input type="number" id="p-weight" min="20" max="350" step="0.1">
-                        </div>
-                        <div class="field">
-                            <label for="p-target-weight">Target weight (kg)</label>
-                            <input type="number" id="p-target-weight" min="20" max="350" step="0.1">
-                        </div>
-                        <div class="field">
-                            <label for="p-weekly">Weekly workouts</label>
-                            <input type="number" id="p-weekly" min="0" max="14" step="1">
-                        </div>
+                <div class="card-body">
+                    <div class="settings-grid">
                         <div class="field full">
-                            <label for="p-goal">Primary goal</label>
-                            <input type="text" id="p-goal" maxlength="80" placeholder="strength, endurance, fat loss">
-                        </div>
-                        <div class="field full">
-                            <label for="p-equipment">Equipment</label>
-                            <input type="text" id="p-equipment" placeholder="Dumbbells, pull-up bar, TRX">
-                        </div>
-                        <div class="field full">
-                            <label for="p-diet">Dietary restrictions</label>
-                            <input type="text" id="p-diet" placeholder="vegetarian, lactose-free">
+                            <label>Email</label>
+                            <input id="s-email" type="email" readonly tabindex="-1">
                         </div>
                         <div class="field">
-                            <label for="p-calories">Daily calories</label>
-                            <input type="number" id="p-calories" min="800" max="8000" step="1">
+                            <label for="s-birth-date">Date of birth</label>
+                            <input type="date" id="s-birth-date">
                         </div>
                         <div class="field">
-                            <label for="p-sex">Sex</label>
-                            <select id="p-sex">
+                            <label for="s-sex">Sex</label>
+                            <select id="s-sex">
                                 <option value="">Unset</option>
                                 <option value="female">Female</option>
                                 <option value="male">Male</option>
@@ -333,236 +566,1007 @@
                                 <option value="unspecified">Unspecified</option>
                             </select>
                         </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button class="btn-save" id="save-account-btn" type="button">Save</button>
+                    <span class="status" id="account-status"></span>
+                </div>
+            </div>
+
+            <!-- Security -->
+            <div class="settings-card">
+                <div class="card-header">
+                    <h3>Security</h3>
+                    <p>Change your login password</p>
+                </div>
+                <div class="card-body">
+                    <div class="settings-grid">
                         <div class="field full">
-                            <label for="p-notes">Notes</label>
-                            <textarea id="p-notes" maxlength="2000" placeholder="Injuries, preferences, schedule constraints"></textarea>
+                            <label for="s-current-pw">Current password</label>
+                            <input type="password" id="s-current-pw" autocomplete="current-password">
+                        </div>
+                        <div class="field">
+                            <label for="s-new-pw">New password</label>
+                            <input type="password" id="s-new-pw" autocomplete="new-password" placeholder="Min. 8 characters">
+                        </div>
+                        <div class="field">
+                            <label for="s-confirm-pw">Confirm new password</label>
+                            <input type="password" id="s-confirm-pw" autocomplete="new-password">
                         </div>
                     </div>
-                    <div class="profile-actions">
-                        <button class="primary-button" id="save-profile-button" type="submit">Save</button>
-                        <span class="status" id="profile-status"></span>
+                </div>
+                <div class="card-footer">
+                    <button class="btn-save" id="change-pw-btn" type="button">Change password</button>
+                    <span class="status" id="security-status"></span>
+                </div>
+            </div>
+
+            <!-- Body metrics -->
+            <div class="settings-card">
+                <div class="card-header">
+                    <h3>Body metrics</h3>
+                    <p>Used for personalised calorie and training recommendations</p>
+                </div>
+                <div class="card-body">
+                    <div class="settings-grid">
+                        <div class="field">
+                            <label for="s-height">Height (cm)</label>
+                            <input type="number" id="s-height" min="50" max="250" step="0.1" placeholder="175">
+                        </div>
+                        <div class="field">
+                            <label for="s-weight">Current weight (kg)</label>
+                            <input type="number" id="s-weight" min="20" max="350" step="0.1" placeholder="80">
+                        </div>
+                        <div class="field">
+                            <label for="s-target-weight">Target weight (kg)</label>
+                            <input type="number" id="s-target-weight" min="20" max="350" step="0.1" placeholder="75">
+                        </div>
                     </div>
-                </form>
-            </aside>
-        </main>
+                </div>
+                <div class="card-footer">
+                    <button class="btn-save" id="save-body-btn" type="button">Save</button>
+                    <span class="status" id="body-status"></span>
+                </div>
+            </div>
+
+            <!-- Training -->
+            <div class="settings-card">
+                <div class="card-header">
+                    <h3>Training</h3>
+                    <p>Goals, schedule, and available equipment</p>
+                </div>
+                <div class="card-body">
+                    <div class="settings-grid">
+                        <div class="field full">
+                            <label for="s-goal">Primary goal</label>
+                            <input type="text" id="s-goal" maxlength="80" placeholder="fat loss, hypertrophy, endurance…">
+                        </div>
+                        <div class="field">
+                            <label for="s-weekly">Weekly workouts</label>
+                            <input type="number" id="s-weekly" min="0" max="14" step="1" placeholder="4">
+                        </div>
+                        <div class="field full">
+                            <label for="s-equipment">Equipment (comma-separated)</label>
+                            <input type="text" id="s-equipment" placeholder="pull-up bar, TRX, dumbbells">
+                        </div>
+                        <div class="field full">
+                            <label for="s-notes">Notes for the coach</label>
+                            <textarea id="s-notes" rows="3" maxlength="2000" placeholder="Injuries, preferred session length, schedule constraints…"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button class="btn-save" id="save-training-btn" type="button">Save</button>
+                    <span class="status" id="training-status"></span>
+                </div>
+            </div>
+
+            <!-- Nutrition -->
+            <div class="settings-card">
+                <div class="card-header">
+                    <h3>Nutrition</h3>
+                    <p>Daily calorie and macro targets, dietary preferences</p>
+                </div>
+                <div class="card-body">
+                    <div class="settings-grid">
+                        <div class="field">
+                            <label for="s-calories">Daily calories (kcal)</label>
+                            <input type="number" id="s-calories" min="800" max="8000" step="1" placeholder="2500">
+                        </div>
+                        <div class="field full">
+                            <label>Macros (g / day)</label>
+                            <div class="macro-row">
+                                <div>
+                                    <label for="s-protein">Protein</label>
+                                    <input type="number" id="s-protein" min="0" max="500" step="1" placeholder="160 g">
+                                </div>
+                                <div>
+                                    <label for="s-carbs">Carbs</label>
+                                    <input type="number" id="s-carbs" min="0" max="1000" step="1" placeholder="280 g">
+                                </div>
+                                <div>
+                                    <label for="s-fat">Fat</label>
+                                    <input type="number" id="s-fat" min="0" max="300" step="1" placeholder="80 g">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="field full">
+                            <label for="s-diet">Dietary restrictions (comma-separated)</label>
+                            <input type="text" id="s-diet" placeholder="vegetarian, lactose-free, gluten-free">
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button class="btn-save" id="save-nutrition-btn" type="button">Save</button>
+                    <span class="status" id="nutrition-status"></span>
+                </div>
+            </div>
+
+            <!-- Sign out -->
+            <div class="settings-card">
+                <div class="card-header">
+                    <h3>Session</h3>
+                    <p>Sign out of this device</p>
+                </div>
+                <div class="card-footer" style="border-top: none; margin-top: 0;">
+                    <button class="btn-danger" id="settings-logout-btn" type="button">Sign out</button>
+                </div>
+            </div>
+
+        </div>
     </div>
 
-    <script>
-        const tokenKey = "fitness-agent-token";
-        const themeKey = "fitness-agent-theme";
-        let conversationId = null;
+    <!-- ── History view ── -->
+    <div class="history-wrap hidden" id="history-view">
+        <div class="history-container">
+            <div>
+                <div class="settings-heading">History</div>
+                <div class="settings-subheading">Past chat messages, persisted server-side</div>
+            </div>
+            <div class="history-toolbar">
+                <input type="search" id="history-search" placeholder="Search messages…">
+                <button class="text-btn" id="history-refresh-btn" type="button">Refresh</button>
+                <button class="text-btn" id="history-export-btn" type="button">Export</button>
+                <a class="text-btn" id="history-ics-btn" href="/calendar/upcoming.ics" download style="display:inline-flex;align-items:center;text-decoration:none;height:38px;padding:0 12px;">📆 .ics</a>
+                <button class="btn-danger" id="history-clear-btn" type="button" style="height: 38px;">Clear all</button>
+            </div>
+            <div class="history-stats" id="history-stats"></div>
+            <div class="history-list" id="history-list"></div>
+        </div>
+    </div>
 
-        const state = {
-            token: localStorage.getItem(tokenKey) || "",
-            email: localStorage.getItem("fitness-agent-email") || ""
+    <!-- ── Files view ── -->
+    <div class="files-wrap hidden" id="files-view">
+        <div class="files-container">
+            <div>
+                <div class="settings-heading">Files</div>
+                <div class="settings-subheading">Uploads (progress photos, meal pics, PDFs) and agent-generated plan images</div>
+            </div>
+            <div class="history-toolbar">
+                <input type="file" id="file-input" style="flex:1;height:38px;padding:6px 8px;">
+                <button class="text-btn" id="file-upload-btn" type="button">Upload</button>
+                <button class="text-btn" id="file-refresh-btn" type="button">Refresh</button>
+                <span class="status" id="file-status"></span>
+            </div>
+            <div class="history-list" id="files-list"></div>
+        </div>
+    </div>
+
+    <!-- ── Bottom tab bar (mobile only) ── -->
+    <nav class="tab-bar hidden" id="tab-bar">
+        <button class="tab-item active" data-view="app-view" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            Chat
+        </button>
+        <button class="tab-item" data-view="history-view" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            History
+        </button>
+        <button class="tab-item" data-view="files-view" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+            </svg>
+            Files
+        </button>
+        <button class="tab-item" data-view="settings-view" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            Settings
+        </button>
+    </nav>
+
+</div>
+<script>
+    const tokenKey = "fitness-agent-token";
+    const emailKey = "fitness-agent-email";
+    const themeKey = "fitness-agent-theme";
+
+    let conversationId          = null;
+    let currentTask             = "chat";
+    let currentAbortController  = null;
+    // pending attachments for the next chat send
+    // shape: [{ id, filename, mime_type, uploading: bool }]
+    let pendingAttachments      = [];
+
+    const COACH_META = {
+        chat:               { icon: "💬", label: "Chat" },
+        plan_generation:    { icon: "📅", label: "Plan" },
+        nutrition_analysis: { icon: "🥗", label: "Nutrition" },
+        progress_review:    { icon: "📊", label: "Progress" },
+        mental_health:      { icon: "🧠", label: "Mind" },
+    };
+    function coachLabel(task) {
+        const c = COACH_META[task];
+        return c ? `${c.icon} ${c.label}` : (task || "");
+    }
+
+    const state = {
+        token:      localStorage.getItem(tokenKey)  || "",
+        email:      localStorage.getItem(emailKey)  || "",
+        routing:    {},
+        showTokens: localStorage.getItem("fitness-agent-tokens") === "1"
+    };
+
+    const $ = id => document.getElementById(id);
+
+    /* ── Theme ── */
+    function applyTheme(t) {
+        document.documentElement.dataset.theme = t;
+        $("theme-toggle").textContent = t === "dark" ? "☀️" : "🌙";
+        localStorage.setItem(themeKey, t);
+    }
+    $("theme-toggle").addEventListener("click", () =>
+        applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark")
+    );
+
+    /* ── Helpers ── */
+    function authHeaders() {
+        return { "Authorization": `Bearer ${state.token}`, "Content-Type": "application/json" };
+    }
+
+    function setStatus(el, text, type = "") {
+        el.textContent = text;
+        el.className = `status ${type}`.trim();
+    }
+
+    function flashStatus(elId, text, type = "success", ms = 2500) {
+        const el = $(elId);
+        setStatus(el, text, type);
+        setTimeout(() => setStatus(el, ""), ms);
+    }
+
+    async function request(path, options = {}) {
+        const res = await fetch(path, options);
+        if (res.status === 401) { logout(); throw new Error("Session expired"); }
+        if (!res.ok) {
+            let msg;
+            try { msg = (await res.json()).detail; } catch (_) { msg = await res.text(); }
+            throw new Error(msg || `Request failed with ${res.status}`);
+        }
+        return res;
+    }
+
+    function numberOrNull(id) {
+        const v = $(id).value;
+        return v === "" ? null : Number(v);
+    }
+
+    function listFromInput(id) {
+        return $(id).value.split(",").map(s => s.trim()).filter(Boolean);
+    }
+
+    /* ── Navigation ── */
+    const VIEWS = ["app-view", "history-view", "files-view", "settings-view"];
+
+    function switchView(viewId) {
+        VIEWS.forEach(id => $(id).classList.toggle("hidden", id !== viewId));
+        document.querySelectorAll("[data-view]").forEach(t =>
+            t.classList.toggle("active", t.dataset.view === viewId)
+        );
+        if (viewId === "history-view") {
+            fetchHistory().then(renderHistoryView);
+        } else if (viewId === "files-view") {
+            renderFilesView();
+        }
+    }
+
+    function showApp(isSignedIn) {
+        $("login-view").classList.toggle("hidden", isSignedIn);
+        if (!isSignedIn) VIEWS.forEach(id => $(id).classList.add("hidden"));
+        $("tab-bar").classList.toggle("hidden", !isSignedIn);
+        $("nav-tabs-desktop").classList.toggle("hidden", !isSignedIn);
+        $("logout-button").classList.toggle("hidden", !isSignedIn);
+        $("session-label").textContent = isSignedIn ? state.email : "Signed out";
+        if (isSignedIn) {
+            switchView("app-view");
+            applyTokenToggle();
+            loadProfile();
+            loadRouting();
+            restoreHistory();
+        }
+    }
+
+    document.querySelectorAll("[data-view]").forEach(el =>
+        el.addEventListener("click", () => switchView(el.dataset.view))
+    );
+
+    /* ── Provider selector ── */
+    const providerCls = { local: "local", anthropic: "anthropic", openai: "openai" };
+
+    function updateProviderBadge(task) {
+        const info = state.routing[task] || { provider: "local", model: "" };
+        $("provider-badge").className = `provider-wrap ${providerCls[info.provider] || "local"}`;
+        $("provider-select").value = info.provider;
+        $("model-label").textContent = info.model || "";
+    }
+
+    async function loadRouting() {
+        try {
+            const res = await fetch("/config/routing");
+            if (res.ok) { state.routing = await res.json(); updateProviderBadge(currentTask); }
+        } catch (_) {}
+    }
+
+    async function changeProvider(provider) {
+        try {
+            const res = await fetch("/config/routing", {
+                method: "PATCH",
+                headers: authHeaders(),
+                body: JSON.stringify({ task: currentTask, provider })
+            });
+            if (res.ok) { state.routing = await res.json(); updateProviderBadge(currentTask); }
+        } catch (_) {}
+    }
+
+    /* ── Token toggle ── */
+    function applyTokenToggle() {
+        $("chat-history").classList.toggle("show-tokens", state.showTokens);
+        $("token-toggle").classList.toggle("active", state.showTokens);
+    }
+    $("token-toggle").addEventListener("click", () => {
+        state.showTokens = !state.showTokens;
+        localStorage.setItem("fitness-agent-tokens", state.showTokens ? "1" : "0");
+        applyTokenToggle();
+    });
+
+    /* ── Coach pills ── */
+    function setActiveCoach(task) {
+        currentTask = task;
+        document.querySelectorAll(".coach-btn").forEach(b =>
+            b.classList.toggle("active", b.dataset.task === task)
+        );
+        const title = $("active-coach-title");
+        if (title) title.textContent = `${coachLabel(task)} Coach`;
+        updateProviderBadge(task);
+    }
+
+    document.querySelectorAll(".coach-btn").forEach(btn =>
+        btn.addEventListener("click", () => setActiveCoach(btn.dataset.task))
+    );
+
+    $("provider-select").addEventListener("change", e => changeProvider(e.target.value));
+
+    /* ── Auth ── */
+    async function login(event) {
+        event.preventDefault();
+        const btn = $("login-button");
+        btn.disabled = true;
+        setStatus($("login-status"), "Signing in…");
+        try {
+            const email = $("email").value.trim();
+            const res = await fetch("/auth/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password: $("password").value })
+            });
+            if (res.status === 401) throw new Error("Invalid email or password");
+            if (!res.ok) throw new Error((await res.text()) || `Request failed with ${res.status}`);
+            const data = await res.json();
+            state.token = data.access_token;
+            state.email = email;
+            localStorage.setItem(tokenKey, state.token);
+            localStorage.setItem(emailKey, state.email);
+            $("password").value = "";
+            setStatus($("login-status"), "");
+            showApp(true);
+        } catch (err) {
+            setStatus($("login-status"), err.message, "error");
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    function logout() {
+        state.token = "";
+        conversationId = null;
+        historyCache = [];
+        pendingAttachments = [];
+        renderPendingAttachments();
+        localStorage.removeItem(tokenKey);
+        localStorage.removeItem(emailKey);
+        $("chat-history").replaceChildren();
+        showApp(false);
+    }
+
+    /* ── Profile load ── */
+    async function loadProfile() {
+        try {
+            const res = await request("/profile", { headers: authHeaders() });
+            const d = await res.json();
+
+            $("s-email").value        = state.email;
+            $("s-birth-date").value   = d.birth_date ?? "";
+            $("s-sex").value          = d.sex ?? "";
+
+            $("s-height").value       = d.height_cm ?? "";
+            $("s-weight").value       = d.weight_kg ?? "";
+            $("s-target-weight").value = d.target_weight_kg ?? "";
+
+            $("s-goal").value         = d.primary_goal ?? "";
+            $("s-weekly").value       = d.weekly_workout_target ?? 4;
+            $("s-equipment").value    = (d.equipment || []).join(", ");
+            $("s-notes").value        = d.notes ?? "";
+
+            $("s-calories").value     = d.daily_calorie_target ?? "";
+            $("s-protein").value      = d.macro_targets?.protein_g ?? "";
+            $("s-carbs").value        = d.macro_targets?.carbs_g ?? "";
+            $("s-fat").value          = d.macro_targets?.fat_g ?? "";
+            $("s-diet").value         = (d.dietary_restrictions || []).join(", ");
+        } catch (_) {}
+    }
+
+    async function saveProfileSection(payload, btnId, statusId) {
+        const btn = $(btnId);
+        btn.disabled = true;
+        setStatus($(statusId), "Saving…");
+        try {
+            await request("/profile", {
+                method: "PUT",
+                headers: authHeaders(),
+                body: JSON.stringify(payload)
+            });
+            flashStatus(statusId, "Saved ✓", "success");
+        } catch (err) {
+            setStatus($(statusId), err.message, "error");
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    /* ── Settings saves ── */
+    $("save-account-btn").addEventListener("click", () =>
+        saveProfileSection(
+            { birth_date: $("s-birth-date").value || null, sex: $("s-sex").value || null },
+            "save-account-btn", "account-status"
+        )
+    );
+
+    $("save-body-btn").addEventListener("click", () =>
+        saveProfileSection(
+            {
+                height_cm:        numberOrNull("s-height"),
+                weight_kg:        numberOrNull("s-weight"),
+                target_weight_kg: numberOrNull("s-target-weight"),
+            },
+            "save-body-btn", "body-status"
+        )
+    );
+
+    $("save-training-btn").addEventListener("click", () =>
+        saveProfileSection(
+            {
+                primary_goal:          $("s-goal").value.trim() || null,
+                weekly_workout_target: numberOrNull("s-weekly"),
+                equipment:             listFromInput("s-equipment"),
+                notes:                 $("s-notes").value.trim() || null,
+            },
+            "save-training-btn", "training-status"
+        )
+    );
+
+    $("save-nutrition-btn").addEventListener("click", () => {
+        const protein = numberOrNull("s-protein");
+        const carbs   = numberOrNull("s-carbs");
+        const fat     = numberOrNull("s-fat");
+        const macros  = (protein !== null || carbs !== null || fat !== null)
+            ? { protein_g: protein ?? 0, carbs_g: carbs ?? 0, fat_g: fat ?? 0 }
+            : null;
+        saveProfileSection(
+            {
+                daily_calorie_target:  numberOrNull("s-calories"),
+                macro_targets:         macros,
+                dietary_restrictions:  listFromInput("s-diet"),
+            },
+            "save-nutrition-btn", "nutrition-status"
+        );
+    });
+
+    /* ── Change password ── */
+    $("change-pw-btn").addEventListener("click", async () => {
+        const current = $("s-current-pw").value;
+        const newPw   = $("s-new-pw").value;
+        const confirm = $("s-confirm-pw").value;
+
+        if (!current) { setStatus($("security-status"), "Enter your current password", "error"); return; }
+        if (newPw.length < 8) { setStatus($("security-status"), "New password must be at least 8 characters", "error"); return; }
+        if (newPw !== confirm) { setStatus($("security-status"), "Passwords do not match", "error"); return; }
+
+        const btn = $("change-pw-btn");
+        btn.disabled = true;
+        setStatus($("security-status"), "Updating…");
+        try {
+            await request("/auth/change-password", {
+                method: "POST",
+                headers: authHeaders(),
+                body: JSON.stringify({ current_password: current, new_password: newPw })
+            });
+            $("s-current-pw").value = "";
+            $("s-new-pw").value = "";
+            $("s-confirm-pw").value = "";
+            flashStatus("security-status", "Password changed ✓", "success", 3000);
+        } catch (err) {
+            setStatus($("security-status"), err.message, "error");
+        } finally {
+            btn.disabled = false;
+        }
+    });
+
+    /* ── Logout buttons ── */
+    $("logout-button").addEventListener("click", logout);
+    $("settings-logout-btn").addEventListener("click", logout);
+
+    /* ── Chat history (server-backed) ── */
+    // In-memory cache of /chat/history rows. Populated on login/refresh.
+    let historyCache = [];
+
+    function formatTs(ts) {
+        if (!ts) return "";
+        const d = typeof ts === "number" ? new Date(ts) : new Date(ts);
+        return d.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+    }
+
+    function normalizeRow(r) {
+        // Server rows have role/content/created_at/task/model_used/input_tokens/output_tokens/attachments.
+        return {
+            text: r.content,
+            sender: r.role === "user" ? "user" : "agent",
+            meta: r.model_used || null,
+            task: r.task || null,
+            attachments: r.attachments || [],
+            usage: (r.input_tokens || r.output_tokens) ? {
+                input_tokens: r.input_tokens || 0,
+                output_tokens: r.output_tokens || 0,
+                total_tokens: (r.input_tokens || 0) + (r.output_tokens || 0),
+            } : null,
+            ts: r.created_at,
         };
+    }
 
-        const $ = (id) => document.getElementById(id);
-
-        function applyTheme(theme) {
-            document.documentElement.dataset.theme = theme;
-            $("theme-toggle").textContent = theme === "dark" ? "L" : "D";
-            localStorage.setItem(themeKey, theme);
+    async function fetchHistory() {
+        try {
+            const res = await request("/chat/history", { headers: authHeaders() });
+            const rows = await res.json();
+            historyCache = rows.map(normalizeRow);
+        } catch (_) {
+            historyCache = [];
         }
+    }
 
-        function authHeaders() {
-            return {
-                "Authorization": `Bearer ${state.token}`,
-                "Content-Type": "application/json"
-            };
-        }
+    async function clearServerHistory() {
+        await request("/chat/history", { method: "DELETE", headers: authHeaders() });
+        historyCache = [];
+    }
 
-        function setStatus(element, text, type = "") {
-            element.textContent = text;
-            element.className = `status ${type}`.trim();
-        }
+    function renderHistoryView() {
+        const list = $("history-list");
+        const stats = $("history-stats");
+        const query = ($("history-search").value || "").toLowerCase().trim();
+        const filtered = query
+            ? historyCache.filter(m => (m.text || "").toLowerCase().includes(query))
+            : historyCache;
 
-        function showApp(isSignedIn) {
-            $("login-view").classList.toggle("hidden", isSignedIn);
-            $("app-view").classList.toggle("hidden", !isSignedIn);
-            $("logout-button").classList.toggle("hidden", !isSignedIn);
-            $("session-label").textContent = isSignedIn ? state.email : "Signed out";
-            if (isSignedIn) {
-                loadProfile();
-                appendMessage("Ready when you are.", "agent", "System");
+        list.replaceChildren();
+        if (filtered.length === 0) {
+            const empty = document.createElement("div");
+            empty.className = "history-empty";
+            empty.textContent = historyCache.length === 0
+                ? "No chat history yet. Start a conversation in the Chat tab."
+                : "No messages match your search.";
+            list.appendChild(empty);
+        } else {
+            for (const m of filtered) {
+                const item = document.createElement("div");
+                item.className = "history-item";
+                const head = document.createElement("div");
+                head.className = "history-item-head";
+                const role = document.createElement("span");
+                role.className = m.sender === "user" ? "role-user" : "role-agent";
+                role.textContent = m.sender === "user" ? "You" : (m.meta || "Coach");
+                head.appendChild(role);
+                if (m.task) {
+                    const c = document.createElement("span");
+                    c.textContent = "· " + coachLabel(m.task);
+                    head.appendChild(c);
+                }
+                if (m.ts) {
+                    const t = document.createElement("span");
+                    t.textContent = "· " + formatTs(m.ts);
+                    head.appendChild(t);
+                }
+                const body = document.createElement("div");
+                body.className = "history-item-text";
+                body.textContent = m.text;
+                item.appendChild(head);
+                item.appendChild(body);
+                list.appendChild(item);
             }
         }
+        stats.textContent = `${filtered.length} of ${historyCache.length} message${historyCache.length === 1 ? "" : "s"}`;
+    }
 
-        async function request(path, options = {}) {
-            const res = await fetch(path, options);
-            if (res.status === 401) {
-                logout();
-                throw new Error("Session expired");
-            }
-            if (!res.ok) {
-                const text = await res.text();
-                throw new Error(text || `Request failed with ${res.status}`);
-            }
-            return res;
-        }
+    function exportHistory() {
+        const blob = new Blob([JSON.stringify(historyCache, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `fitness-agent-history-${new Date().toISOString().slice(0, 10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
 
-        async function login(event) {
-            event.preventDefault();
-            const button = $("login-button");
-            button.disabled = true;
-            setStatus($("login-status"), "Signing in...");
-            try {
-                const email = $("email").value.trim();
-                const res = await request("/auth/login", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ email, password: $("password").value })
+    /* ── Files view ── */
+    async function renderFilesView() {
+        const list = $("files-list");
+        list.replaceChildren();
+        try {
+            const res = await request("/files", { headers: authHeaders() });
+            const files = await res.json();
+            if (files.length === 0) {
+                const empty = document.createElement("div");
+                empty.className = "history-empty";
+                empty.textContent = "No files yet. Upload a photo or PDF, or ask the coach to generate a plan image.";
+                list.appendChild(empty);
+                return;
+            }
+            for (const f of files) {
+                const item = document.createElement("div");
+                item.className = "history-item";
+                const head = document.createElement("div");
+                head.className = "history-item-head";
+                const kind = document.createElement("span");
+                kind.className = f.kind === "generated" ? "role-agent" : "role-user";
+                kind.textContent = f.kind === "generated" ? "🎨 Generated" : "📤 Upload";
+                head.appendChild(kind);
+                const ts = document.createElement("span");
+                ts.textContent = "· " + formatTs(f.created_at) + " · " + (f.size_bytes / 1024).toFixed(1) + " KB";
+                head.appendChild(ts);
+                item.appendChild(head);
+
+                const title = document.createElement("div");
+                title.className = "history-item-text";
+                title.style.fontWeight = "600";
+                title.textContent = f.filename;
+                item.appendChild(title);
+
+                if (f.prompt) {
+                    const p = document.createElement("div");
+                    p.className = "history-item-text";
+                    p.style.fontSize = "0.78rem";
+                    p.style.color = "var(--text-2)";
+                    p.textContent = f.prompt;
+                    item.appendChild(p);
+                }
+
+                if ((f.mime_type || "").startsWith("image/")) {
+                    const img = document.createElement("img");
+                    img.src = "/files/" + f.id;
+                    img.style.maxWidth = "320px"; img.style.maxHeight = "320px";
+                    img.style.borderRadius = "8px"; img.style.marginTop = "6px";
+                    item.appendChild(img);
+                }
+
+                const actions = document.createElement("div");
+                actions.style.display = "flex"; actions.style.gap = "8px"; actions.style.marginTop = "6px";
+                const dl = document.createElement("a");
+                dl.className = "text-btn"; dl.style.height = "32px"; dl.style.padding = "0 10px";
+                dl.style.display = "inline-flex"; dl.style.alignItems = "center";
+                dl.style.textDecoration = "none"; dl.href = "/files/" + f.id; dl.download = f.filename;
+                dl.textContent = "Download";
+                const del = document.createElement("button");
+                del.className = "btn-danger"; del.style.height = "32px"; del.style.padding = "0 10px";
+                del.style.fontSize = "0.78rem";
+                del.textContent = "Delete";
+                del.addEventListener("click", async () => {
+                    if (!confirm(`Delete ${f.filename}?`)) return;
+                    await request("/files/" + f.id, { method: "DELETE", headers: { "Authorization": `Bearer ${state.token}` } });
+                    renderFilesView();
                 });
-                const data = await res.json();
-                state.token = data.access_token;
-                state.email = email;
-                localStorage.setItem(tokenKey, state.token);
-                localStorage.setItem("fitness-agent-email", state.email);
-                $("password").value = "";
-                setStatus($("login-status"), "");
-                showApp(true);
-            } catch (error) {
-                setStatus($("login-status"), error.message, "error");
-            } finally {
-                button.disabled = false;
+                actions.appendChild(dl);
+                actions.appendChild(del);
+                item.appendChild(actions);
+
+                list.appendChild(item);
             }
+        } catch (err) {
+            const empty = document.createElement("div");
+            empty.className = "history-empty";
+            empty.textContent = "Could not load files: " + err.message;
+            list.appendChild(empty);
         }
+    }
 
-        function logout() {
-            state.token = "";
-            conversationId = null;
-            localStorage.removeItem(tokenKey);
-            localStorage.removeItem("fitness-agent-email");
-            $("chat-history").replaceChildren();
-            showApp(false);
-        }
-
-        function listFromInput(id) {
-            return $(id).value.split(",").map((item) => item.trim()).filter(Boolean);
-        }
-
-        function numberOrNull(id) {
-            const value = $(id).value;
-            return value === "" ? null : Number(value);
-        }
-
-        async function loadProfile() {
-            try {
-                const res = await request("/profile", { headers: authHeaders() });
-                const data = await res.json();
-                $("p-height").value = data.height_cm ?? "";
-                $("p-weight").value = data.weight_kg ?? "";
-                $("p-target-weight").value = data.target_weight_kg ?? "";
-                $("p-weekly").value = data.weekly_workout_target ?? 4;
-                $("p-goal").value = data.primary_goal ?? "";
-                $("p-equipment").value = (data.equipment || []).join(", ");
-                $("p-diet").value = (data.dietary_restrictions || []).join(", ");
-                $("p-calories").value = data.daily_calorie_target ?? "";
-                $("p-sex").value = data.sex ?? "";
-                $("p-notes").value = data.notes ?? "";
-            } catch (error) {
-                setStatus($("profile-status"), error.message, "error");
-            }
-        }
-
-        async function saveProfile(event) {
-            event.preventDefault();
-            const button = $("save-profile-button");
-            button.disabled = true;
-            setStatus($("profile-status"), "Saving...");
-            const payload = {
-                height_cm: numberOrNull("p-height"),
-                weight_kg: numberOrNull("p-weight"),
-                target_weight_kg: numberOrNull("p-target-weight"),
-                weekly_workout_target: numberOrNull("p-weekly"),
-                primary_goal: $("p-goal").value.trim() || null,
-                equipment: listFromInput("p-equipment"),
-                dietary_restrictions: listFromInput("p-diet"),
-                daily_calorie_target: numberOrNull("p-calories"),
-                sex: $("p-sex").value || null,
-                notes: $("p-notes").value.trim() || null
-            };
-
-            try {
-                await request("/profile", {
-                    method: "PUT",
-                    headers: authHeaders(),
-                    body: JSON.stringify(payload)
-                });
-                setStatus($("profile-status"), "Saved", "success");
-            } catch (error) {
-                setStatus($("profile-status"), error.message, "error");
-            } finally {
-                button.disabled = false;
-            }
-        }
-
-        async function sendMessage(event) {
-            event.preventDefault();
-            const input = $("message-input");
-            const text = input.value.trim();
-            if (!text) return;
-
-            const button = $("send-button");
-            appendMessage(text, "user", "");
+    async function uploadFile() {
+        const input = $("file-input");
+        const file = input.files?.[0];
+        if (!file) { setStatus($("file-status"), "Pick a file first", "error"); return; }
+        const fd = new FormData();
+        fd.append("upload", file);
+        setStatus($("file-status"), "Uploading…");
+        try {
+            const res = await fetch("/files", {
+                method: "POST",
+                headers: { "Authorization": `Bearer ${state.token}` },
+                body: fd,
+            });
+            if (!res.ok) throw new Error((await res.text()) || "upload failed");
             input.value = "";
-            button.disabled = true;
-            button.textContent = "Sending";
+            flashStatus("file-status", "Uploaded ✓", "success");
+            renderFilesView();
+        } catch (err) {
+            setStatus($("file-status"), err.message, "error");
+        }
+    }
 
-            try {
-                const res = await request("/chat", {
-                    method: "POST",
-                    headers: authHeaders(),
-                    body: JSON.stringify({
-                        message: text,
-                        task_hint: $("task-hint").value,
-                        conversation_id: conversationId
-                    })
-                });
-                const data = await res.json();
-                conversationId = data.conversation_id;
-                appendMessage(data.reply, "agent", data.model_used);
-            } catch (error) {
-                appendMessage(error.message, "agent", "Error");
-            } finally {
-                button.disabled = false;
-                button.textContent = "Send";
+    /* ── Chat ── */
+    function renderAttachments(container, attachments) {
+        if (!attachments || attachments.length === 0) return;
+        const wrap = document.createElement("div");
+        wrap.className = "message-attachments";
+        for (const a of attachments) {
+            const isImg = (a.mime_type || "").startsWith("image/");
+            if (isImg) {
+                const img = document.createElement("img");
+                img.src = "/files/" + a.id + "?t=" + Date.now();
+                img.alt = a.filename;
+                wrap.appendChild(img);
+            } else {
+                const link = document.createElement("a");
+                link.href = "/files/" + a.id;
+                link.target = "_blank";
+                link.rel = "noopener";
+                link.textContent = "📎 " + a.filename;
+                wrap.appendChild(link);
             }
         }
+        container.appendChild(wrap);
+    }
 
-        function appendMessage(text, sender, meta) {
-            const history = $("chat-history");
-            const message = document.createElement("div");
-            message.className = `message ${sender}`;
-            message.textContent = text;
-            if (meta) {
-                const label = document.createElement("span");
-                label.className = "meta";
-                label.textContent = meta;
-                message.appendChild(label);
+    function renderMessage(text, sender, meta, usage, task, attachments) {
+        const msg = document.createElement("div");
+        msg.className = `message ${sender}`;
+        if (task && COACH_META[task]) {
+            const chip = document.createElement("span");
+            chip.className = "coach-chip";
+            chip.textContent = coachLabel(task);
+            msg.appendChild(chip);
+        }
+        msg.appendChild(document.createTextNode(text));
+        renderAttachments(msg, attachments);
+        if (meta) {
+            const metaEl = document.createElement("span");
+            metaEl.className = "meta";
+            metaEl.textContent = meta;
+            msg.appendChild(metaEl);
+        }
+        if (usage && sender === "agent") {
+            const parts = [];
+            if (usage.input_tokens)  parts.push(`↑ ${usage.input_tokens.toLocaleString()}`);
+            if (usage.output_tokens) parts.push(`↓ ${usage.output_tokens.toLocaleString()}`);
+            if (usage.total_tokens)  parts.push(`Σ ${usage.total_tokens.toLocaleString()}`);
+            if (parts.length) {
+                const tokenEl = document.createElement("span");
+                tokenEl.className = "token-usage";
+                tokenEl.textContent = parts.join(" · ");
+                msg.appendChild(tokenEl);
             }
-            history.appendChild(message);
+        }
+        return msg;
+    }
+
+    function appendMessage(text, sender, meta, usage, alsoCache = true, task = null, attachments = null) {
+        const history = $("chat-history");
+        history.appendChild(renderMessage(text, sender, meta, usage, task, attachments));
+        history.scrollTop = history.scrollHeight;
+        if (alsoCache) {
+            historyCache.push({
+                text, sender,
+                meta: meta || null, usage: usage || null,
+                task: task || null,
+                attachments: attachments || [],
+                ts: new Date().toISOString(),
+            });
+        }
+    }
+
+    async function restoreHistory() {
+        const history = $("chat-history");
+        history.replaceChildren();
+        await fetchHistory();
+        if (historyCache.length === 0) {
+            appendMessage("Ready when you are.", "agent", "System", null, false);
+        } else {
+            for (const m of historyCache) history.appendChild(renderMessage(m.text, m.sender, m.meta, m.usage, m.task, m.attachments));
             history.scrollTop = history.scrollHeight;
         }
+    }
 
-        $("login-form").addEventListener("submit", login);
-        $("logout-button").addEventListener("click", logout);
-        $("profile-form").addEventListener("submit", saveProfile);
-        $("chat-form").addEventListener("submit", sendMessage);
-        $("message-input").addEventListener("keydown", (event) => {
-            if (event.key === "Enter" && !event.shiftKey) {
-                event.preventDefault();
-                $("chat-form").requestSubmit();
-            }
-        });
-        $("theme-toggle").addEventListener("click", () => {
-            const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
-            applyTheme(next);
-        });
+    function showTyping() {
+        const history = $("chat-history");
+        const el = document.createElement("div");
+        el.id = "typing-indicator";
+        el.className = "message agent";
+        el.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+        history.appendChild(el);
+        history.scrollTop = history.scrollHeight;
+    }
 
-        applyTheme(localStorage.getItem(themeKey) || "light");
-        $("email").value = state.email;
-        showApp(Boolean(state.token));
-    </script>
+    function removeTyping() { $("typing-indicator")?.remove(); }
+
+    function setInFlight(active) {
+        $("send-button").classList.toggle("hidden", active);
+        $("stop-button").classList.toggle("hidden", !active);
+    }
+
+    $("stop-button").addEventListener("click", () => currentAbortController?.abort());
+
+    /* ── Pending attachments for the next chat send ── */
+    function renderPendingAttachments() {
+        const wrap = $("pending-attachments");
+        wrap.replaceChildren();
+        for (const a of pendingAttachments) {
+            const chip = document.createElement("div");
+            chip.className = "attach-chip" + (a.uploading ? " uploading" : "");
+            const label = document.createElement("span");
+            label.textContent = (a.uploading ? "⏳ " : "📎 ") + a.filename;
+            const x = document.createElement("span");
+            x.className = "x"; x.textContent = "×"; x.title = "Remove";
+            x.addEventListener("click", () => {
+                pendingAttachments = pendingAttachments.filter(p => p !== a);
+                renderPendingAttachments();
+            });
+            chip.appendChild(label);
+            chip.appendChild(x);
+            wrap.appendChild(chip);
+        }
+    }
+
+    async function attachLocalFile(file) {
+        const placeholder = { id: null, filename: file.name, mime_type: file.type, uploading: true };
+        pendingAttachments.push(placeholder);
+        renderPendingAttachments();
+        try {
+            const fd = new FormData();
+            fd.append("upload", file);
+            const res = await fetch("/files", {
+                method: "POST",
+                headers: { "Authorization": `Bearer ${state.token}` },
+                body: fd,
+            });
+            if (!res.ok) throw new Error((await res.text()) || "upload failed");
+            const meta = await res.json();
+            placeholder.id = meta.id;
+            placeholder.mime_type = meta.mime_type;
+            placeholder.uploading = false;
+        } catch (err) {
+            pendingAttachments = pendingAttachments.filter(p => p !== placeholder);
+            alert("Attachment failed: " + err.message);
+        }
+        renderPendingAttachments();
+    }
+
+    $("chat-attach-btn").addEventListener("click", () => $("chat-file-input").click());
+    $("chat-file-input").addEventListener("change", async e => {
+        for (const f of e.target.files || []) await attachLocalFile(f);
+        e.target.value = "";
+    });
+
+    async function sendMessage(event) {
+        event.preventDefault();
+        const input = $("message-input");
+        const text = input.value.trim();
+        if (!text && pendingAttachments.length === 0) return;
+
+        const sentTask = currentTask;
+        const ready = pendingAttachments.filter(a => a.id && !a.uploading);
+        const stillUploading = pendingAttachments.some(a => a.uploading);
+        if (stillUploading) {
+            alert("Wait for the attachment upload to finish before sending.");
+            return;
+        }
+        const sentAttachments = ready.map(a => ({ id: a.id, filename: a.filename, mime_type: a.mime_type }));
+        const attachedIds = ready.map(a => a.id);
+        pendingAttachments = [];
+        renderPendingAttachments();
+
+        appendMessage(text, "user", "", null, true, sentTask, sentAttachments);
+        input.value = "";
+        input.style.height = "";
+        setInFlight(true);
+        showTyping();
+        currentAbortController = new AbortController();
+
+        try {
+            const res = await request("/chat", {
+                method: "POST",
+                headers: authHeaders(),
+                body: JSON.stringify({
+                    message: text,
+                    task_hint: sentTask,
+                    conversation_id: conversationId,
+                    attached_file_ids: attachedIds,
+                }),
+                signal: currentAbortController.signal
+            });
+            const data = await res.json();
+            conversationId = data.conversation_id;
+            removeTyping();
+            appendMessage(data.reply, "agent", data.model_used, data.token_usage, true, sentTask);
+        } catch (err) {
+            removeTyping();
+            if (err.name !== "AbortError") appendMessage(err.message, "agent", "Error");
+        } finally {
+            currentAbortController = null;
+            setInFlight(false);
+        }
+    }
+
+    $("message-input").addEventListener("input", function () {
+        this.style.height = "";
+        this.style.height = Math.min(this.scrollHeight, 130) + "px";
+    });
+    $("message-input").addEventListener("keydown", e => {
+        if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("chat-form").requestSubmit(); }
+    });
+
+    /* ── History toolbar ── */
+    $("history-search").addEventListener("input", renderHistoryView);
+    $("history-refresh-btn").addEventListener("click", async () => {
+        await fetchHistory();
+        renderHistoryView();
+    });
+    $("history-export-btn").addEventListener("click", exportHistory);
+    $("history-clear-btn").addEventListener("click", async () => {
+        if (!confirm("Clear all stored chat history? This cannot be undone.")) return;
+        try {
+            await clearServerHistory();
+            $("chat-history").replaceChildren();
+            renderHistoryView();
+            appendMessage("Ready when you are.", "agent", "System", null, false);
+        } catch (err) {
+            alert("Failed to clear history: " + err.message);
+        }
+    });
+
+    /* ── Files toolbar ── */
+    $("file-upload-btn").addEventListener("click", uploadFile);
+    $("file-refresh-btn").addEventListener("click", renderFilesView);
+
+    /* ── Wire up ── */
+    $("login-form").addEventListener("submit", login);
+    $("chat-form").addEventListener("submit", sendMessage);
+
+    /* ── Boot ── */
+    applyTheme(localStorage.getItem(themeKey) || "light");
+    $("email").value = state.email;
+    showApp(Boolean(state.token));
+</script>
 </body>
 </html>

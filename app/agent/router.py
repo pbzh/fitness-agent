@@ -16,6 +16,18 @@ from pydantic_ai.providers.openai import OpenAIProvider
 
 from app.config import get_settings
 
+# Populated at startup by probing the local server; falls back to settings value.
+_probed_local_model: str | None = None
+
+
+def set_probed_local_model(name: str) -> None:
+    global _probed_local_model
+    _probed_local_model = name
+
+
+def get_effective_local_model() -> str:
+    return _probed_local_model or get_settings().local_llm_model
+
 
 class TaskClass(StrEnum):
     CHAT = "chat"
@@ -24,6 +36,7 @@ class TaskClass(StrEnum):
     PLAN_GENERATION = "plan_generation"
     NUTRITION_ANALYSIS = "nutrition_analysis"
     PROGRESS_REVIEW = "progress_review"
+    MENTAL_HEALTH = "mental_health"
 
 
 class Provider(StrEnum):
@@ -40,6 +53,7 @@ def _resolve_provider(task: TaskClass) -> Provider:
         TaskClass.PLAN_GENERATION: settings.provider_for_planning,
         TaskClass.NUTRITION_ANALYSIS: settings.provider_for_nutrition,
         TaskClass.PROGRESS_REVIEW: settings.provider_for_progress,
+        TaskClass.MENTAL_HEALTH: settings.provider_for_mental_health,
     }
     chosen = task_provider_map.get(task, settings.provider_for_chat)
 
@@ -52,10 +66,15 @@ def _resolve_provider(task: TaskClass) -> Provider:
     return chosen
 
 
-def get_model_for_task(task: TaskClass) -> Model:
-    """Return a configured PydanticAI Model for the given task class."""
+def get_model_for_task(task: TaskClass, override_provider: Provider | None = None) -> Model:
+    """Return a configured PydanticAI Model for the given task class.
+
+    ``override_provider`` lets callers force a specific provider for one run
+    (e.g. force Anthropic when the user attached an image and the task would
+    otherwise route to the local non-multimodal llama.cpp endpoint).
+    """
     settings = get_settings()
-    provider = _resolve_provider(task)
+    provider = override_provider or _resolve_provider(task)
 
     if provider == Provider.ANTHROPIC:
         return AnthropicModel(
@@ -69,9 +88,9 @@ def get_model_for_task(task: TaskClass) -> Model:
             provider=OpenAIProvider(api_key=settings.openai_api_key),
         )
 
-    # Local llama.cpp via OpenAI-compatible endpoint
+    # Local llama.cpp / Ollama via OpenAI-compatible endpoint
     return OpenAIModel(
-        model_name=settings.local_llm_model,
+        model_name=get_effective_local_model(),
         provider=OpenAIProvider(
             base_url=settings.local_llm_base_url,
             api_key=settings.local_llm_api_key,

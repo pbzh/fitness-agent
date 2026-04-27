@@ -20,7 +20,7 @@ branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
 
-workouttype = sa.Enum(
+workouttype = postgresql.ENUM(
     "STRENGTH",
     "HANGBOARD",
     "TRX",
@@ -29,20 +29,23 @@ workouttype = sa.Enum(
     "REST",
     "MIXED",
     name="workouttype",
+    create_type=False,
 )
-intensitylevel = sa.Enum(
+intensitylevel = postgresql.ENUM(
     "LIGHT",
     "MODERATE",
     "HARD",
     "MAX",
     name="intensitylevel",
+    create_type=False,
 )
-mealslot = sa.Enum(
+mealslot = postgresql.ENUM(
     "BREAKFAST",
     "LUNCH",
     "DINNER",
     "SNACK",
     name="mealslot",
+    create_type=False,
 )
 
 

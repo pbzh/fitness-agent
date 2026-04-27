@@ -13,11 +13,14 @@ from sqlmodel import select
 
 from app.agent.agent import AgentDeps
 from app.db.models import (
+    File,
+    FileKind,
     HealthMetric,
     IntensityLevel,
     MealLog,
     MealSlot,
     UserProfile,
+    WorkoutLocation,
     WorkoutSession,
     WorkoutType,
 )
@@ -155,25 +158,46 @@ def register_tools(agent: Agent[AgentDeps, str]) -> None:
         intensity: IntensityLevel,
         duration_min: int,
         exercises: list[dict],
+        scheduled_time: str | None = Field(
+            default=None,
+            description="Optional HH:MM 24h time the user plans to train",
+        ),
+        target_rpe: int | None = Field(default=None, ge=1, le=10),
+        location: WorkoutLocation | None = None,
+        warmup: str | None = None,
+        cooldown: str | None = None,
         notes: str | None = None,
         plan_id: UUID | None = None,
     ) -> str:
         """Create a planned workout session. Use when generating weekly plans
         or when the user requests an ad-hoc workout."""
+        from datetime import time as _time
+
+        sched_time = None
+        if scheduled_time:
+            hh, mm = scheduled_time.split(":")[:2]
+            sched_time = _time(int(hh), int(mm))
+
         async with ctx.deps.session_factory() as session:
             ws = WorkoutSession(
                 user_id=ctx.deps.user_id,
                 plan_id=plan_id,
                 scheduled_date=scheduled_date,
+                scheduled_time=sched_time,
                 workout_type=workout_type,
                 intensity=intensity,
                 duration_min=duration_min,
+                target_rpe=target_rpe,
+                location=location,
                 exercises=exercises,
+                warmup=warmup,
+                cooldown=cooldown,
                 notes=notes,
             )
             session.add(ws)
             await session.commit()
-            return f"Scheduled {workout_type.value} for {scheduled_date} ({duration_min} min)."
+            when = f"{scheduled_date} {scheduled_time}" if scheduled_time else str(scheduled_date)
+            return f"Scheduled {workout_type.value} for {when} ({duration_min} min)."
 
     @agent.tool
     async def get_recent_meals(
@@ -230,6 +254,93 @@ def register_tools(agent: Agent[AgentDeps, str]) -> None:
             if protein_g:
                 macros = f" ({calories} kcal, {protein_g:.0f}g P)"
             return f"Logged {slot.value}: {name}{macros}"
+
+    @agent.tool
+    async def generate_plan_image(
+        ctx: RunContext[AgentDeps],
+        prompt: str = Field(
+            description=(
+                "Visual description of the image to generate. Be explicit: "
+                "'A clean weekly workout calendar with Mon-Sun rows, day labels, "
+                "exercise icons, sans-serif font, light theme.'"
+            )
+        ),
+        kind: str = Field(
+            default="workout_plan",
+            description="One of: workout_plan, meal_plan, progress_chart, other",
+        ),
+        linked_workout_plan_id: UUID | None = None,
+        linked_meal_plan_id: UUID | None = None,
+    ) -> dict:
+        """Generate an image (e.g. weekly workout/meal calendar) via OpenAI gpt-image-1.
+
+        Saves the PNG to the file store and returns its file id and URL so you
+        can reference it in your reply (e.g. ![plan](/files/<id>))."""
+        from app.agent.image_gen import generate_image
+        from app.files import storage
+
+        img = await generate_image(prompt)
+        filename = f"{kind}-{date.today().isoformat()}.png"
+        fid, rel = storage.write_bytes(img.data, filename=filename, mime_type=img.mime_type)
+        async with ctx.deps.session_factory() as session:
+            f = File(
+                id=fid,
+                user_id=ctx.deps.user_id,
+                kind=FileKind.GENERATED,
+                filename=filename,
+                mime_type=img.mime_type,
+                size_bytes=len(img.data),
+                storage_path=rel,
+                prompt=prompt,
+                description=kind,
+                linked_workout_plan_id=linked_workout_plan_id,
+                linked_meal_plan_id=linked_meal_plan_id,
+            )
+            session.add(f)
+            await session.commit()
+        return {"file_id": str(fid), "url": f"/files/{fid}", "filename": filename}
+
+    @agent.tool
+    async def log_mental_state(
+        ctx: RunContext[AgentDeps],
+        mood_score: int | None = Field(
+            default=None, ge=1, le=10, description="1=worst, 10=best"
+        ),
+        stress_level: int | None = Field(default=None, ge=1, le=10),
+        energy_level: int | None = Field(default=None, ge=1, le=10),
+        sleep_quality: int | None = Field(default=None, ge=1, le=10),
+        note: str | None = None,
+    ) -> str:
+        """Persist a mental-state snapshot. Use when the user shares mood, stress,
+        energy, or sleep quality so trends accumulate. Anything provided is logged
+        as a HealthMetric row; missing values are skipped."""
+        rows: list[HealthMetric] = []
+        now = datetime.utcnow()
+        for metric_type, value in (
+            ("mood_score", mood_score),
+            ("stress_level", stress_level),
+            ("energy_level", energy_level),
+            ("sleep_quality", sleep_quality),
+        ):
+            if value is None:
+                continue
+            rows.append(
+                HealthMetric(
+                    user_id=ctx.deps.user_id,
+                    recorded_at=now,
+                    metric_type=metric_type,
+                    value=float(value),
+                    source="mental_health_coach",
+                    raw_data={"note": note} if note else None,
+                )
+            )
+        if not rows:
+            return "Nothing to log — provide at least one of mood_score, stress_level, energy_level, sleep_quality."
+        async with ctx.deps.session_factory() as session:
+            session.add_all(rows)
+            await session.commit()
+        logged = ", ".join(r.metric_type for r in rows)
+        return f"Logged: {logged} at {now.isoformat(timespec='minutes')}Z"
 
     @agent.tool
     async def get_recent_health_metrics(

@@ -32,12 +32,18 @@ class Settings(BaseSettings):
     # OpenAI
     openai_api_key: str | None = None
     openai_model: str = "gpt-5.3"
+    openai_image_model: str = "gpt-image-1"
 
     # Per-task provider routing
     provider_for_chat: ProviderName = "local"
     provider_for_planning: ProviderName = "anthropic"
     provider_for_nutrition: ProviderName = "anthropic"
     provider_for_progress: ProviderName = "anthropic"
+    provider_for_mental_health: ProviderName = "anthropic"
+
+    # File storage (uploads + generated images)
+    file_storage_dir: str = "/opt/fitness-agent-data"
+    max_upload_bytes: int = 25 * 1024 * 1024  # 25 MB
 
     # External
     garmin_email: str | None = None

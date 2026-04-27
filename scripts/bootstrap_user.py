@@ -33,9 +33,9 @@ async def bootstrap() -> None:
 
         profile = UserProfile(
             user_id=USER_ID,
-            height_cm=180,            # adjust
-            weight_kg=78,             # adjust
-            primary_goal="strength",  # or "hypertrophy", "endurance", "fat_loss"
+            height_cm=170,            # adjust
+            weight_kg=80,             # adjust
+            primary_goal="fat_loss",  # or "hypertrophy", "endurance", "fat_loss"
             weekly_workout_target=4,
             equipment=[
                 "MountainGrip hangboard",

@@ -4,7 +4,7 @@ Single-user system on day one, but `user_id` is on every table so multi-user
 is a non-event later.
 """
 
-from datetime import date, datetime
+from datetime import date, datetime, time
 from enum import StrEnum
 from typing import Optional
 from uuid import UUID, uuid4
@@ -35,6 +35,30 @@ class MealSlot(StrEnum):
     LUNCH = "lunch"
     DINNER = "dinner"
     SNACK = "snack"
+
+
+class WorkoutLocation(StrEnum):
+    HOME = "home"
+    GYM = "gym"
+    OUTDOOR = "outdoor"
+    CLIMBING_GYM = "climbing_gym"
+    CRAG = "crag"
+    OTHER = "other"
+
+
+class FileKind(StrEnum):
+    UPLOAD = "upload"
+    GENERATED = "generated"
+
+
+class CoachTask(StrEnum):
+    """Persona/coach the message belongs to. Mirrors agent.router.TaskClass."""
+
+    CHAT = "chat"
+    PLAN_GENERATION = "plan_generation"
+    NUTRITION_ANALYSIS = "nutrition_analysis"
+    PROGRESS_REVIEW = "progress_review"
+    MENTAL_HEALTH = "mental_health"
 
 
 class User(SQLModel, table=True):
@@ -78,6 +102,7 @@ class WorkoutPlan(SQLModel, table=True):
     rationale: str | None = None
     generated_by_model: str | None = None
     generation_metadata: dict | None = Field(default=None, sa_type=JSONB)
+    image_file_id: UUID | None = Field(default=None, foreign_key="file.id")
 
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -90,12 +115,18 @@ class WorkoutSession(SQLModel, table=True):
     plan_id: UUID | None = Field(default=None, foreign_key="workoutplan.id")
 
     scheduled_date: date = Field(index=True)
+    scheduled_time: time | None = None
     workout_type: WorkoutType
     intensity: IntensityLevel = IntensityLevel.MODERATE
     duration_min: int
+    target_rpe: int | None = None
+    location: WorkoutLocation | None = None
 
     exercises: list[dict] = Field(default_factory=list, sa_type=JSONB)
     notes: str | None = None
+    warmup: str | None = None
+    cooldown: str | None = None
+    image_file_id: UUID | None = Field(default=None, foreign_key="file.id")
 
     completed: bool = False
     completed_at: datetime | None = None
@@ -112,6 +143,7 @@ class MealPlan(SQLModel, table=True):
 
     rationale: str | None = None
     generated_by_model: str | None = None
+    image_file_id: UUID | None = Field(default=None, foreign_key="file.id")
 
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -124,16 +156,21 @@ class PlannedMeal(SQLModel, table=True):
     plan_id: UUID | None = Field(default=None, foreign_key="mealplan.id")
 
     scheduled_date: date = Field(index=True)
+    scheduled_time: time | None = None
     slot: MealSlot
 
     name: str
     recipe: str | None = None
     ingredients: list[dict] = Field(default_factory=list, sa_type=JSONB)
+    prep_time_min: int | None = None
+    cook_time_min: int | None = None
+    servings: int | None = None
 
     calories: int | None = None
     protein_g: float | None = None
     carbs_g: float | None = None
     fat_g: float | None = None
+    image_file_id: UUID | None = Field(default=None, foreign_key="file.id")
 
     plan: MealPlan | None = Relationship(back_populates="meals")
 
@@ -150,6 +187,7 @@ class MealLog(SQLModel, table=True):
     carbs_g: float | None = None
     fat_g: float | None = None
     notes: str | None = None
+    image_file_id: UUID | None = Field(default=None, foreign_key="file.id")
 
 
 class HealthMetric(SQLModel, table=True):
@@ -173,5 +211,34 @@ class AgentMessage(SQLModel, table=True):
 
     role: str
     content: str
+    task: str | None = None
     tool_calls: list[dict] | None = Field(default=None, sa_type=JSONB)
     model_used: str | None = None
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+    attached_file_ids: list[str] = Field(default_factory=list, sa_type=JSONB)
+
+
+class File(SQLModel, table=True):
+    """User-uploaded files and agent-generated artifacts (images, PDFs).
+
+    Bytes live on disk under settings.file_storage_dir; this row holds metadata
+    and a relative storage_path.
+    """
+
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    user_id: UUID = Field(foreign_key="user.id", index=True)
+    kind: FileKind = Field(index=True)
+
+    filename: str
+    mime_type: str
+    size_bytes: int
+    storage_path: str  # relative to settings.file_storage_dir
+
+    description: str | None = None
+    prompt: str | None = None  # for generated images: the prompt used
+
+    linked_workout_plan_id: UUID | None = Field(default=None, foreign_key="workoutplan.id")
+    linked_meal_plan_id: UUID | None = Field(default=None, foreign_key="mealplan.id")
+
+    created_at: datetime = Field(default_factory=datetime.utcnow, index=True)
