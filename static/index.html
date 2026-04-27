@@ -43,13 +43,13 @@
         }
         [data-theme="dark"] {
             color-scheme: dark;
-            --bg: #262624;
-            --surface: #2e2e2c;
-            --surface-2: #363634;
-            --surface-3: #3e3e3c;
-            --text: #e8e8e4;
-            --text-2: #8a8a86;
-            --border: #484846;
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-2: #263248;
+            --surface-3: #2e3c54;
+            --text: #e2e8f0;
+            --text-2: #94a3b8;
+            --border: #334155;
             --primary: #5b8af9;
             --primary-hover: #4272e8;
             --primary-glow: rgba(91,138,249,0.22);
@@ -59,15 +59,15 @@
             --shadow: 0 8px 32px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.25);
             --shadow-lg: 0 24px 64px rgba(0,0,0,0.5), 0 4px 16px rgba(0,0,0,0.3);
             --gradient: linear-gradient(135deg, #5b8af9 0%, #818cf8 100%);
-            --local-bg: #363634;    --local-text: #8a8a86;
-            --claude-bg: #322e3e;   --claude-text: #a78bfa;
-            --openai-bg: #283830;   --openai-text: #34d399;
+            --local-bg: #263248;    --local-text: #94a3b8;
+            --claude-bg: #1e1b3a;   --claude-text: #a78bfa;
+            --openai-bg: #0f2a24;   --openai-text: #34d399;
             --color-background-primary: var(--surface);
             --color-background-secondary: var(--surface-2);
-            --color-background-info: #2e3a4e;
+            --color-background-info: #1e3a5f;
             --color-text-primary: var(--text);
             --color-text-secondary: var(--text-2);
-            --color-text-tertiary: #6a6a66;
+            --color-text-tertiary: #64748b;
             --color-text-info: var(--primary);
             --color-text-success: var(--accent);
             --color-border-tertiary: var(--border);
@@ -2107,7 +2107,7 @@
             const res = await fetch("/config/routing");
             if (res.ok) {
                 state.routing = await res.json();
-                updateProviderBadge(currentTask === "auto" ? "plan_generation" : currentTask);
+                updateProviderBadge(currentTask === "auto" ? "auto" : currentTask);
             }
         } catch (_) {}
     }
@@ -2122,7 +2122,7 @@
             });
             if (res.ok) {
                 state.routing = await res.json();
-                updateProviderBadge(currentTask === "auto" ? "plan_generation" : currentTask);
+                updateProviderBadge(currentTask === "auto" ? "auto" : currentTask);
             }
         } catch (_) {}
     }
@@ -2181,8 +2181,7 @@
                 ? "🧭 Boss — picks the coach"
                 : `${coachLabel(task)} Coach`;
         }
-        // The provider badge is meaningless for auto (resolved per turn).
-        updateProviderBadge(task === "auto" ? "plan_generation" : task);
+        updateProviderBadge(task);
         renderCurrentChatThread();
     }
 
@@ -2542,7 +2541,7 @@
             if (!state.routing[task]) state.routing[task] = {};
             state.routing[task] = { provider: effective, model: models[effective] || "" };
         }
-        updateProviderBadge(currentTask === "auto" ? "plan_generation" : currentTask);
+        updateProviderBadge(currentTask === "auto" ? "auto" : currentTask);
     }
 
     async function loadLLMConfig() {

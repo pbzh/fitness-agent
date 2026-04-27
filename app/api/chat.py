@@ -154,9 +154,14 @@ async def chat(
             ).scalars().all()
             recent_user_msgs = [m.content for m in reversed(recent)]
         settings = get_settings()
-        default_boss = Provider.ANTHROPIC if settings.anthropic_api_key else Provider.LOCAL
+        default_boss = _env_provider_for(TaskClass.AUTO)
         boss_provider = eff.provider_for("auto", default_boss)
         boss_api_key = resolve_api_key(boss_provider, eff)
+        # Fall back to local if the resolved cloud provider has no usable key.
+        if boss_provider in (Provider.ANTHROPIC, Provider.OPENAI) and not boss_api_key:
+            log.warning("No API key for boss provider, falling back to local", provider=boss_provider.value)
+            boss_provider = Provider.LOCAL
+            boss_api_key = resolve_api_key(Provider.LOCAL, eff)
         boss_prompt = prompt_overrides.get("auto") if prompt_overrides else None
         resolved_task = await classify_turn(req.message, recent_user_msgs, boss_provider=boss_provider, prompt_override=boss_prompt or None, api_key=boss_api_key)
     else:
