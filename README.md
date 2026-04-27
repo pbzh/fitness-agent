@@ -1,5 +1,9 @@
 # coacher
 
+<p align="center">
+  <img src="static/logo.svg" alt="coacher logo" width="220">
+</p>
+
 A self-hosted personal coaching agent: workouts, nutrition, mental-health
 check-ins, productivity support, and plan generation, all sharing one rolling
 chat thread. API-first, designed for homelab deployment with a future iOS

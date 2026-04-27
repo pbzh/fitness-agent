@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>coacher</title>
+    <link rel="icon" type="image/svg+xml" href="/logo.svg">
     <style>
         :root {
             color-scheme: light;
@@ -131,10 +132,13 @@
             flex-shrink: 0;
         }
         .brand-logo {
-            display: flex; align-items: center;
+            display: flex; align-items: center; gap: 10px;
             padding-right: 28px; flex-shrink: 0;
             border-right: none;
             margin-right: 0;
+        }
+        .brand-logo img {
+            width: 30px; height: 30px; display: block; flex-shrink: 0;
         }
         .brand-wordmark {
             font-size: 0.88rem; font-weight: 600;
@@ -226,12 +230,15 @@
         }
         .login-brand-inner { position: relative; max-width: 340px; }
         .login-brand-icon {
-            width: 56px; height: 56px; border-radius: 14px;
+            width: 72px; height: 72px; border-radius: 18px;
             background: rgba(255,255,255,0.18);
             border: 1px solid rgba(255,255,255,0.3);
             display: grid; place-items: center;
-            font-weight: 900; font-size: 1.1rem; color: #fff;
             margin-bottom: 24px; backdrop-filter: blur(8px);
+            padding: 8px;
+        }
+        .login-brand-icon img {
+            width: 100%; height: 100%; display: block;
         }
         .login-brand-name {
             font-size: 1.8rem; font-weight: 800; color: #fff;
@@ -931,6 +938,7 @@
     <!-- ── Topbar ── -->
     <header class="topbar">
         <div class="brand-logo">
+            <img src="/logo.svg" alt="coacher logo">
             <span class="brand-wordmark">coacher</span>
         </div>
         <nav class="nav-tabs hidden" id="nav-tabs-desktop">
@@ -963,7 +971,7 @@
     <div class="login-wrap" id="login-view">
         <div class="login-brand-panel">
             <div class="login-brand-inner">
-                <div class="login-brand-icon">C</div>
+                <div class="login-brand-icon"><img src="/logo.svg" alt="coacher logo"></div>
                 <h1 class="login-brand-name">coacher</h1>
                 <p class="login-brand-sub" data-i18n="login.tagline">Your AI-powered personal fitness &amp; nutrition coach. Chat with specialized coaches for workouts, meals, progress tracking, and mental wellness.</p>
             </div>
