@@ -2517,12 +2517,28 @@
         } catch (_) {}
     }
 
+    // Apply per-user effective providers (override > env default) to state.routing
+    // so the chat header badge reflects the settings actually used server-side.
+    function applyLLMConfigToRouting(cfg) {
+        const models = cfg.provider_models || {};
+        for (const [task, envProvider] of Object.entries(cfg.env_providers || {})) {
+            const effective = (cfg.local_only ? "local" : null)
+                || cfg.coach_providers[task]
+                || envProvider
+                || "local";
+            if (!state.routing[task]) state.routing[task] = {};
+            state.routing[task] = { provider: effective, model: models[effective] || "" };
+        }
+        updateProviderBadge(currentTask === "auto" ? "plan_generation" : currentTask);
+    }
+
     async function loadLLMConfig() {
         try {
             const res = await request("/profile/llm", { headers: authHeaders() });
             const cfg = await res.json();
             renderLLMConfig(cfg);
             renderPrivacyToggles(cfg);
+            applyLLMConfigToRouting(cfg);
         } catch (_) {}
     }
 
@@ -2557,6 +2573,7 @@
             });
             const cfg = await res.json();
             renderPrivacyToggles(cfg);
+            applyLLMConfigToRouting(cfg);
             // If the user picked a language, also flip the UI immediately.
             if (cfg.preferred_language && I18N[cfg.preferred_language]) {
                 setLanguage(cfg.preferred_language);
@@ -2681,10 +2698,10 @@
                 headers: authHeaders(),
                 body: JSON.stringify(payload),
             });
-            renderLLMConfig(await res.json());
-            // Re-fetch routing badge data so the chat tab reflects the change.
-            await loadRouting();
-            updateProviderBadge(currentTask === "auto" ? "plan_generation" : currentTask);
+            const cfg = await res.json();
+            renderLLMConfig(cfg);
+            // Update routing badge to show the effective (per-user override > env default) provider.
+            applyLLMConfigToRouting(cfg);
             flashStatus("llm-status", "Saved ✓", "success");
         } catch (err) {
             setStatus($("llm-status"), err.message, "error");

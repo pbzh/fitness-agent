@@ -129,6 +129,7 @@ class LLMConfigRead(BaseModel):
 
     coach_providers: dict[str, str]    # task -> "local"|"anthropic"|"openai"
     env_providers: dict[str, str]      # task -> .env default (read-only)
+    provider_models: dict[str, str]    # provider -> model name (for badge label)
     api_keys_set: dict[str, bool]      # provider -> "set in DB?"
     api_keys_env: dict[str, bool]      # provider -> "set in .env?"
     local_only: bool                   # if true, every coach forced to local
@@ -222,9 +223,15 @@ def _llm_snapshot(profile: UserProfile | None) -> LLMConfigRead:
         task: _env_provider_for(TaskClass(task)).value for task in COACH_META
     }
     enc = (profile.api_keys_enc if profile else None) or {}
+    from app.agent.router import get_effective_local_model
     return LLMConfigRead(
         coach_providers=coach_providers,
         env_providers=env_providers,
+        provider_models={
+            "local":     get_effective_local_model(),
+            "anthropic": settings.anthropic_model,
+            "openai":    settings.openai_model,
+        },
         api_keys_set={p: (p in enc) for p in _API_KEY_PROVIDERS},
         api_keys_env={
             "anthropic": bool(settings.anthropic_api_key),
