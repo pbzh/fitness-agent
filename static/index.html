@@ -1659,7 +1659,7 @@
     $("chat-form").addEventListener("submit", sendMessage);
 
     /* ── Boot ── */
-    applyTheme(localStorage.getItem(themeKey) || "light");
+    applyTheme(localStorage.getItem(themeKey) || "dark");
     $("email").value = state.email;
     showApp(Boolean(state.token));
 </script>
