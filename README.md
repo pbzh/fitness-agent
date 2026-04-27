@@ -1,16 +1,45 @@
 # Fitness Agent
 
-Personal fitness and meal planning agent. API-first backend designed for homelab
-deployment with future iOS client in mind.
+A self-hosted personal coaching agent: workouts, nutrition, mental-health
+check-ins, progress review, and plan generation, all sharing one rolling
+chat thread. API-first, designed for homelab deployment with a future iOS
+client in mind.
+
+```
+You → "I'm wrecked, can't get myself to train"
+            ↓
+   🎯 Manager (Anthropic) classifies the turn
+            ↓
+   🧠 Mental-health coach picks it up, correlates against
+      your sleep + RPE history, suggests one small action,
+      and logs the mood snapshot.
+
+You → "Build me a hangboard plan for tomorrow at 7am"
+            ↓
+   🎯 Manager → 📅 Plan coach → create_workout_session
+   tool fires → row lands on your calendar.
+```
 
 ## What it does
 
-- Generates weekly workout plans tailored to your goals, equipment, and recent training
-- Logs completed workouts and tracks progressive overload
-- Plans meals aligned with macro targets and dietary preferences
-- Generates grocery lists from meal plans
-- Ingests health metrics from Garmin/Apple Health *(planned)*
-- Auto-generates next week's plan every Sunday evening
+- **One chat, five coaches.** A small "manager" classifies each turn and
+  routes it to the right specialist (chat / plan / nutrition / progress /
+  mind). You can also pin a coach manually.
+- **Persistent rolling thread.** Every message — including which coach
+  answered — is stored in Postgres and restored on login.
+- **Multimodal attachments.** Drop in images (meal photo → log it),
+  PDFs (training program → ingest it), DOCX, txt/csv. Images go to Claude
+  as binary; PDFs/DOCX get extracted to text.
+- **Image generation.** Coaches can call `generate_plan_image` (OpenAI
+  `gpt-image-1`) to produce a weekly workout / meal calendar PNG, saved to
+  the file store and referenced in the reply.
+- **ICS calendar export.** Per-plan or rolling 30-day feed with
+  Europe/Zurich VTIMEZONE — drag into Calendar.app, GCal, etc.
+- **Per-user customization.** Override each coach's system prompt, pick
+  the LLM provider per coach, store your own API keys (encrypted at rest).
+- **Auto-generated weekly plans.** APScheduler runs every Sunday 19:00.
+- **Single-user, multi-user-ready.** `user_id` is on every table.
+  Auth is real JWT with bcrypt; users can self-register.
 
 ## Stack
 
@@ -18,17 +47,19 @@ deployment with future iOS client in mind.
 |---|---|
 | API | FastAPI + uvicorn |
 | Agent framework | PydanticAI 1.x |
-| LLM (local) | llama.cpp server (OpenAI-compatible endpoint) |
-| LLM (cloud) | Anthropic Claude or OpenAI GPT (per-task routing) |
+| LLM (local) | llama.cpp / Ollama via OpenAI-compatible endpoint |
+| LLM (cloud) | Anthropic Claude or OpenAI GPT (per-coach routing) |
+| Image gen | OpenAI `gpt-image-1` |
 | Database | PostgreSQL 17 + SQLModel (async) |
 | Migrations | Alembic |
 | Scheduler | APScheduler |
+| Secrets | Fernet (AES-128-CBC + HMAC-SHA256) |
 | Package manager | uv |
 
 ## Architecture
 
 ```
-Clients (iOS app, web UI, Home Assistant, curl)
+Clients (iOS, web UI, Home Assistant, curl)
                   │ HTTPS + JWT
                   ▼
             FastAPI (uvicorn)
@@ -38,55 +69,109 @@ Clients (iOS app, web UI, Home Assistant, curl)
 Postgres    PydanticAI      APScheduler
 (state)      agent         (Sun 19:00)
                 │
-        ┌───────┴────────┐
-        ▼                ▼
-   Provider Router     Tools
-        │            - profile
-   ┌────┼────┐       - workouts
-   ▼    ▼    ▼       - meals
-local  Claude GPT    - health metrics
-(B50)
+       ┌────────┼────────┬─────────────┐
+       ▼        ▼        ▼             ▼
+   Manager   Coaches   Tools         Files
+  (router) (5 personas)│        (/opt/fitness-agent-data
+                ┌──────┤            + encrypted keys)
+                ▼      ▼
+        Provider     11 tools
+        Resolver  (workouts, meals,
+        (per user) health metrics,
+                  generate_plan_image,
+                  log_mental_state, …)
 ```
 
-### Per-task LLM routing
+### The manager (auto-router)
 
-Configurable in `.env` — each task picks `local`, `anthropic`, or `openai`:
+A small classifier (Claude by default, configurable) labels each turn into
+one of the five sub-coach tasks and dispatches accordingly. The resolved
+coach is returned to the client so the UI can show the right chip.
 
-| Task | Default | Why |
-|---|---|---|
-| `chat` | local | conversational, no API cost |
-| `plan_generation` | anthropic | best at multi-constraint planning |
-| `nutrition_analysis` | anthropic | strong at structured math |
-| `progress_review` | anthropic | better at trend synthesis |
+| Coach | Triggers (examples) |
+|---|---|
+| 💬 Chat | small talk, generic Q&A |
+| 📅 Plan | "build me a workout / weekly plan", scheduling |
+| 🥗 Nutrition | meals, recipes, macros, "I just ate X" |
+| 📊 Progress | trends, weight, sleep / HRV / RPE patterns |
+| 🧠 Mind | mood, stress, motivation, burnout, sleep *quality* |
 
-Falls back to local automatically if a cloud provider's API key is missing.
+The Mental-health coach has explicit safety guardrails: it never tries to
+handle a crisis itself, and routes to the Swiss emergency line **143** /
+European **112** when warranted.
+
+### Per-coach LLM routing
+
+Each coach can be sent to `local`, `anthropic`, or `openai`. Defaults come
+from `.env`; users can override per-coach in Settings. If a chosen cloud
+provider has no API key (DB *or* `.env`), routing falls back to local.
+
+If the user attaches an image and the routed coach lives on the local
+non-multimodal endpoint, that single turn is bumped to Claude so the model
+actually sees the picture.
+
+### Per-coach prompt overrides
+
+Each user can override the system prompt for any of the five coaches in
+Settings → "Coach prompts" (8 KB cap per prompt). Empty textarea = use the
+built-in default. The manager prompt itself is *not* user-editable — it's
+a structured classifier and free-form prose silently breaks routing.
+
+### Encrypted API keys
+
+API keys can be supplied in `.env` (server-wide) or stored per-user in
+the DB. DB keys are encrypted with Fernet. The encryption key resolves
+in this order:
+
+1. `SETTINGS_ENCRYPTION_KEY` env var (recommended for production)
+2. `<file_storage_dir>/.encryption.key` — auto-generated on first run
+   (chmod 600)
+
+If you lose the encryption key, all DB-stored API keys become unreadable
+and the runtime falls back to `.env` values with a warning. **Back this
+file up.**
+
+API keys are never returned to clients — `GET /profile/llm` reports
+`"set"` / `"unset"` only.
 
 ## Repository layout
 
 ```
 fitness-agent/
 ├── app/
-│   ├── main.py              FastAPI entrypoint
+│   ├── main.py              FastAPI entrypoint, local-model probe
 │   ├── config.py            pydantic-settings, loads .env
 │   ├── agent/
-│   │   ├── agent.py         PydanticAI agent + system prompt
-│   │   ├── router.py        local/cloud routing per task
-│   │   └── tools.py         seven tools the agent can call
+│   │   ├── agent.py         PydanticAI agent factory
+│   │   ├── manager.py       auto-router classifier
+│   │   ├── prompts.py       per-coach system prompts + user-override resolver
+│   │   ├── router.py        provider routing, model factory
+│   │   ├── effective_config.py  per-user provider/key resolver
+│   │   ├── attachments.py   image / PDF / DOCX → agent input parts
+│   │   ├── image_gen.py     OpenAI gpt-image-1 wrapper
+│   │   └── tools.py         11 tools (workouts, meals, metrics,
+│   │                                   image gen, mental state, …)
 │   ├── api/
-│   │   ├── auth.py          POST /auth/login JWT login
-│   │   ├── chat.py          POST /chat with retry on transient errors
+│   │   ├── auth.py          /auth/login, /auth/register, /auth/change-password
+│   │   ├── chat.py          /chat with retries + manager routing + multimodal
+│   │   ├── files.py         /files upload / download / delete
+│   │   ├── calendar.py      /calendar/{workouts,meals}/{plan_id}.ics
+│   │   ├── profile.py       /profile, /profile/llm, /profile/coach-prompts/defaults
 │   │   ├── workouts.py      direct REST for the iOS app
-│   │   ├── health.py        GET /healthz
+│   │   ├── config.py        /config/routing (env-level provider config)
+│   │   ├── health.py        /healthz
 │   │   └── deps.py          JWT auth dependency
 │   ├── db/
 │   │   ├── models.py        SQLModel schema
 │   │   └── session.py       async session factory
+│   ├── files/storage.py     disk-backed file store (sharded by UUID)
+│   ├── security/secrets.py  Fernet encrypt/decrypt
 │   └── scheduler/jobs.py    Sunday weekly plan generation
-├── alembic/                 database migrations
-├── docker-compose.yml       Postgres for local dev (production runs in LXC)
-├── pyproject.toml           uv-managed deps
+├── alembic/versions/        0001 init, 0002 files+extras, 0003 prompts,
+│                            0004 user provider/key overrides
+├── static/index.html        web UI (vanilla JS, no build step)
+├── pyproject.toml
 ├── .env.example
-├── .gitignore
 └── README.md
 ```
 
@@ -97,10 +182,10 @@ Two LXC containers on the Server VLAN:
 | LXC | Purpose | Resources | IP |
 |---|---|---|---|
 | fitness-db | Postgres 17 | 2 vCPU / 2 GB / 16 GB | `10.1.10.10` |
-| fitness-agent | FastAPI app | 2 vCPU / 1 GB / 8 GB | `10.1.10.103` |
+| fitness-agent | FastAPI app + file store | 2 vCPU / 1 GB / 16 GB | `10.1.10.103` |
 
-llama.cpp runs separately on a Windows workstation with an Intel Arc Pro B50,
-exposed on `:8080`. Anthropic API and OpenAI API are reached over the internet.
+llama.cpp runs separately on a workstation with a GPU, exposed at
+`:8080`. Anthropic and OpenAI APIs are reached over the internet.
 
 ### First-time setup
 
@@ -130,19 +215,22 @@ apt update && apt install -y python3 git curl locales
 curl -LsSf https://astral.sh/uv/install.sh | sh
 source $HOME/.local/bin/env
 
-# Set locale (Swiss server)
+# Locale (Swiss server)
 sed -i 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
 sed -i 's/# de_CH.UTF-8 UTF-8/de_CH.UTF-8 UTF-8/' /etc/locale.gen
 locale-gen
 update-locale LANG=en_US.UTF-8 LC_TIME=de_CH.UTF-8 LC_NUMERIC=de_CH.UTF-8
 
-# Pull the project
+# File store
+mkdir -p /opt/fitness-agent-data
+chmod 750 /opt/fitness-agent-data
+
+# Pull and configure
 mkdir -p /opt && cd /opt
 git clone <your-private-repo-url> fitness-agent
 cd fitness-agent
-
 cp .env.example .env
-$EDITOR .env  # see Configuration section below
+$EDITOR .env  # see Configuration
 
 uv sync
 uv run alembic upgrade head
@@ -163,6 +251,9 @@ Type=simple
 User=root
 WorkingDirectory=/opt/fitness-agent
 Environment="PATH=/root/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+# Optional: pin the encryption key instead of relying on the on-disk file.
+# Generate with: python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())'
+# Environment="SETTINGS_ENCRYPTION_KEY=..."
 ExecStart=/root/.local/bin/uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
 Restart=on-failure
 RestartSec=5
@@ -179,52 +270,87 @@ journalctl -u fitness-agent -f
 
 ## Configuration
 
-`.env` (all settings):
+All knobs live in `.env` — see `.env.example` for a full template.
 
 ```bash
 # Database
 DATABASE_URL=postgresql+asyncpg://fitness:PASSWORD@10.1.10.10:5432/fitness
 
 # Auth
-JWT_SECRET=<generate with: python -c "import secrets; print(secrets.token_urlsafe(32))">
+JWT_SECRET=<python -c "import secrets; print(secrets.token_urlsafe(32))">
+JWT_EXPIRE_MINUTES=10080
 
-# Local LLM (llama.cpp on Windows/B50)
+# Local LLM (llama.cpp / Ollama, OpenAI-compatible)
 LOCAL_LLM_BASE_URL=http://10.1.10.50:8080/v1
-LOCAL_LLM_MODEL=qwen3-32b-q4
+# LOCAL_LLM_MODEL is auto-detected at startup by probing /v1/models;
+# only set this to override.
+LOCAL_LLM_API_KEY=not-needed
 
-# Cloud LLM keys (leave blank to disable that provider)
+# Cloud LLM (leave key blank to disable that provider)
 ANTHROPIC_API_KEY=sk-ant-...
 ANTHROPIC_MODEL=claude-opus-4-7
-OPENAI_API_KEY=
+OPENAI_API_KEY=sk-...
 OPENAI_MODEL=gpt-5.3
+OPENAI_IMAGE_MODEL=gpt-image-1
 
-# Per-task routing: local | anthropic | openai
+# Per-coach defaults (users can override in Settings)
 PROVIDER_FOR_CHAT=local
 PROVIDER_FOR_PLANNING=anthropic
 PROVIDER_FOR_NUTRITION=anthropic
-PROVIDER_FOR_PROGRESS=anthropic
+PROVIDER_FOR_PROGRESS=openai
+PROVIDER_FOR_MENTAL_HEALTH=anthropic
+
+# File storage
+FILE_STORAGE_DIR=/opt/fitness-agent-data
+MAX_UPLOAD_BYTES=26214400   # 25 MB
+
+# Optional: pin the encryption key (otherwise auto-provisioned on first run)
+# SETTINGS_ENCRYPTION_KEY=...
 
 TIMEZONE=Europe/Zurich
 SCHEDULER_USER_ID=00000000-0000-0000-0000-000000000001
 ```
 
-**Spending caps:** set hard monthly limits in the Anthropic/OpenAI consoles before
-running the service. Recommended: $10/month while developing.
+**Spending caps:** set hard monthly limits in the Anthropic and OpenAI
+consoles before exposing the service. Recommended: $10/month while
+developing, raise once usage stabilizes.
 
-## Bootstrapping your user
+## Bootstrapping
 
-Create the first login account once. Set the email and password explicitly so
-the stored password is hashed before it reaches the database:
+Either register the first user via the web UI ("Create account") or seed
+one from the CLI:
 
 ```bash
-cd /opt/fitness-agent
 BOOTSTRAP_EMAIL=you@example.com BOOTSTRAP_PASSWORD='<strong-password>' \
   uv run python scripts/bootstrap_user.py
 ```
 
-The web UI served at `/` uses `POST /auth/login` and stores the returned JWT in
-browser local storage. API clients should do the same login first, then pass the
-token as `Authorization: Bearer <token>`.
+The web UI at `/` calls `POST /auth/login` and stores the JWT in browser
+local storage. API clients pass the token as `Authorization: Bearer <token>`.
+
+## API surface
+
+| Method | Path | Notes |
+|---|---|---|
+| POST | `/auth/login` | email + password → JWT |
+| POST | `/auth/register` | self-service signup |
+| POST | `/auth/change-password` | bearer required |
+| GET  | `/profile` | full profile read |
+| PUT  | `/profile` | merge-update; `coach_prompts` empty-string clears |
+| GET  | `/profile/llm` | provider overrides + `set/unset` key state |
+| PUT  | `/profile/llm` | merge-update; empty-string clears |
+| GET  | `/profile/coach-prompts/defaults` | built-in defaults for each coach |
+| POST | `/chat` | `task_hint` defaults to `auto` (manager picks) |
+| GET  | `/chat/history` | rolling thread, oldest → newest |
+| DELETE | `/chat/history` | wipe the rolling thread |
+| GET  | `/files` | list user's files |
+| POST | `/files` | multipart upload (≤ 25 MB) |
+| GET  | `/files/{id}` | download |
+| DELETE | `/files/{id}` | remove file + DB row |
+| GET  | `/calendar/workouts/{plan_id}.ics` | per-plan workout calendar |
+| GET  | `/calendar/meals/{plan_id}.ics` | per-plan meal calendar |
+| GET  | `/calendar/upcoming.ics?days=30` | rolling combined feed |
+| GET  | `/healthz` | liveness probe |
 
 ## Smoke testing
 
@@ -232,25 +358,21 @@ token as `Authorization: Bearer <token>`.
 # Health
 curl http://10.1.10.103:8000/healthz
 
-# Local LLM path
+# Auth
 TOKEN=$(curl -s -X POST http://10.1.10.103:8000/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email": "you@example.com", "password": "<strong-password>"}' \
+  -d '{"email":"you@example.com","password":"<strong-password>"}' \
   | python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])')
 
+# Auto-routed chat (manager picks the coach)
 curl -X POST http://10.1.10.103:8000/chat \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"message": "What is my primary fitness goal?", "task_hint": "chat"}'
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"message":"Build me a 45-min hangboard session for Tuesday at 7am"}'
 
-# Cloud LLM path with explicit write directive
+# Forced coach: nutrition
 curl -X POST http://10.1.10.103:8000/chat \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "message": "Schedule a workout for tomorrow. Use create_workout_session to persist it after checking my profile and recent training.",
-    "task_hint": "plan_generation"
-  }'
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"message":"I just ate 200g chicken and 150g rice","task_hint":"nutrition_analysis"}'
 
 # Verify writes landed
 psql postgresql://fitness:PASSWORD@10.1.10.10:5432/fitness \
@@ -276,36 +398,61 @@ sudo -u postgres pg_dump fitness | gzip > /var/backups/fitness_$(date +\%Y\%m\%d
 find /var/backups/fitness_*.sql.gz -mtime +14 -delete
 ```
 
-In addition, Proxmox backs up both LXCs nightly to PBS or local storage.
+In addition, Proxmox backs up both LXCs nightly.
+
+### Encryption key & file-store backups
+
+Back up these alongside the DB — losing either breaks the agent:
+
+| Path | What |
+|---|---|
+| `/opt/fitness-agent-data/.encryption.key` | Fernet key for DB-stored API keys |
+| `/opt/fitness-agent-data/<shard>/<uuid>.<ext>` | uploads + generated images |
+
+If you'd rather not have the key on disk, set `SETTINGS_ENCRYPTION_KEY`
+in the systemd unit's `Environment=` and delete the file.
 
 ### Common issues
 
-**`status_code: 529, overloaded_error`** — Anthropic API overloaded. Transient.
-The chat endpoint retries 3× with exponential backoff automatically. If it
-persists, check https://status.anthropic.com/ or flip `PROVIDER_FOR_PLANNING=openai`
-as a fallback.
+**`status_code: 529, overloaded_error`** — Anthropic API overloaded. The
+chat endpoint retries 3× with exponential backoff. If persistent, switch
+that coach's provider to `openai` in Settings, or in `.env`.
 
-**`concurrent operations are not permitted`** — fixed in `tools.py` by giving each
-tool its own short-lived session via `deps.session_factory()`. If this resurfaces,
-it means a tool is sharing a session with another tool. Each tool must wrap its
-DB work in `async with ctx.deps.session_factory() as session:`.
+**`401 invalid x-api-key`** — your Anthropic / OpenAI key is wrong or
+expired. Either rotate the value in `.env` (server-wide) or in Settings →
+"LLM providers & API keys" (per-user, encrypted in DB).
 
-**Agent reply doesn't write to DB** — the LLM chose to describe in prose rather
-than call `create_workout_session`. Make the prompt directive ("Use
-create_workout_session to schedule it") and ensure the system prompt's operating
-principles spell out when to write.
+**`Could not probe local model`** at startup — the local llama.cpp endpoint
+is unreachable. The service still boots and falls back to the configured
+default model name; cloud-routed coaches still work.
 
-**`UserLocation` import error** — pydantic-ai SDK version mismatch. Bump to
-`pydantic-ai[anthropic,openai]>=1.5.0` and clear `__pycache__`.
+**Generated images aren't appearing in chat** — `OPENAI_API_KEY` missing or
+out of credits. Image generation requires OpenAI; Anthropic has no image
+endpoint.
+
+**`concurrent operations are not permitted`** — a tool is sharing a
+session. Every tool must wrap its DB work in
+`async with ctx.deps.session_factory() as session:`.
+
+**Stored DB API keys stop decrypting after a restart** — the encryption
+key changed. Check `/opt/fitness-agent-data/.encryption.key` exists and is
+unchanged, or that `SETTINGS_ENCRYPTION_KEY` env matches what was used
+when the keys were stored.
 
 ## Roadmap
 
-- [x] Schema, FastAPI skeleton, agent with 7 tools
-- [x] Local + cloud LLM routing
+- [x] Schema, FastAPI skeleton, agent with structured tools
+- [x] Local + cloud LLM routing per task
 - [x] Sunday weekly plan generation (APScheduler)
-- [x] Retry logic for transient cloud errors
-- [x] Real JWT auth
-- [ ] Meal planning REST endpoints
+- [x] Real JWT auth + user registration + change-password
+- [x] Rolling chat thread, server-side history
+- [x] Mental-health coach with safety guardrails
+- [x] Manager auto-router (one chat, five coaches)
+- [x] File uploads + multimodal chat (images, PDFs, DOCX, text)
+- [x] Image generation (gpt-image-1) with on-disk store
+- [x] ICS calendar export (Europe/Zurich VTIMEZONE)
+- [x] Per-user prompt overrides
+- [x] Per-user provider overrides + encrypted API keys
 - [ ] Open Food Facts / USDA FDC nutrition lookup tools
 - [ ] wger exercise database integration
 - [ ] Garmin Connect ingestion service

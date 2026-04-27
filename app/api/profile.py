@@ -10,9 +10,16 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, field_validator
 from sqlmodel import select
 
+from app.agent.prompts import COACH_META, default_prompts
+from app.agent.router import Provider, _env_provider_for, TaskClass
 from app.api.deps import get_current_user_id
+from app.config import get_settings
 from app.db.models import UserProfile
 from app.db.session import AsyncSessionLocal
+from app.security.secrets import encrypt
+
+_MAX_PROMPT_CHARS = 8000
+_API_KEY_PROVIDERS = {p.value for p in Provider}
 
 router = APIRouter(prefix="/profile", tags=["profile"])
 
@@ -39,6 +46,7 @@ class ProfileRead(BaseModel):
     daily_calorie_target: int | None
     macro_targets: dict[str, Any] | None
     notes: str | None
+    coach_prompts: dict[str, str] | None
 
 
 class ProfileUpdate(BaseModel):
@@ -54,6 +62,10 @@ class ProfileUpdate(BaseModel):
     daily_calorie_target: int | None = Field(default=None, ge=800, le=8000)
     macro_targets: dict[str, Any] | None = None
     notes: str | None = Field(default=None, max_length=2000)
+    # Per-coach system-prompt overrides. Keys must be editable coach task names
+    # (see GET /profile/coach-prompts/defaults). Empty string clears the
+    # override and falls back to the built-in default.
+    coach_prompts: dict[str, str] | None = None
 
     @field_validator("equipment", "dietary_restrictions")
     @classmethod
@@ -63,6 +75,26 @@ class ProfileUpdate(BaseModel):
         cleaned = [item.strip() for item in value if item.strip()]
         if any(len(item) > 80 for item in cleaned):
             raise ValueError("List items must be 80 characters or fewer")
+        return cleaned
+
+    @field_validator("coach_prompts")
+    @classmethod
+    def validate_coach_prompts(
+        cls, value: dict[str, str] | None
+    ) -> dict[str, str] | None:
+        if value is None:
+            return None
+        cleaned: dict[str, str] = {}
+        for key, prompt in value.items():
+            if key not in COACH_META:
+                raise ValueError(f"Unknown coach: {key}")
+            if not isinstance(prompt, str):
+                raise ValueError("Prompt values must be strings")
+            if len(prompt) > _MAX_PROMPT_CHARS:
+                raise ValueError(
+                    f"Prompt for '{key}' exceeds {_MAX_PROMPT_CHARS} chars"
+                )
+            cleaned[key] = prompt
         return cleaned
 
     @field_validator("macro_targets")
@@ -78,6 +110,159 @@ class ProfileUpdate(BaseModel):
             if not isinstance(macro_value, int | float) or macro_value < 0:
                 raise ValueError("Macro target values must be non-negative numbers")
         return value
+
+
+class CoachPromptDefault(BaseModel):
+    task: str
+    label: str
+    default_prompt: str
+
+
+class LLMConfigRead(BaseModel):
+    """Per-user LLM routing + API key visibility.
+
+    Returns provider overrides verbatim (with the .env default as a fallback
+    indicator), and only "set"/"unset" status for API keys — never the
+    plaintext or ciphertext.
+    """
+
+    coach_providers: dict[str, str]    # task -> "local"|"anthropic"|"openai"
+    env_providers: dict[str, str]      # task -> .env default (read-only)
+    api_keys_set: dict[str, bool]      # provider -> "set in DB?"
+    api_keys_env: dict[str, bool]      # provider -> "set in .env?"
+
+
+class LLMConfigUpdate(BaseModel):
+    # task -> provider name. Empty string clears that override.
+    coach_providers: dict[str, str] | None = None
+    # provider -> plaintext API key. Empty string clears that key.
+    api_keys: dict[str, str] | None = None
+
+    @field_validator("coach_providers")
+    @classmethod
+    def validate_coach_providers(
+        cls, value: dict[str, str] | None
+    ) -> dict[str, str] | None:
+        if value is None:
+            return None
+        cleaned: dict[str, str] = {}
+        for task, provider in value.items():
+            if task not in COACH_META:
+                raise ValueError(f"Unknown coach task: {task}")
+            if provider == "":
+                cleaned[task] = ""
+                continue
+            try:
+                Provider(provider)
+            except ValueError as exc:
+                raise ValueError(f"Unknown provider for {task}: {provider}") from exc
+            cleaned[task] = provider
+        return cleaned
+
+    @field_validator("api_keys")
+    @classmethod
+    def validate_api_keys(
+        cls, value: dict[str, str] | None
+    ) -> dict[str, str] | None:
+        if value is None:
+            return None
+        cleaned: dict[str, str] = {}
+        for provider, key in value.items():
+            if provider not in _API_KEY_PROVIDERS:
+                raise ValueError(f"Unknown provider: {provider}")
+            if not isinstance(key, str):
+                raise ValueError("API keys must be strings")
+            if len(key) > 4096:
+                raise ValueError("API key too long")
+            cleaned[provider] = key
+        return cleaned
+
+
+@router.get("/coach-prompts/defaults", response_model=list[CoachPromptDefault])
+async def get_coach_prompt_defaults(
+    _: Annotated[UUID, Depends(get_current_user_id)],
+) -> list[CoachPromptDefault]:
+    """Built-in default system prompts per editable coach.
+
+    UI uses these as placeholders / 'Reset to default' targets in the
+    coach-prompts settings card.
+    """
+    defaults = default_prompts()
+    return [
+        CoachPromptDefault(
+            task=key,
+            label=meta["label"],
+            default_prompt=defaults[key],
+        )
+        for key, meta in COACH_META.items()
+    ]
+
+
+def _llm_snapshot(profile: UserProfile | None) -> LLMConfigRead:
+    settings = get_settings()
+    coach_providers = dict((profile.coach_providers if profile else None) or {})
+    env_providers = {
+        task: _env_provider_for(TaskClass(task)).value for task in COACH_META
+    }
+    enc = (profile.api_keys_enc if profile else None) or {}
+    return LLMConfigRead(
+        coach_providers=coach_providers,
+        env_providers=env_providers,
+        api_keys_set={p: (p in enc) for p in _API_KEY_PROVIDERS},
+        api_keys_env={
+            "anthropic": bool(settings.anthropic_api_key),
+            "openai":    bool(settings.openai_api_key),
+            "local":     bool(settings.local_llm_api_key and settings.local_llm_api_key != "not-needed"),
+        },
+    )
+
+
+@router.get("/llm", response_model=LLMConfigRead)
+async def get_llm_config(
+    user_id: Annotated[UUID, Depends(get_current_user_id)],
+) -> LLMConfigRead:
+    async with AsyncSessionLocal() as session:
+        profile = (
+            await session.execute(select(UserProfile).where(UserProfile.user_id == user_id))
+        ).scalar_one_or_none()
+    return _llm_snapshot(profile)
+
+
+@router.put("/llm", response_model=LLMConfigRead)
+async def update_llm_config(
+    body: LLMConfigUpdate,
+    user_id: Annotated[UUID, Depends(get_current_user_id)],
+) -> LLMConfigRead:
+    async with AsyncSessionLocal() as session:
+        profile = (
+            await session.execute(select(UserProfile).where(UserProfile.user_id == user_id))
+        ).scalar_one_or_none()
+        if not profile:
+            profile = UserProfile(user_id=user_id)
+            session.add(profile)
+
+        if body.coach_providers is not None:
+            merged = dict(profile.coach_providers or {})
+            for task, provider in body.coach_providers.items():
+                if provider == "":
+                    merged.pop(task, None)
+                else:
+                    merged[task] = provider
+            profile.coach_providers = merged or None
+
+        if body.api_keys is not None:
+            merged = dict(profile.api_keys_enc or {})
+            for provider, plaintext in body.api_keys.items():
+                if plaintext == "":
+                    merged.pop(provider, None)
+                else:
+                    merged[provider] = encrypt(plaintext)
+            profile.api_keys_enc = merged or None
+
+        profile.updated_at = datetime.utcnow()
+        await session.commit()
+        await session.refresh(profile)
+        return _llm_snapshot(profile)
 
 
 @router.get("", response_model=ProfileRead)
@@ -109,7 +294,18 @@ async def update_profile(
 
         update_dict = update_data.model_dump(exclude_unset=True)
         for key, value in update_dict.items():
-            setattr(profile, key, value)
+            if key == "coach_prompts" and value is not None:
+                # Merge: only the keys present in the request are updated.
+                # Empty string clears that coach's override.
+                merged = dict(profile.coach_prompts or {})
+                for coach, prompt in value.items():
+                    if prompt == "":
+                        merged.pop(coach, None)
+                    else:
+                        merged[coach] = prompt
+                setattr(profile, key, merged or None)
+            else:
+                setattr(profile, key, value)
 
         profile.updated_at = datetime.utcnow()
         await session.commit()

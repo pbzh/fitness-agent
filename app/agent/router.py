@@ -30,6 +30,7 @@ def get_effective_local_model() -> str:
 
 
 class TaskClass(StrEnum):
+    AUTO = "auto"  # router/manager: pick the best sub-coach per turn
     CHAT = "chat"
     LOGGING = "logging"
     QUICK_LOOKUP = "quick_lookup"
@@ -39,53 +40,63 @@ class TaskClass(StrEnum):
     MENTAL_HEALTH = "mental_health"
 
 
+# Tasks the router/manager is allowed to dispatch to.
+DISPATCHABLE_TASKS: tuple[TaskClass, ...] = (
+    TaskClass.CHAT,
+    TaskClass.PLAN_GENERATION,
+    TaskClass.NUTRITION_ANALYSIS,
+    TaskClass.PROGRESS_REVIEW,
+    TaskClass.MENTAL_HEALTH,
+)
+
+
 class Provider(StrEnum):
     LOCAL = "local"
     ANTHROPIC = "anthropic"
     OPENAI = "openai"
 
 
-def _resolve_provider(task: TaskClass) -> Provider:
-    """Decide which provider handles this task based on .env config."""
+def _env_provider_for(task: TaskClass) -> Provider:
+    """The .env-configured provider for ``task``, ignoring user overrides."""
     settings = get_settings()
-
     task_provider_map = {
         TaskClass.PLAN_GENERATION: settings.provider_for_planning,
         TaskClass.NUTRITION_ANALYSIS: settings.provider_for_nutrition,
         TaskClass.PROGRESS_REVIEW: settings.provider_for_progress,
         TaskClass.MENTAL_HEALTH: settings.provider_for_mental_health,
     }
-    chosen = task_provider_map.get(task, settings.provider_for_chat)
+    return Provider(task_provider_map.get(task, settings.provider_for_chat))
 
+
+def _resolve_provider(task: TaskClass) -> Provider:
+    """Backwards-compat: .env-only resolver (used by the manager classifier)."""
+    settings = get_settings()
+    chosen = _env_provider_for(task)
     # Fall back to local if the chosen cloud provider has no API key
     if chosen == Provider.ANTHROPIC and not settings.anthropic_api_key:
         chosen = Provider.LOCAL
     if chosen == Provider.OPENAI and not settings.openai_api_key:
         chosen = Provider.LOCAL
-
     return chosen
 
 
-def get_model_for_task(task: TaskClass, override_provider: Provider | None = None) -> Model:
-    """Return a configured PydanticAI Model for the given task class.
+def build_model(provider: Provider, api_key: str | None = None) -> Model:
+    """Construct a PydanticAI Model for ``provider``.
 
-    ``override_provider`` lets callers force a specific provider for one run
-    (e.g. force Anthropic when the user attached an image and the task would
-    otherwise route to the local non-multimodal llama.cpp endpoint).
+    ``api_key`` overrides the .env value when provided.
     """
     settings = get_settings()
-    provider = override_provider or _resolve_provider(task)
 
     if provider == Provider.ANTHROPIC:
         return AnthropicModel(
             model_name=settings.anthropic_model,
-            provider=AnthropicProvider(api_key=settings.anthropic_api_key),
+            provider=AnthropicProvider(api_key=api_key or settings.anthropic_api_key),
         )
 
     if provider == Provider.OPENAI:
         return OpenAIModel(
             model_name=settings.openai_model,
-            provider=OpenAIProvider(api_key=settings.openai_api_key),
+            provider=OpenAIProvider(api_key=api_key or settings.openai_api_key),
         )
 
     # Local llama.cpp / Ollama via OpenAI-compatible endpoint
@@ -93,6 +104,12 @@ def get_model_for_task(task: TaskClass, override_provider: Provider | None = Non
         model_name=get_effective_local_model(),
         provider=OpenAIProvider(
             base_url=settings.local_llm_base_url,
-            api_key=settings.local_llm_api_key,
+            api_key=api_key or settings.local_llm_api_key,
         ),
     )
+
+
+def get_model_for_task(task: TaskClass, override_provider: Provider | None = None) -> Model:
+    """.env-only model factory (kept for the manager classifier and other
+    code paths that don't have a user_id at hand)."""
+    return build_model(override_provider or _resolve_provider(task))

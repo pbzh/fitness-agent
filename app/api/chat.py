@@ -15,12 +15,18 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlmodel import select
 
-from app.agent.agent import AgentDeps, build_agent
+from pydantic_ai import Agent
+
+from app.agent.agent import AgentDeps
 from app.agent.attachments import build_part, has_image
-from app.agent.router import Provider, TaskClass, _resolve_provider
+from app.agent.effective_config import load_effective_config, resolve_api_key
+from app.agent.manager import classify_turn
+from app.agent.prompts import resolve_prompt
+from app.agent.router import Provider, TaskClass, _env_provider_for, build_model
+from app.agent.tools import register_tools
 from app.api.deps import get_current_user_id
 from app.config import get_settings
-from app.db.models import AgentMessage, File as DBFile
+from app.db.models import AgentMessage, File as DBFile, UserProfile
 from app.db.session import AsyncSessionLocal
 from app.files import storage
 
@@ -36,7 +42,9 @@ def rolling_conversation_id(user_id: UUID) -> UUID:
 class ChatRequest(BaseModel):
     message: str
     conversation_id: UUID | None = None  # ignored — kept for client compat
-    task_hint: TaskClass = TaskClass.CHAT
+    # Default is now AUTO: the manager picks the right sub-coach. Clients can
+    # still force a specific coach by setting this explicitly.
+    task_hint: TaskClass = TaskClass.AUTO
     attached_file_ids: list[UUID] = Field(default_factory=list)
 
 
@@ -50,6 +58,10 @@ class ChatResponse(BaseModel):
     reply: str
     conversation_id: UUID
     model_used: str
+    # The coach that actually answered (the manager's resolved task when
+    # task_hint=auto, otherwise just the requested task).
+    resolved_task: str
+    routed_by_manager: bool = False
     token_usage: TokenUsage | None = None
 
 
@@ -113,8 +125,28 @@ async def chat(
             parts.append(build_part(f, full))
             attachment_ids.append(str(f.id))
 
-    # Persist the user turn before invoking the agent so it survives even if
-    # the LLM call fails.
+    # ── Manager routing: when task_hint=auto, classify and dispatch ──
+    routed_by_manager = req.task_hint == TaskClass.AUTO
+    if routed_by_manager:
+        recent_user_msgs: list[str] = []
+        async with AsyncSessionLocal() as session:
+            recent = (
+                await session.execute(
+                    select(AgentMessage)
+                    .where(AgentMessage.user_id == user_id)
+                    .where(AgentMessage.conversation_id == convo_id)
+                    .where(AgentMessage.role == "user")
+                    .order_by(AgentMessage.created_at.desc())
+                    .limit(3)
+                )
+            ).scalars().all()
+            recent_user_msgs = [m.content for m in reversed(recent)]
+        resolved_task = await classify_turn(req.message, recent_user_msgs)
+    else:
+        resolved_task = req.task_hint
+
+    # Persist the user turn (with the *resolved* task tag) before invoking the
+    # agent so it survives even if the LLM call fails.
     async with AsyncSessionLocal() as session:
         session.add(
             AgentMessage(
@@ -122,23 +154,52 @@ async def chat(
                 conversation_id=convo_id,
                 role="user",
                 content=req.message,
-                task=req.task_hint.value,
+                task=resolved_task.value,
                 attached_file_ids=attachment_ids,
             )
         )
         await session.commit()
 
-    # If the user attached an image and the task would route to the local
-    # llama.cpp endpoint (which is not multimodal), bump this single run to
-    # Anthropic so the image is actually visible to the model.
-    override_provider: Provider | None = None
-    if has_image(parts):
-        resolved = _resolve_provider(req.task_hint)
-        if resolved == Provider.LOCAL and get_settings().anthropic_api_key:
-            override_provider = Provider.ANTHROPIC
-            log.info("Routing image-bearing turn to anthropic", task=req.task_hint.value)
+    # Load per-user prompt overrides + effective LLM config (providers + keys).
+    async with AsyncSessionLocal() as session:
+        profile = (
+            await session.execute(select(UserProfile).where(UserProfile.user_id == user_id))
+        ).scalar_one_or_none()
+    prompt_overrides = profile.coach_prompts if profile else None
+    eff = await load_effective_config(user_id)
 
-    agent = build_agent(task=req.task_hint, override_provider=override_provider)
+    # Resolve provider: user override > .env default. Then fall back if the
+    # chosen cloud provider has neither user nor .env API key.
+    settings = get_settings()
+    resolved_provider = eff.provider_for(resolved_task.value, _env_provider_for(resolved_task))
+
+    def _has_key(p: Provider) -> bool:
+        if eff.key_for(p):
+            return True
+        if p == Provider.ANTHROPIC: return bool(settings.anthropic_api_key)
+        if p == Provider.OPENAI:    return bool(settings.openai_api_key)
+        return True  # local always usable
+
+    if resolved_provider in (Provider.ANTHROPIC, Provider.OPENAI) and not _has_key(resolved_provider):
+        log.warning("Falling back to local: no API key for chosen provider", provider=resolved_provider.value)
+        resolved_provider = Provider.LOCAL
+
+    # If the user attached an image and the task would otherwise route to the
+    # local llama.cpp endpoint (not multimodal), bump this single run to
+    # Anthropic so the image is actually visible to the model.
+    if has_image(parts) and resolved_provider == Provider.LOCAL and _has_key(Provider.ANTHROPIC):
+        log.info("Routing image-bearing turn to anthropic", task=resolved_task.value)
+        resolved_provider = Provider.ANTHROPIC
+
+    api_key = resolve_api_key(resolved_provider, eff)
+    model = build_model(resolved_provider, api_key=api_key)
+
+    agent: Agent[AgentDeps, str] = Agent(
+        model=model,
+        deps_type=AgentDeps,
+        system_prompt=resolve_prompt(resolved_task, prompt_overrides),
+    )
+    register_tools(agent)
     deps = AgentDeps(session_factory=AsyncSessionLocal, user_id=user_id)
 
     # PydanticAI accepts a list of mixed strings + BinaryContent for multimodal.
@@ -158,7 +219,7 @@ async def chat(
                         conversation_id=convo_id,
                         role="assistant",
                         content=result.output,
-                        task=req.task_hint.value,
+                        task=resolved_task.value,
                         model_used=model_used,
                         input_tokens=usage.input_tokens,
                         output_tokens=usage.output_tokens,
@@ -170,6 +231,8 @@ async def chat(
                 reply=result.output,
                 conversation_id=convo_id,
                 model_used=model_used,
+                resolved_task=resolved_task.value,
+                routed_by_manager=routed_by_manager,
                 token_usage=TokenUsage(
                     input_tokens=usage.input_tokens,
                     output_tokens=usage.output_tokens,

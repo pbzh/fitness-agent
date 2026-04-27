@@ -89,6 +89,17 @@ class UserProfile(SQLModel, table=True):
     macro_targets: dict | None = Field(default=None, sa_type=JSONB)
 
     notes: str | None = None
+    # Per-coach system-prompt overrides. Keys are TaskClass values (e.g.
+    # "chat", "mental_health"). Empty/missing keys fall back to the built-in
+    # default in app.agent.prompts.
+    coach_prompts: dict[str, str] | None = Field(default=None, sa_type=JSONB)
+    # Per-coach provider override: task name -> "local"|"anthropic"|"openai".
+    # Missing keys fall back to PROVIDER_FOR_X .env defaults.
+    coach_providers: dict[str, str] | None = Field(default=None, sa_type=JSONB)
+    # API keys, *encrypted* with app.security.secrets.encrypt(). Keys are
+    # provider names: "anthropic" | "openai" | "local". Missing keys fall
+    # back to the corresponding .env value.
+    api_keys_enc: dict[str, str] | None = Field(default=None, sa_type=JSONB)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
     user: User | None = Relationship(back_populates="profile")

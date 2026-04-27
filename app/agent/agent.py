@@ -30,15 +30,20 @@ class AgentDeps:
 def build_agent(
     task: TaskClass = TaskClass.CHAT,
     override_provider: Provider | None = None,
+    system_prompt: str | None = None,
 ) -> Agent[AgentDeps, str]:
-    """Construct a PydanticAI agent. Tools are registered separately."""
+    """Construct a PydanticAI agent. Tools are registered separately.
+
+    If ``system_prompt`` is given, it overrides the default prompt for ``task``
+    (used to apply per-user prompt overrides).
+    """
     from app.agent.prompts import get_prompt
 
     model = get_model_for_task(task, override_provider=override_provider)
     agent = Agent(
         model=model,
         deps_type=AgentDeps,
-        system_prompt=get_prompt(task),
+        system_prompt=system_prompt or get_prompt(task),
     )
     from app.agent import tools as _tools
 

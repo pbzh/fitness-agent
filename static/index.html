@@ -404,6 +404,56 @@
         }
         .settings-subheading { font-size: 0.84rem; color: var(--text-2); margin-bottom: 8px; }
 
+        .llm-row {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 8px 12px; align-items: center;
+            padding: 10px 0; border-top: 1px solid var(--border);
+        }
+        .llm-row:first-child { border-top: none; padding-top: 0; }
+        .llm-row .label {
+            font-size: 0.84rem; font-weight: 600;
+        }
+        .llm-row .hint {
+            font-size: 0.72rem; color: var(--text-2); grid-column: 1 / -1;
+        }
+        .llm-row select { height: 36px; }
+        .llm-key-row {
+            display: grid; grid-template-columns: 130px 1fr auto;
+            gap: 8px; align-items: center; padding: 8px 0;
+        }
+        .llm-key-row .label { font-weight: 600; font-size: 0.84rem; }
+        .llm-key-row input { height: 36px; font-family: 'Menlo','Monaco','Consolas',ui-monospace,monospace; font-size: 0.78rem; }
+        .llm-key-status {
+            font-size: 0.72rem; padding: 3px 8px; border-radius: 10px;
+            background: var(--surface-3); color: var(--text-2); white-space: nowrap;
+        }
+        .llm-key-status.set { background: var(--openai-bg); color: var(--openai-text); }
+        .llm-section-head {
+            font-weight: 700; font-size: 0.85rem; margin: 14px 0 6px;
+            color: var(--text-2); text-transform: uppercase; letter-spacing: 0.04em;
+        }
+
+        .coach-prompt-block { padding: 14px 0; border-top: 1px solid var(--border); }
+        .coach-prompt-block:first-child { border-top: none; padding-top: 0; }
+        .coach-prompt-block summary {
+            cursor: pointer; list-style: none;
+            display: flex; align-items: center; justify-content: space-between;
+            font-weight: 700; font-size: 0.92rem;
+            padding: 6px 0;
+        }
+        .coach-prompt-block summary::-webkit-details-marker { display: none; }
+        .coach-prompt-block summary .chev { font-size: 0.7rem; opacity: 0.6; }
+        .coach-prompt-block details[open] summary .chev { transform: rotate(90deg); }
+        .coach-prompt-block textarea {
+            width: 100%; min-height: 180px; max-height: 480px;
+            font-family: 'Menlo', 'Monaco', 'Consolas', ui-monospace, monospace;
+            font-size: 0.78rem; line-height: 1.45; padding: 10px 12px;
+            border-radius: var(--radius-sm); margin-top: 8px;
+        }
+        .coach-prompt-actions { display: flex; gap: 8px; margin-top: 6px; }
+        .coach-prompt-actions .text-btn { height: 32px; padding: 0 10px; font-size: 0.78rem; }
+        .coach-prompt-status { font-size: 0.74rem; color: var(--text-2); margin-left: auto; align-self: center; }
+
         .settings-card {
             background: var(--surface); border: 1px solid var(--border);
             border-radius: var(--radius-sm); box-shadow: none; overflow: hidden;
@@ -601,7 +651,8 @@
                     </div>
                     <div class="coach-row">
                         <div class="coach-pills">
-                            <button class="coach-btn active" data-task="chat" type="button">💬 Chat</button>
+                            <button class="coach-btn active" data-task="auto" type="button" title="The manager picks the best coach for each turn">🎯 Auto</button>
+                            <button class="coach-btn" data-task="chat" type="button">💬 Chat</button>
                             <button class="coach-btn" data-task="plan_generation" type="button">📅 Plan</button>
                             <button class="coach-btn" data-task="nutrition_analysis" type="button">🥗 Nutrition</button>
                             <button class="coach-btn" data-task="progress_review" type="button">📊 Progress</button>
@@ -818,6 +869,46 @@
                 </div>
             </div>
 
+            <!-- LLM providers + API keys -->
+            <div class="settings-card">
+                <div class="card-header">
+                    <h3>LLM providers &amp; API keys</h3>
+                    <p>
+                        Pick the provider per coach (overrides .env defaults; leave on
+                        “Default” to inherit). API keys are encrypted at rest with
+                        Fernet (AES-128-CBC + HMAC-SHA256) and never returned to the
+                        client. Empty a key field to clear the override.
+                    </p>
+                </div>
+                <div class="card-body" id="llm-config-body">
+                    <!-- populated by renderLLMConfig() -->
+                </div>
+                <div class="card-footer">
+                    <button class="btn-save" id="save-llm-btn" type="button">Save</button>
+                    <span class="status" id="llm-status"></span>
+                </div>
+            </div>
+
+            <!-- Coach prompts -->
+            <div class="settings-card">
+                <div class="card-header">
+                    <h3>Coach prompts</h3>
+                    <p>
+                        Override the system prompt used by each coach. Leave a textarea
+                        blank to use the built-in default. The Auto/manager prompt is
+                        not editable — it's a classifier and free-form edits will
+                        silently break routing.
+                    </p>
+                </div>
+                <div class="card-body" id="coach-prompts-body">
+                    <!-- populated by renderCoachPrompts() -->
+                </div>
+                <div class="card-footer">
+                    <button class="btn-save" id="save-coach-prompts-btn" type="button">Save prompts</button>
+                    <span class="status" id="coach-prompts-status"></span>
+                </div>
+            </div>
+
             <!-- Sign out -->
             <div class="settings-card">
                 <div class="card-header">
@@ -905,13 +996,16 @@
     const themeKey = "fitness-agent-theme";
 
     let conversationId          = null;
-    let currentTask             = "chat";
+    let currentTask             = "auto";  // manager picks the coach by default
     let currentAbortController  = null;
     // pending attachments for the next chat send
     // shape: [{ id, filename, mime_type, uploading: bool }]
     let pendingAttachments      = [];
+    // server-fetched defaults for the coach-prompts settings card
+    let coachPromptDefaults     = [];
 
     const COACH_META = {
+        auto:               { icon: "🎯", label: "Auto" },
         chat:               { icon: "💬", label: "Chat" },
         plan_generation:    { icon: "📅", label: "Plan" },
         nutrition_analysis: { icon: "🥗", label: "Nutrition" },
@@ -1059,7 +1153,21 @@
             b.classList.toggle("active", b.dataset.task === task)
         );
         const title = $("active-coach-title");
-        if (title) title.textContent = `${coachLabel(task)} Coach`;
+        if (title) {
+            title.textContent = task === "auto"
+                ? "🎯 Auto — manager picks the coach"
+                : `${coachLabel(task)} Coach`;
+        }
+        // The provider badge is meaningless for auto (resolved per turn).
+        updateProviderBadge(task === "auto" ? "chat" : task);
+    }
+
+    // Briefly show which coach the manager routed this turn to, without
+    // changing the user's selected pill.
+    function showRoutedCoach(task) {
+        const title = $("active-coach-title");
+        if (!title) return;
+        title.textContent = `🎯 Auto → ${coachLabel(task)}`;
         updateProviderBadge(task);
     }
 
@@ -1134,7 +1242,229 @@
             $("s-carbs").value        = d.macro_targets?.carbs_g ?? "";
             $("s-fat").value          = d.macro_targets?.fat_g ?? "";
             $("s-diet").value         = (d.dietary_restrictions || []).join(", ");
+            await renderCoachPrompts(d.coach_prompts || {});
+            await loadLLMConfig();
         } catch (_) {}
+    }
+
+    async function loadLLMConfig() {
+        try {
+            const res = await request("/profile/llm", { headers: authHeaders() });
+            renderLLMConfig(await res.json());
+        } catch (_) {}
+    }
+
+    function renderLLMConfig(cfg) {
+        const body = $("llm-config-body");
+        if (!body) return;
+        body.replaceChildren();
+
+        // ── Provider per coach ──
+        const head = document.createElement("div");
+        head.className = "llm-section-head";
+        head.textContent = "Provider per coach";
+        body.appendChild(head);
+
+        const providerOptions = [
+            { value: "",           label: "Default (.env)" },
+            { value: "local",      label: "Local LLM" },
+            { value: "anthropic",  label: "Claude" },
+            { value: "openai",     label: "GPT" },
+        ];
+
+        for (const c of coachPromptDefaults) {
+            const row = document.createElement("div");
+            row.className = "llm-row";
+            const label = document.createElement("div");
+            label.className = "label";
+            label.textContent = `${COACH_META[c.task]?.icon || ""} ${c.label}`;
+            const sel = document.createElement("select");
+            sel.id = `llm-provider-${c.task}`;
+            for (const o of providerOptions) {
+                const opt = document.createElement("option");
+                opt.value = o.value;
+                opt.textContent = o.value === ""
+                    ? `${o.label} → ${cfg.env_providers[c.task] || "—"}`
+                    : o.label;
+                sel.appendChild(opt);
+            }
+            sel.value = cfg.coach_providers[c.task] || "";
+            row.append(label, sel);
+            body.appendChild(row);
+        }
+
+        // ── API keys ──
+        const keyHead = document.createElement("div");
+        keyHead.className = "llm-section-head";
+        keyHead.textContent = "API keys (encrypted at rest)";
+        body.appendChild(keyHead);
+
+        const keyRows = [
+            { provider: "anthropic", label: "Anthropic" },
+            { provider: "openai",    label: "OpenAI" },
+            { provider: "local",     label: "Local LLM" },
+        ];
+        for (const k of keyRows) {
+            const row = document.createElement("div");
+            row.className = "llm-key-row";
+            const label = document.createElement("div");
+            label.className = "label";
+            label.textContent = k.label;
+
+            const input = document.createElement("input");
+            input.type = "password";
+            input.autocomplete = "new-password";
+            input.id = `llm-key-${k.provider}`;
+            input.placeholder = cfg.api_keys_set[k.provider]
+                ? "•••••••• (set — leave blank to keep)"
+                : (cfg.api_keys_env[k.provider] ? "Using .env value" : "Not set");
+
+            const status = document.createElement("span");
+            status.className = "llm-key-status" + (cfg.api_keys_set[k.provider] ? " set" : "");
+            status.id = `llm-key-status-${k.provider}`;
+            status.textContent = cfg.api_keys_set[k.provider]
+                ? "DB"
+                : (cfg.api_keys_env[k.provider] ? ".env" : "unset");
+
+            row.append(label, input, status);
+            body.appendChild(row);
+        }
+
+        // Per-provider clear button
+        const clearRow = document.createElement("div");
+        clearRow.className = "hint";
+        clearRow.textContent = "Tip: type 'clear' (literally those 5 letters) and Save to remove a stored DB key for that provider.";
+        body.appendChild(clearRow);
+    }
+
+    async function saveLLMConfig() {
+        const btn = $("save-llm-btn");
+        btn.disabled = true;
+        setStatus($("llm-status"), "Saving…");
+        const payload = { coach_providers: {}, api_keys: {} };
+
+        for (const c of coachPromptDefaults) {
+            const sel = $(`llm-provider-${c.task}`);
+            if (sel) payload.coach_providers[c.task] = sel.value;  // "" = clear
+        }
+
+        for (const provider of ["anthropic", "openai", "local"]) {
+            const input = $(`llm-key-${provider}`);
+            if (!input) continue;
+            const v = input.value;
+            if (v === "") continue;                  // unchanged: keep existing
+            if (v.toLowerCase() === "clear") {       // explicit clear
+                payload.api_keys[provider] = "";
+            } else {
+                payload.api_keys[provider] = v;
+            }
+        }
+
+        try {
+            const res = await request("/profile/llm", {
+                method: "PUT",
+                headers: authHeaders(),
+                body: JSON.stringify(payload),
+            });
+            renderLLMConfig(await res.json());
+            // Re-fetch routing badge data so the chat tab reflects the change.
+            await loadRouting();
+            updateProviderBadge(currentTask === "auto" ? "chat" : currentTask);
+            flashStatus("llm-status", "Saved ✓", "success");
+        } catch (err) {
+            setStatus($("llm-status"), err.message, "error");
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    async function renderCoachPrompts(overrides) {
+        const body = $("coach-prompts-body");
+        if (!body) return;
+        // Fetch defaults once, then keep them cached.
+        if (coachPromptDefaults.length === 0) {
+            try {
+                const res = await request("/profile/coach-prompts/defaults", { headers: authHeaders() });
+                coachPromptDefaults = await res.json();
+            } catch (_) {
+                coachPromptDefaults = [];
+            }
+        }
+        body.replaceChildren();
+        for (const c of coachPromptDefaults) {
+            const block = document.createElement("details");
+            block.className = "coach-prompt-block";
+            const sum = document.createElement("summary");
+            const h = document.createElement("span");
+            h.textContent = `${COACH_META[c.task]?.icon || ""} ${c.label} coach`;
+            const status = document.createElement("span");
+            status.className = "coach-prompt-status";
+            status.dataset.task = c.task;
+            status.textContent = (overrides && overrides[c.task]) ? "custom" : "using default";
+            const chev = document.createElement("span");
+            chev.className = "chev"; chev.textContent = "▶";
+            sum.append(h, status, chev);
+            block.appendChild(sum);
+
+            const ta = document.createElement("textarea");
+            ta.id = `coach-prompt-${c.task}`;
+            ta.placeholder = c.default_prompt;
+            ta.value = (overrides && overrides[c.task]) || "";
+            block.appendChild(ta);
+
+            const actions = document.createElement("div");
+            actions.className = "coach-prompt-actions";
+            const reset = document.createElement("button");
+            reset.type = "button"; reset.className = "text-btn";
+            reset.textContent = "Reset to default";
+            reset.addEventListener("click", () => {
+                ta.value = "";
+                status.textContent = "using default (unsaved)";
+            });
+            const fill = document.createElement("button");
+            fill.type = "button"; fill.className = "text-btn";
+            fill.textContent = "Load default into editor";
+            fill.addEventListener("click", () => {
+                ta.value = c.default_prompt;
+                status.textContent = "custom (unsaved)";
+            });
+            ta.addEventListener("input", () => {
+                status.textContent = ta.value.trim()
+                    ? "custom (unsaved)"
+                    : "using default (unsaved)";
+            });
+            actions.append(reset, fill);
+            block.appendChild(actions);
+            body.appendChild(block);
+        }
+    }
+
+    async function saveCoachPrompts() {
+        const btn = $("save-coach-prompts-btn");
+        const status = $("coach-prompts-status");
+        btn.disabled = true;
+        setStatus(status, "Saving…");
+        const payload = { coach_prompts: {} };
+        for (const c of coachPromptDefaults) {
+            const ta = $(`coach-prompt-${c.task}`);
+            if (!ta) continue;
+            // Empty string clears the override server-side.
+            payload.coach_prompts[c.task] = ta.value.trim();
+        }
+        try {
+            const res = await request("/profile", {
+                method: "PUT",
+                headers: authHeaders(),
+                body: JSON.stringify(payload),
+            });
+            const d = await res.json();
+            await renderCoachPrompts(d.coach_prompts || {});
+            flashStatus("coach-prompts-status", "Saved ✓", "success");
+        } catch (err) {
+            setStatus(status, err.message, "error");
+        } finally {
+            btn.disabled = false;
+        }
     }
 
     async function saveProfileSection(payload, btnId, statusId) {
@@ -1202,6 +1532,9 @@
             "save-nutrition-btn", "nutrition-status"
         );
     });
+
+    $("save-coach-prompts-btn").addEventListener("click", saveCoachPrompts);
+    $("save-llm-btn").addEventListener("click", saveLLMConfig);
 
     /* ── Change password ── */
     $("change-pw-btn").addEventListener("click", async () => {
@@ -1632,7 +1965,9 @@
             const data = await res.json();
             conversationId = data.conversation_id;
             removeTyping();
-            appendMessage(data.reply, "agent", data.model_used, data.token_usage, true, sentTask);
+            const replyTask = data.resolved_task || sentTask;
+            appendMessage(data.reply, "agent", data.model_used, data.token_usage, true, replyTask);
+            if (data.routed_by_manager) showRoutedCoach(replyTask);
         } catch (err) {
             removeTyping();
             if (err.name !== "AbortError") appendMessage(err.message, "agent", "Error");
