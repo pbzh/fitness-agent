@@ -103,7 +103,7 @@ async def dashboard_summary(
                 select(WorkoutSession)
                 .where(WorkoutSession.user_id == user_id)
                 .where(WorkoutSession.scheduled_date == today)
-                .order_by(WorkoutSession.scheduled_time, WorkoutSession.created_at)
+                .order_by(WorkoutSession.scheduled_time)
             )
         ).scalars().all()
         upcoming_workouts = (
