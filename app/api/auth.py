@@ -1,5 +1,6 @@
 """Authentication endpoints."""
 
+import asyncio
 from datetime import UTC, datetime, timedelta
 from typing import Annotated
 from uuid import UUID
@@ -14,11 +15,12 @@ from sqlmodel import select
 from app.agent.prompts import COACH_META, default_prompts
 from app.api.deps import get_approved_user_id, get_current_user
 from app.config import get_settings
-from app.db.models import User, UserProfile
+from app.db.models import AdminAuditLog, LoginAttempt, User, UserProfile
 from app.db.session import get_session
 from app.security.rate_limit import check_auth_rate_limit, clear_auth_rate_limit
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+_background_tasks: set = set()
 
 
 class LoginRequest(BaseModel):
@@ -91,6 +93,18 @@ async def _ensure_default_profile(session: AsyncSession, user_id: UUID) -> None:
     await session.commit()
 
 
+async def _notify_admins_registration(new_user_email: str) -> None:
+    from app.core.email import send_registration_notification
+    from app.db.session import AsyncSessionLocal
+
+    async with AsyncSessionLocal() as session:
+        admins = (
+            await session.execute(select(User).where(User.is_admin.is_(True)))
+        ).scalars().all()
+    for admin in admins:
+        await send_registration_notification(admin.email, new_user_email)
+
+
 @router.post("/register", response_model=RegisterResponse, status_code=201)
 async def register(
     req: RegisterRequest,
@@ -114,9 +128,22 @@ async def register(
         approved_at=datetime.utcnow() if is_first_user else None,
     )
     session.add(user)
+    session.add(
+        AdminAuditLog(
+            actor_user_id=user.id,
+            target_user_id=user.id,
+            action="registration",
+            before=None,
+            after={"email": user.email, "is_admin": user.is_admin, "is_approved": user.is_approved},
+        )
+    )
     await session.commit()
     await session.refresh(user)
     if not user.is_approved:
+        # notify admins about pending registration (fire-and-forget)
+        t = asyncio.create_task(_notify_admins_registration(req.email))
+        _background_tasks.add(t)
+        t.add_done_callback(_background_tasks.discard)
         return RegisterResponse(pending_approval=True)
     await _ensure_default_profile(session, user.id)
     await clear_auth_rate_limit(request, req.email)
@@ -158,21 +185,51 @@ async def login(
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> TokenResponse:
     await check_auth_rate_limit(request, credentials.email)
+    ip = request.headers.get("X-Forwarded-For", request.client.host if request.client else None)
+    ua = request.headers.get("User-Agent")
+
     result = await session.execute(select(User).where(User.email == credentials.email))
     user = result.scalar_one_or_none()
+
     if not user or not verify_password(credentials.password, user.hashed_password):
+        session.add(LoginAttempt(
+            email=credentials.email,
+            user_id=user.id if user else None,
+            success=False,
+            ip_address=ip,
+            user_agent=ua,
+            failure_reason="invalid_credentials",
+        ))
+        await session.commit()
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password",
         )
     if not user.is_approved:
+        session.add(LoginAttempt(
+            email=credentials.email,
+            user_id=user.id,
+            success=False,
+            ip_address=ip,
+            user_agent=ua,
+            failure_reason="pending_approval",
+        ))
+        await session.commit()
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Account is pending approval",
         )
 
+    session.add(LoginAttempt(
+        email=credentials.email,
+        user_id=user.id,
+        success=True,
+        ip_address=ip,
+        user_agent=ua,
+    ))
     await _ensure_default_profile(session, user.id)
     await clear_auth_rate_limit(request, credentials.email)
+    await session.commit()
     return TokenResponse(access_token=create_access_token(user.id))
 
 

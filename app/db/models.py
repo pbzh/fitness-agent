@@ -250,6 +250,32 @@ class AgentMessage(SQLModel, table=True):
     attached_file_ids: list[str] = Field(default_factory=list, sa_type=JSONB)
 
 
+class LoginAttempt(SQLModel, table=True):
+    """Records every login attempt for audit and rate-limit analysis."""
+
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    email: str = Field(index=True)
+    user_id: UUID | None = Field(default=None, foreign_key="user.id", index=True)
+    success: bool = Field(index=True)
+    ip_address: str | None = None
+    user_agent: str | None = None
+    failure_reason: str | None = None
+    created_at: datetime = Field(default_factory=datetime.utcnow, index=True)
+
+
+class SystemConfig(SQLModel, table=True):
+    """Single-row key/value store for admin-managed system settings.
+
+    Each row is keyed by `key` (e.g. "smtp"). Value is JSONB so each config
+    type can carry its own schema.  Sensitive fields (passwords) must be
+    Fernet-encrypted before storage.
+    """
+
+    key: str = Field(primary_key=True)
+    value: dict = Field(default_factory=dict, sa_type=JSONB)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
 class File(SQLModel, table=True):
     """User-uploaded files and agent-generated artifacts (images, PDFs).
 
