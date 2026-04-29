@@ -37,6 +37,8 @@ You → "Build me a hangboard plan for tomorrow at 7am"
 - **Image generation.** Coaches can call `generate_plan_image` (OpenAI
   `gpt-image-1`) to produce a weekly workout / meal calendar PNG, saved to
   the file store and referenced in the reply.
+- **Document generation.** Coaches can create downloadable `PDF`, `DOCX`,
+  `XLSX`, and `PPTX` exports for plans, reports, checklists, and handouts.
 - **ICS calendar export.** Per-plan or rolling 30-day feed with
   Europe/Zurich VTIMEZONE — drag into Calendar.app, GCal, etc.
 - **Per-user customization.** Override each coach's system prompt, pick
@@ -79,10 +81,11 @@ Boss       Coaches   Tools         Files
   (router) (4 personas)│        (/opt/fitness-agent-data
                 ┌──────┤            + encrypted keys)
                 ▼      ▼
-        Provider     11 tools
+        Provider     12 tools
         Resolver  (workouts, meals,
         (per user) health metrics,
                   generate_plan_image,
+                  generate_document_export,
                   log_mental_state, …)
 ```
 
@@ -152,8 +155,8 @@ coacher/
 │   │   ├── effective_config.py  per-user provider/key resolver
 │   │   ├── attachments.py   image / PDF / DOCX → agent input parts
 │   │   ├── image_gen.py     OpenAI gpt-image-1 wrapper
-│   │   └── tools.py         11 tools (workouts, meals, metrics,
-│   │                                   image gen, mental state, …)
+│   │   └── tools.py         12 tools (workouts, meals, metrics,
+│   │                                   image/doc gen, mental state, …)
 │   ├── api/
 │   │   ├── auth.py          /auth/login, /auth/register, /auth/change-password
 │   │   ├── chat.py          /chat with retries + manager routing + multimodal
