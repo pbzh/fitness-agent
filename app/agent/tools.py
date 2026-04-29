@@ -12,6 +12,7 @@ from pydantic_ai import Agent, RunContext
 from sqlmodel import select
 
 from app.agent.agent import AgentDeps
+from app.agent.document_gen import generate_document, sanitize_filename_stem
 from app.db.models import (
     File,
     FileKind,
@@ -60,6 +61,13 @@ class ProfileSummary(BaseModel):
     daily_calorie_target: int | None
     macro_targets: dict | None
     notes: str | None
+
+
+class DocumentExportResult(BaseModel):
+    file_id: str
+    url: str
+    filename: str
+    mime_type: str
 
 
 def register_tools(agent: Agent[AgentDeps, str]) -> None:
@@ -256,6 +264,71 @@ def register_tools(agent: Agent[AgentDeps, str]) -> None:
             return f"Logged {slot.value}: {name}{macros}"
 
     @agent.tool
+    async def generate_document_export(
+        ctx: RunContext[AgentDeps],
+        file_format: str = Field(description="One of: pdf, docx, xlsx, pptx"),
+        title: str = Field(description="Human-readable document title"),
+        content: str = Field(
+            description=(
+                "Plain text body for the export. Use short paragraphs or one "
+                "line per bullet or section."
+            )
+        ),
+        table_rows: list[list[str]] | None = None,
+        kind: str = Field(
+            default="document_export",
+            description="Short label such as workout_plan, report, checklist, presentation",
+        ),
+        filename_stem: str | None = Field(
+            default=None,
+            description="Optional filename stem without extension. If omitted, derived from title.",
+        ),
+    ) -> DocumentExportResult:
+        """Create a downloadable PDF, Word, Excel, or PowerPoint file.
+
+        Use this when the user explicitly wants a file deliverable instead of
+        only a chat reply."""
+        normalized = file_format.lower().strip()
+        if normalized not in {"pdf", "docx", "xlsx", "pptx"}:
+            raise ValueError("file_format must be one of: pdf, docx, xlsx, pptx")
+
+        document = generate_document(
+            file_format=normalized,
+            title=title,
+            content=content,
+            table_rows=table_rows,
+        )
+        filename = f"{sanitize_filename_stem(filename_stem or title)}.{document.extension}"
+
+        from app.files import storage
+
+        fid, rel = storage.write_bytes(
+            document.data,
+            filename=filename,
+            mime_type=document.mime_type,
+        )
+        async with ctx.deps.session_factory() as session:
+            f = File(
+                id=fid,
+                user_id=ctx.deps.user_id,
+                kind=FileKind.GENERATED,
+                filename=filename,
+                mime_type=document.mime_type,
+                size_bytes=len(document.data),
+                storage_path=rel,
+                description=kind,
+                prompt=content[:4000],
+            )
+            session.add(f)
+            await session.commit()
+        return DocumentExportResult(
+            file_id=str(fid),
+            url=f"/files/{fid}",
+            filename=filename,
+            mime_type=document.mime_type,
+        )
+
+    @agent.tool
     async def generate_plan_image(
         ctx: RunContext[AgentDeps],
         prompt: str = Field(
@@ -373,16 +446,40 @@ def register_tools(agent: Agent[AgentDeps, str]) -> None:
     @agent.tool
     async def update_body_metrics(
         ctx: RunContext[AgentDeps],
-        weight_kg: float | None = Field(default=None, ge=20, le=350, description="Current body weight in kg"),
-        height_cm: float | None = Field(default=None, ge=50, le=250, description="Height in cm"),
-        target_weight_kg: float | None = Field(default=None, ge=20, le=350, description="Goal weight in kg"),
-        primary_goal: str | None = Field(default=None, max_length=80, description="e.g. 'lose fat', 'build strength', 'maintain'"),
-        weekly_workout_target: int | None = Field(default=None, ge=0, le=14, description="Target training sessions per week"),
-        daily_calorie_target: int | None = Field(default=None, ge=800, le=8000, description="Daily kcal target"),
+        weight_kg: float | None = Field(
+            default=None, ge=20, le=350, description="Current body weight in kg"
+        ),
+        height_cm: float | None = Field(
+            default=None, ge=50, le=250, description="Height in cm"
+        ),
+        target_weight_kg: float | None = Field(
+            default=None, ge=20, le=350, description="Goal weight in kg"
+        ),
+        primary_goal: str | None = Field(
+            default=None,
+            max_length=80,
+            description="e.g. 'lose fat', 'build strength', 'maintain'",
+        ),
+        weekly_workout_target: int | None = Field(
+            default=None, ge=0, le=14, description="Target training sessions per week"
+        ),
+        daily_calorie_target: int | None = Field(
+            default=None, ge=800, le=8000, description="Daily kcal target"
+        ),
     ) -> str:
         """Update the user's body metrics or fitness goals in their profile.
         Only provide the fields the user has explicitly stated. Leave others as None."""
-        if all(v is None for v in (weight_kg, height_cm, target_weight_kg, primary_goal, weekly_workout_target, daily_calorie_target)):
+        if all(
+            v is None
+            for v in (
+                weight_kg,
+                height_cm,
+                target_weight_kg,
+                primary_goal,
+                weekly_workout_target,
+                daily_calorie_target,
+            )
+        ):
             return "Nothing to update — provide at least one metric."
         async with ctx.deps.session_factory() as session:
             result = await session.execute(
