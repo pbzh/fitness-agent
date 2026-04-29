@@ -65,7 +65,11 @@ def _send_sync(cfg: dict, to: str, subject: str, body_html: str, body_text: str)
             server.starttls(context=ctx)
         if cfg.get("username"):
             server.login(cfg["username"], password or "")
-        server.sendmail(cfg["from_address"], [to], msg.as_string())
+        # Use authenticated username as envelope sender (MAIL FROM).
+        # Providers like Gmail reject MAIL FROM != authenticated account.
+        # msg["From"] header still shows the configured from_address to recipients.
+        envelope_from = cfg.get("username") or cfg["from_address"]
+        server.sendmail(envelope_from, [to], msg.as_string())
 
 
 async def send_email(to: str, subject: str, body_html: str, body_text: str = "") -> bool:
