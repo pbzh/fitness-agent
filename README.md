@@ -43,6 +43,11 @@ You → "Build me a hangboard plan for tomorrow at 7am"
   Europe/Zurich VTIMEZONE — drag into Calendar.app, GCal, etc.
 - **Per-user customization.** Override each coach's system prompt, pick
   the LLM provider per coach, store your own API keys (encrypted at rest).
+- **Inner Team.** Seven built-in coaching personas (Athlete, Recovery Guardian,
+  Planner, Honest Coach, Compassionate Friend, Nutrition Strategist, Future Self)
+  each with a unique color and icon. In auto mode the active role is inferred
+  from message keywords; in manual mode you pin one. The active role shapes
+  the system prompt. Custom roles (up to 10 total) are supported.
 - **Auto-generated weekly plans.** APScheduler runs every Sunday 19:00.
 - **Single-user, multi-user-ready.** `user_id` is on every table.
   Auth is real JWT with bcrypt; users can self-register.
@@ -81,7 +86,7 @@ Boss       Coaches   Tools         Files
   (router) (4 personas)│        (/opt/fitness-agent-data
                 ┌──────┤            + encrypted keys)
                 ▼      ▼
-        Provider     12 tools
+        Provider     11 tools
         Resolver  (workouts, meals,
         (per user) health metrics,
                   generate_plan_image,
@@ -155,8 +160,10 @@ coacher/
 │   │   ├── effective_config.py  per-user provider/key resolver
 │   │   ├── attachments.py   image / PDF / DOCX → agent input parts
 │   │   ├── image_gen.py     OpenAI gpt-image-1 wrapper
-│   │   └── tools.py         12 tools (workouts, meals, metrics,
+│   │   ├── document_gen.py  PDF / DOCX / XLSX / PPTX export builder
+│   │   └── tools.py         11 tools (workouts, meals, metrics,
 │   │                                   image/doc gen, mental state, …)
+│   ├── inner_team.py        Inner Team roles, auto-detection, normalization
 │   ├── api/
 │   │   ├── auth.py          /auth/login, /auth/register, /auth/change-password
 │   │   ├── chat.py          /chat with retries + manager routing + multimodal
@@ -174,7 +181,10 @@ coacher/
 │   ├── security/secrets.py  Fernet encrypt/decrypt
 │   └── scheduler/jobs.py    Sunday weekly plan generation
 ├── alembic/versions/        0001 init, 0002 files+extras, 0003 prompts,
-│                            0004 user provider/key overrides
+│                            0004 user provider/key overrides,
+│                            0005 local-only/retention/language,
+│                            0006 user approval/admin, 0007 audit log,
+│                            0008 inner team
 ├── static/index.html        web UI (vanilla JS, no build step)
 ├── pyproject.toml
 ├── .env.example
@@ -507,9 +517,12 @@ through the same endpoints.
 - [x] Boss router (one chat, four coaches)
 - [x] File uploads + multimodal chat (images, PDFs, DOCX, text)
 - [x] Image generation (gpt-image-1) with on-disk store
+- [x] Document export (PDF, DOCX, XLSX, PPTX) via `generate_document_export`
 - [x] ICS calendar export (Europe/Zurich VTIMEZONE)
 - [x] Per-user prompt overrides
 - [x] Per-user provider overrides + encrypted API keys
+- [x] Inner Team — 7 built-in roles with auto keyword detection, manual pin,
+      custom roles; per-role color + SVG icon identity in the web UI
 - [ ] Open Food Facts / USDA FDC nutrition lookup tools
 - [ ] wger exercise database integration
 - [ ] Garmin Connect ingestion service
