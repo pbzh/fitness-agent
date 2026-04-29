@@ -102,6 +102,19 @@ def _base_html(content: str) -> str:
 </body></html>"""
 
 
+async def send_registration_pending_email(to: str) -> bool:
+    html = _base_html("""
+<h2>Registration received</h2>
+<p>Your Coacher account has been created and is waiting for admin approval.</p>
+<p>You will receive another email as soon as your account is activated.</p>
+""")
+    text = (
+        "Your Coacher account has been created and is waiting for admin approval. "
+        "You will receive another email once activated."
+    )
+    return await send_email(to, "Your Coacher account is pending approval", html, text)
+
+
 async def send_approval_email(to: str) -> bool:
     html = _base_html("""
 <h2 style="color:#16a34a">Your account has been approved</h2>

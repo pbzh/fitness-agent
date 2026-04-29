@@ -141,10 +141,14 @@ async def register(
     await session.commit()
     await session.refresh(user)
     if not user.is_approved:
-        # notify admins about pending registration (fire-and-forget)
-        t = asyncio.create_task(_notify_admins_registration(req.email))
-        _background_tasks.add(t)
-        t.add_done_callback(_background_tasks.discard)
+        from app.core.email import send_registration_pending_email
+        for coro in (
+            _notify_admins_registration(req.email),
+            send_registration_pending_email(req.email),
+        ):
+            t = asyncio.create_task(coro)
+            _background_tasks.add(t)
+            t.add_done_callback(_background_tasks.discard)
         return RegisterResponse(pending_approval=True)
     await _ensure_default_profile(session, user.id)
     await clear_auth_rate_limit(request, req.email)
