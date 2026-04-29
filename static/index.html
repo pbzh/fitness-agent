@@ -7,15 +7,12 @@
     <link rel="icon" type="image/png" href="/logo.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Jost:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
     <style>
         /* ═══════════════════════════════════════════════
            COACHER — RAW ATHLETIC TERMINAL
            Palette: electric chartreuse on near-black
-           Type: Syne (display) + DM Mono (data/ui)
+           Type: Bebas Neue (display) + Jost (body) + JetBrains Mono (data/ui)
            ═══════════════════════════════════════════════ */
 
         /* ── Variables: Light (default) ── */
@@ -99,7 +96,7 @@
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            font-family: 'DM Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+            font-family: 'Jost', ui-sans-serif, system-ui, -apple-system, sans-serif;
             background: var(--bg);
             color: var(--text);
             height: 100vh; height: 100dvh;
@@ -130,7 +127,7 @@
 
         label {
             display: block;
-            font-family: 'DM Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 0.69rem; font-weight: 500;
             color: var(--text-2);
             margin-bottom: 5px;
@@ -160,7 +157,7 @@
         }
         .brand-logo img { width: 26px; height: 26px; display: block; flex-shrink: 0; }
         .brand-wordmark {
-            font-family: 'Syne', sans-serif;
+            font-family: 'Bebas Neue', sans-serif;
             font-size: 1.02rem; font-weight: 700;
             letter-spacing: -0.03em;
             color: var(--text);
@@ -171,7 +168,7 @@
         }
         .session-email {
             display: none;
-            font-family: 'DM Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 0.69rem; color: var(--text-2);
             max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
@@ -183,10 +180,25 @@
             width: 28px; height: 28px; border-radius: var(--radius-xs);
             background: var(--color-background-info); color: var(--color-text-info);
             display: grid; place-items: center;
-            font-family: 'DM Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 0.67rem; font-weight: 500;
         }
         .avatar-caret { font-size: 0.95rem; line-height: 1; }
+        .theme-toggle-btn {
+            width: 32px; height: 32px; border-radius: var(--radius-xs);
+            background: transparent; color: var(--text-2);
+            display: inline-flex; align-items: center; justify-content: center;
+            transition: background 0.12s, color 0.12s;
+            flex-shrink: 0;
+        }
+        .theme-toggle-btn:hover { background: var(--surface-2); color: var(--text); }
+        .theme-toggle-btn svg { width: 17px; height: 17px; }
+        .theme-toggle-btn .icon-system { display: none; }
+        .theme-toggle-btn .icon-light  { display: none; }
+        .theme-toggle-btn .icon-dark   { display: none; }
+        .theme-toggle-btn[data-mode="light"]  .icon-light  { display: block; }
+        .theme-toggle-btn[data-mode="dark"]   .icon-dark   { display: block; }
+        .theme-toggle-btn[data-mode="system"] .icon-system { display: block; }
         .account-menu {
             position: absolute; right: 0; top: 42px; z-index: 30;
             width: 210px; padding: 6px;
@@ -197,7 +209,7 @@
         }
         .account-menu-email {
             padding: 8px 10px;
-            font-family: 'DM Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 0.69rem; color: var(--text-2);
             overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
@@ -225,7 +237,7 @@
             background: transparent; border: none;
             border-bottom: 2px solid transparent;
             color: var(--text-2);
-            font-family: 'DM Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 0.7rem; font-weight: 500;
             text-transform: uppercase; letter-spacing: 0.07em;
             display: inline-flex; align-items: center;
@@ -272,7 +284,7 @@
         }
         .login-brand-icon img { width: 100%; height: 100%; display: block; }
         .login-brand-name {
-            font-family: 'Syne', sans-serif;
+            font-family: 'Bebas Neue', sans-serif;
             font-size: 2.4rem; font-weight: 800; color: var(--text);
             letter-spacing: -0.04em; margin-bottom: 12px; line-height: 1;
         }
@@ -294,7 +306,7 @@
         }
         .auth-tab {
             flex: 1; height: 38px; border-radius: 0;
-            font-family: 'DM Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 0.7rem; font-weight: 500;
             text-transform: uppercase; letter-spacing: 0.07em;
             color: var(--text-2);
@@ -304,7 +316,7 @@
         }
         .auth-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
         .login-card h2 {
-            font-family: 'Syne', sans-serif;
+            font-family: 'Bebas Neue', sans-serif;
             font-size: 1.55rem; font-weight: 700; margin-bottom: 4px; letter-spacing: -0.03em;
         }
         .login-card .subtitle { color: var(--text-2); font-size: 0.85rem; margin-bottom: 28px; }
@@ -313,7 +325,7 @@
             width: 100%; height: 42px;
             background: var(--primary); color: var(--bg);
             border-radius: var(--radius-xs); font-weight: 700; font-size: 0.88rem;
-            font-family: 'DM Mono', monospace; letter-spacing: 0.04em;
+            font-family: 'JetBrains Mono', monospace; letter-spacing: 0.04em;
             transition: opacity 0.12s; margin-top: 6px;
         }
         .btn-primary:hover:not(:disabled) { opacity: 0.82; }
@@ -343,7 +355,7 @@
         }
         .side-card { background: transparent; border: none; border-radius: 0; padding: 0; box-shadow: none; }
         .side-card h3 {
-            font-family: 'DM Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 0.62rem; font-weight: 500;
             text-transform: uppercase; letter-spacing: 0.09em;
             color: var(--color-text-tertiary);
@@ -357,11 +369,11 @@
             padding: 10px 12px; min-height: 56px;
         }
         .metric .value {
-            font-family: 'DM Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 1.12rem; font-weight: 500; letter-spacing: -0.02em;
         }
         .metric .label {
-            font-family: 'DM Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 0.62rem; color: var(--color-text-tertiary);
             margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.07em;
         }
@@ -383,7 +395,7 @@
         .side-item:last-child { border-bottom: none; }
         .side-item-title { font-size: 0.82rem; font-weight: 600; }
         .side-item-sub {
-            font-family: 'DM Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 0.68rem; color: var(--color-text-tertiary); margin-top: 2px;
         }
         .quick-actions { display: grid; grid-template-columns: 1fr; gap: 5px; }
@@ -405,7 +417,7 @@
         @media (max-width: 767px) { .panel { border-radius: 0; border: none; box-shadow: none; } }
 
         .panel-header {
-            max-width: 860px; width: 100%; margin: 0 auto;
+            max-width: 1100px; width: 100%; margin: 0 auto;
             padding: 18px 0 0; border-bottom: none; flex-shrink: 0;
         }
         .panel-title { font-size: 0.9rem; font-weight: 600; margin-bottom: 2px; }
@@ -418,7 +430,7 @@
         .coach-pills { display: flex; gap: 4px; flex-wrap: wrap; flex: 1; }
         .coach-btn {
             padding: 3px 10px; border-radius: var(--radius-xs);
-            font-family: 'DM Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 0.69rem; font-weight: 500;
             background: var(--surface-2); border: 1px solid var(--border);
             color: var(--text-2); transition: all 0.12s; white-space: nowrap;
@@ -430,12 +442,12 @@
         .chat-header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
         .chat-header-top .panel-title { margin-bottom: 0; }
         .chat-subtitle {
-            font-family: 'DM Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             margin: 2px 0 0; font-size: 0.69rem;
             color: var(--color-text-tertiary);
         }
         .manual-btn {
-            font-family: 'DM Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 0.67rem;
             color: var(--color-text-tertiary);
             border: 1px solid var(--border);
@@ -450,7 +462,7 @@
         .token-toggle-btn.active { background: var(--primary); color: var(--bg); border-color: var(--primary); }
         .model-label {
             display: none;
-            font-family: 'DM Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 0.63rem; color: var(--text-2);
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
             max-width: 160px; flex-shrink: 1;
@@ -458,7 +470,7 @@
         .dev-mode .model-label { display: inline; }
         .token-usage {
             display: none;
-            font-family: 'DM Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 0.63rem; opacity: 0.5; margin-top: 2px;
         }
         .show-tokens .token-usage { display: block; }
@@ -466,7 +478,7 @@
         /* ── Provider selector ── */
         .provider-wrap {
             display: inline-flex; align-items: center; gap: 5px;
-            font-family: 'DM Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 0.66rem; font-weight: 500;
             padding: 3px 8px; border-radius: var(--radius-xs);
             white-space: nowrap; flex-shrink: 0;
@@ -488,10 +500,10 @@
         .chat-history {
             flex: 1; overflow-y: auto; min-height: 0;
             padding: 20px 0; display: flex; flex-direction: column; gap: 16px;
-            max-width: 860px; width: 100%; margin: 0 auto;
+            max-width: 1100px; width: 100%; margin: 0 auto;
         }
         .message {
-            max-width: min(80%, 860px); padding: 10px 14px; border-radius: var(--radius-sm);
+            max-width: min(80%, 1100px); padding: 10px 14px; border-radius: var(--radius-sm);
             line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.88rem;
         }
         .message.user {
@@ -515,13 +527,13 @@
         .agent-body { font-size: 0.88rem; line-height: 1.65; }
         .message .meta {
             display: none;
-            font-family: 'DM Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 0.63rem; opacity: 0.5; margin-top: 4px;
         }
         .dev-mode .message .meta { display: block; }
         .message .coach-chip {
             display: block;
-            font-family: 'DM Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 0.62rem; font-weight: 500;
             text-transform: uppercase; letter-spacing: 0.07em;
             padding: 0; border-radius: 0;
@@ -537,7 +549,7 @@
         .msg-actions button {
             background: none; border: none; cursor: pointer;
             color: var(--text-2);
-            font-family: 'DM Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 0.65rem; line-height: 1;
             padding: 2px 6px; border-radius: var(--radius-xs);
             transition: background 0.1s, color 0.1s;
@@ -562,7 +574,7 @@
             padding: 12px 0 8px; border-top: 1px solid var(--border);
             background: transparent; display: flex; gap: 6px; align-items: flex-end;
             flex-shrink: 0; padding-bottom: max(12px, env(safe-area-inset-bottom));
-            max-width: 860px; width: 100%; margin: 0 auto;
+            max-width: 1100px; width: 100%; margin: 0 auto;
         }
         .composer textarea {
             flex: 1; width: auto; min-height: 38px; max-height: 120px;
@@ -576,7 +588,7 @@
             background: var(--primary); color: var(--bg);
             display: grid; place-items: center;
             transition: opacity 0.12s, transform 0.1s;
-            font-family: 'DM Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 0.69rem; font-weight: 500;
             text-transform: uppercase; letter-spacing: 0.05em;
         }
@@ -606,19 +618,19 @@
             display: flex; flex-wrap: wrap; gap: 6px;
             padding: 8px 12px 0;
             background: transparent;
-            max-width: 860px; width: 100%; margin: 0 auto;
+            max-width: 1100px; width: 100%; margin: 0 auto;
         }
         .composer-hint {
-            max-width: 860px; width: 100%; margin: 0 auto 8px;
+            max-width: 1100px; width: 100%; margin: 0 auto 8px;
             text-align: center; color: var(--color-text-tertiary);
-            font-family: 'DM Mono', monospace; font-size: 0.63rem;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.63rem;
         }
         .chat-empty-state {
-            margin: auto; max-width: 860px; width: 100%;
+            margin: auto; max-width: 1100px; width: 100%;
             text-align: center; padding: 24px 0;
         }
         .chat-empty-state h2 {
-            font-family: 'Syne', sans-serif;
+            font-family: 'Bebas Neue', sans-serif;
             font-size: 1.4rem; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.02em;
         }
         .prompt-grid {
@@ -637,7 +649,7 @@
         .prompt-card:hover { border-color: var(--primary); color: var(--primary); }
         .empty-hint {
             margin-top: 10px; font-size: 0.69rem; color: var(--color-text-tertiary);
-            font-family: 'DM Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
         }
         .pending-attachments:empty { display: none; }
         .attach-chip {
@@ -660,8 +672,8 @@
             padding-bottom: max(20px, env(safe-area-inset-bottom));
         }
         .settings-container {
-            max-width: 900px; margin: 0 auto;
-            display: grid; grid-template-columns: 200px minmax(0, 640px);
+            max-width: 1200px; margin: 0 auto;
+            display: grid; grid-template-columns: 200px minmax(0, 940px);
             gap: 28px; align-items: start;
         }
         @media (max-width: 767px) { .settings-container { display: flex; flex-direction: column; gap: 16px; } }
@@ -673,7 +685,7 @@
             height: 32px; padding: 0 10px; border-radius: var(--radius-xs);
             background: transparent; color: var(--text-2);
             text-align: left;
-            font-family: 'DM Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 0.7rem; font-weight: 500;
             text-transform: uppercase; letter-spacing: 0.06em;
             transition: background 0.1s, color 0.1s;
@@ -685,12 +697,12 @@
         }
         .settings-main { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
         .settings-heading {
-            font-family: 'Syne', sans-serif;
+            font-family: 'Bebas Neue', sans-serif;
             font-size: 1.3rem; font-weight: 700; margin-bottom: 4px; letter-spacing: -0.02em;
         }
         .settings-subheading { font-size: 0.82rem; color: var(--text-2); margin-bottom: 8px; }
         .field-help {
-            font-family: 'DM Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 0.69rem; color: var(--color-text-tertiary); margin-top: 4px;
         }
 
@@ -708,15 +720,15 @@
             gap: 8px; align-items: center; padding: 8px 0;
         }
         .llm-key-row .label { font-weight: 600; font-size: 0.84rem; }
-        .llm-key-row input { height: 36px; font-family: 'DM Mono', monospace; font-size: 0.76rem; }
+        .llm-key-row input { height: 36px; font-family: 'JetBrains Mono', monospace; font-size: 0.76rem; }
         .llm-key-status {
-            font-family: 'DM Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 0.66rem; padding: 3px 7px; border-radius: var(--radius-xs);
             background: var(--surface-2); color: var(--text-2); white-space: nowrap;
         }
         .llm-key-status.set { background: var(--openai-bg); color: var(--openai-text); }
         .llm-section-head {
-            font-family: 'DM Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-weight: 500; font-size: 0.7rem; margin: 14px 0 6px;
             color: var(--text-2); text-transform: uppercase; letter-spacing: 0.08em;
         }
@@ -733,14 +745,14 @@
         .coach-prompt-block details[open] summary .chev { transform: rotate(90deg); }
         .coach-prompt-block textarea {
             width: 100%; min-height: 180px; max-height: 480px;
-            font-family: 'DM Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 0.76rem; line-height: 1.5; padding: 10px 12px;
             border-radius: var(--radius-xs); margin-top: 8px;
         }
         .coach-prompt-actions { display: flex; gap: 8px; margin-top: 6px; }
         .coach-prompt-actions .text-btn { height: 30px; padding: 0 10px; font-size: 0.76rem; }
         .coach-prompt-status {
-            font-family: 'DM Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 0.7rem; color: var(--text-2); margin-left: auto; align-self: center;
         }
 
@@ -753,7 +765,7 @@
         .settings-main > .settings-card.active { display: block; }
         .card-header { padding: 16px 20px 0; }
         .card-header h3 {
-            font-family: 'Syne', sans-serif;
+            font-family: 'Bebas Neue', sans-serif;
             font-size: 0.98rem; font-weight: 700; margin-bottom: 3px;
         }
         .card-header p { font-size: 0.8rem; color: var(--text-2); margin-bottom: 14px; }
@@ -766,7 +778,7 @@
         }
         .card-footer .status:empty::before {
             content: "Unsaved";
-            font-family: 'DM Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 0.67rem; color: var(--color-text-tertiary);
         }
         .btn-cancel {
@@ -789,7 +801,7 @@
             padding-bottom: max(20px, env(safe-area-inset-bottom));
         }
         .inner-team-shell {
-            max-width: 1100px; margin: 0 auto;
+            max-width: 1400px; margin: 0 auto;
             display: grid; grid-template-columns: 260px minmax(0, 1fr);
             gap: 18px; align-items: start;
         }
@@ -806,12 +818,12 @@
             padding: 12px 14px 10px; border-bottom: 1px solid var(--border);
         }
         .inner-team-sidebar-head h3 {
-            font-family: 'DM Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--text-2);
         }
         .inner-role-list { display: flex; flex-direction: column; }
         .inner-role-row {
-            display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px;
+            display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 10px;
             width: 100%; padding: 10px 14px; text-align: left;
             background: transparent; border-bottom: 1px solid var(--border);
             color: var(--text); transition: background 0.1s;
@@ -820,21 +832,50 @@
         .inner-role-row:hover { background: var(--surface-2); }
         .inner-role-row.active { background: var(--surface-2); box-shadow: inset 2px 0 0 var(--primary); }
         .inner-role-index {
-            font-family: 'DM Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             color: var(--text-2); font-weight: 500; font-size: 0.74rem; padding-top: 2px;
         }
-        .inner-role-name { font-weight: 600; font-size: 0.88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .inner-role-desc { color: var(--text-2); font-size: 0.74rem; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .inner-role-avatar {
+            width: 32px; height: 32px; border-radius: 6px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            background: color-mix(in srgb, var(--role-color, var(--primary)) 15%, transparent);
+            border: 1px solid color-mix(in srgb, var(--role-color, var(--primary)) 40%, transparent);
+            color: var(--role-color, var(--primary));
+            transition: transform 0.12s;
+        }
+        .inner-role-avatar svg { width: 16px; height: 16px; }
+        .inner-role-row.active .inner-role-avatar { transform: scale(1.08); }
+
+        .inner-role-name { font-weight: 600; font-size: 0.95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .inner-role-desc { color: var(--text-2); font-size: 0.8rem; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .inner-archetype-picker { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+        .inner-archetype-btn {
+            --role-color: #888;
+            width: 40px; height: 40px; border-radius: 8px; border: 1.5px solid var(--border);
+            background: var(--surface-2); color: var(--text-2);
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+            transition: border-color 0.12s, background 0.12s, color 0.12s;
+        }
+        .inner-archetype-btn svg { width: 18px; height: 18px; }
+        .inner-archetype-btn:hover {
+            border-color: color-mix(in srgb, var(--role-color) 60%, transparent);
+            color: var(--role-color);
+        }
+        .inner-archetype-btn.active {
+            background: color-mix(in srgb, var(--role-color) 18%, transparent);
+            border-color: var(--role-color); color: var(--role-color);
+        }
+        .inner-archetype-label { font-size: 0.7rem; color: var(--text-2); margin-bottom: 5px; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: 0.07em; }
         .inner-team-main { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
         .inner-team-head {
             display: flex; justify-content: space-between; gap: 12px; align-items: flex-start;
             margin-bottom: 2px;
         }
         .inner-team-title {
-            font-family: 'Syne', sans-serif;
-            font-size: 1.45rem; font-weight: 700; letter-spacing: -0.02em;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.8rem; font-weight: 700; letter-spacing: -0.02em;
         }
-        .inner-team-subtitle { color: var(--text-2); font-size: 0.86rem; margin-top: 3px; }
+        .inner-team-subtitle { color: var(--text-2); font-size: 0.9rem; margin-top: 3px; }
         .inner-mode-toggle {
             display: inline-flex; padding: 2px; gap: 2px;
             border: 1px solid var(--border); border-radius: var(--radius-xs);
@@ -843,55 +884,107 @@
         .inner-mode-toggle button {
             height: 28px; padding: 0 12px; border-radius: calc(var(--radius-xs) - 1px);
             background: transparent; color: var(--text-2);
-            font-family: 'DM Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-weight: 500; font-size: 0.69rem;
             text-transform: uppercase; letter-spacing: 0.05em;
         }
         .inner-mode-toggle button.active { background: var(--primary); color: var(--bg); }
         .inner-team-panel { padding: 16px; }
-        .inner-active-grid {
-            display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.8fr);
-            gap: 16px;
-        }
-        @media (max-width: 900px) { .inner-active-grid { grid-template-columns: 1fr; } }
         .inner-eyebrow {
-            font-family: 'DM Mono', monospace;
-            font-size: 0.64rem; font-weight: 500; text-transform: uppercase;
-            letter-spacing: 0.09em; color: var(--primary); margin-bottom: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem; font-weight: 500; text-transform: uppercase;
+            letter-spacing: 0.09em; color: var(--primary); margin-bottom: 8px;
         }
-        .inner-active-title {
-            font-family: 'Syne', sans-serif;
-            font-size: 1.35rem; font-weight: 700; margin-bottom: 4px; letter-spacing: -0.02em;
-        }
-        .inner-active-desc { color: var(--text-2); font-size: 0.9rem; line-height: 1.45; }
-        .inner-intention {
-            background: var(--surface-2); border: 1px solid var(--border);
-            border-radius: var(--radius-xs); padding: 14px;
-        }
-        .inner-intention strong {
-            display: block;
-            font-family: 'DM Mono', monospace;
-            font-size: 0.64rem; color: var(--text-2);
-            text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 5px;
-        }
-        .inner-meta-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-        @media (max-width: 900px) { .inner-meta-grid { grid-template-columns: 1fr; } }
-        .inner-meta-card {
+
+        /* ── Option A: Role Stage ── */
+        .inner-role-stage {
             background: var(--surface); border: 1px solid var(--border);
-            border-radius: var(--radius-xs); padding: 14px;
+            border-radius: var(--radius-sm); overflow: hidden;
+            transition: border-color 0.3s;
+            border-color: color-mix(in srgb, var(--role-color, var(--border)) 35%, var(--border));
         }
-        .inner-meta-card h4 {
-            font-family: 'DM Mono', monospace;
-            font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.08em;
+        .inner-stage-hero {
+            display: flex; align-items: stretch; justify-content: space-between;
+            background: color-mix(in srgb, var(--role-color, var(--primary)) 10%, var(--surface));
+            border-bottom: 2px solid color-mix(in srgb, var(--role-color, var(--border)) 35%, transparent);
+            padding: 24px 28px; gap: 20px;
+            transition: background 0.3s, border-color 0.3s;
+            position: relative; overflow: hidden;
+        }
+        .inner-stage-hero::before {
+            content: ''; position: absolute; inset: 0; pointer-events: none;
+            background: radial-gradient(ellipse 60% 80% at 90% 50%, color-mix(in srgb, var(--role-color, var(--primary)) 8%, transparent), transparent);
+        }
+        .inner-stage-hero-content { display: flex; flex-direction: column; justify-content: center; min-width: 0; flex: 1; }
+        .inner-stage-name {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 3rem; line-height: 1; letter-spacing: 0.01em;
+            color: var(--text); margin-bottom: 6px;
+        }
+        .inner-stage-desc { color: var(--text-2); font-size: 1rem; line-height: 1.5; max-width: 480px; }
+        .inner-stage-challenge { display: flex; gap: 4px; margin-top: 12px; }
+        .inner-stage-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); transition: background 0.2s;
+        }
+        .inner-stage-dot.on { background: var(--role-color, var(--primary)); }
+        .inner-stage-icon-wrap {
+            display: flex; flex-direction: column; align-items: center; gap: 6px;
+            flex-shrink: 0; position: relative; z-index: 1;
+        }
+        .inner-active-avatar {
+            width: 80px; height: 80px; border-radius: 16px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            background: color-mix(in srgb, var(--role-color, var(--primary)) 18%, var(--surface));
+            border: 1.5px solid color-mix(in srgb, var(--role-color, var(--primary)) 50%, transparent);
+            color: var(--role-color, var(--primary));
+            box-shadow: 0 4px 20px color-mix(in srgb, var(--role-color, var(--primary)) 25%, transparent);
+            transition: box-shadow 0.3s;
+        }
+        .inner-active-avatar svg { width: 38px; height: 38px; }
+        .inner-stage-archetype-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.1em;
+            color: var(--role-color, var(--text-2)); opacity: 0.8; text-align: center;
+        }
+        .inner-stage-stats {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            border-top: 1px solid var(--border);
+        }
+        @media (max-width: 700px) { .inner-stage-stats { grid-template-columns: 1fr; } }
+        .inner-stat-col {
+            padding: 16px 20px; border-right: 1px solid var(--border);
+        }
+        .inner-stat-col:last-child { border-right: none; }
+        .inner-stat-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.09em;
             color: var(--text-2); margin-bottom: 8px;
         }
         .inner-pill-list { display: flex; flex-wrap: wrap; gap: 5px; }
         .inner-pill {
-            font-size: 0.74rem; padding: 3px 8px; border-radius: var(--radius-xs);
+            font-size: 0.78rem; padding: 3px 9px; border-radius: var(--radius-xs);
             background: var(--surface-2); color: var(--text-2); border: 1px solid var(--border);
         }
-        .inner-task-list { display: flex; flex-direction: column; gap: 6px; }
-        .inner-task-list div { font-size: 0.82rem; color: var(--text-2); }
+        .inner-active-reason-text { font-size: 0.88rem; color: var(--text-2); line-height: 1.5; }
+
+        /* ── Editor accordion ── */
+        .inner-editor-accordion {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); overflow: hidden;
+        }
+        .inner-editor-summary {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 16px; cursor: pointer; list-style: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.09em;
+            color: var(--text-2); user-select: none;
+        }
+        .inner-editor-summary::-webkit-details-marker { display: none; }
+        .inner-editor-summary:hover { color: var(--text); background: var(--surface-2); }
+        .inner-editor-chev { width: 16px; height: 16px; transition: transform 0.2s; }
+        .inner-editor-accordion[open] .inner-editor-chev { transform: rotate(180deg); }
+        .inner-editor-body { padding: 16px; border-top: 1px solid var(--border); }
         .inner-editor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         @media (max-width: 640px) { .inner-editor-grid { grid-template-columns: 1fr; } }
         .inner-editor-grid .full { grid-column: 1 / -1; }
@@ -904,7 +997,7 @@
             height: 36px; padding: 0 18px;
             background: var(--primary); color: var(--bg);
             border-radius: var(--radius-xs); font-weight: 700; font-size: 0.84rem;
-            font-family: 'DM Mono', monospace; letter-spacing: 0.03em;
+            font-family: 'JetBrains Mono', monospace; letter-spacing: 0.03em;
             transition: opacity 0.12s;
         }
         .btn-save:hover:not(:disabled) { opacity: 0.82; }
@@ -942,7 +1035,7 @@
         .history-item:last-child { border-bottom: none; }
         .history-item-head {
             display: flex; align-items: center; gap: 8px;
-            font-family: 'DM Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 0.67rem; font-weight: 500; text-transform: uppercase;
             letter-spacing: 0.06em; color: var(--text-2);
         }
@@ -953,8 +1046,52 @@
             white-space: pre-wrap; overflow-wrap: anywhere;
         }
         .history-stats {
-            font-family: 'DM Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 0.8rem; color: var(--text-2); padding: 0 4px;
+        }
+
+        /* ── Admin audit ── */
+        .admin-audit-filters {
+            display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px;
+        }
+        .admin-audit-filters select,
+        .admin-audit-filters input[type="date"] {
+            height: 36px; padding: 0 10px; border-radius: var(--radius-xs);
+            border: 1px solid var(--border); background: var(--surface); color: var(--text);
+            font-size: 0.8rem;
+        }
+        .audit-badge {
+            display: inline-flex; align-items: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.62rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em;
+            padding: 2px 7px; border-radius: 3px; flex-shrink: 0;
+        }
+        .audit-badge-registration { background: color-mix(in srgb, #4e9be6 18%, transparent); color: #4e9be6; }
+        .audit-badge-approval     { background: color-mix(in srgb, #4ec994 18%, transparent); color: #4ec994; }
+        .audit-badge-rejection    { background: color-mix(in srgb, #e05b3a 18%, transparent); color: #e05b3a; }
+        .audit-badge-deletion     { background: color-mix(in srgb, #e64e60 18%, transparent); color: #e64e60; }
+        .audit-badge-role_change  { background: color-mix(in srgb, #b04ee6 18%, transparent); color: #b04ee6; }
+        .audit-badge-login        { background: color-mix(in srgb, #8bc44e 18%, transparent); color: #8bc44e; }
+        .audit-badge-login_fail   { background: color-mix(in srgb, #e6c440 18%, transparent); color: #e6c440; }
+        .audit-badge-default      { background: var(--surface-2); color: var(--text-2); }
+        .audit-item {
+            display: flex; align-items: baseline; gap: 10px;
+            padding: 9px 14px; border-bottom: 1px solid var(--border);
+            font-size: 0.84rem;
+        }
+        .audit-item:last-child { border-bottom: none; }
+        .audit-item-time {
+            font-family: 'JetBrains Mono', monospace; font-size: 0.72rem;
+            color: var(--text-2); flex-shrink: 0; white-space: nowrap;
+        }
+        .audit-item-actor { font-weight: 600; color: var(--text); flex-shrink: 0; }
+        .audit-item-detail { color: var(--text-2); flex: 1; }
+        .audit-pending-badge {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 16px; height: 16px; border-radius: 8px; padding: 0 4px;
+            background: var(--accent); color: var(--bg);
+            font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; font-weight: 700;
+            margin-left: 5px; vertical-align: middle;
         }
 
         /* ── Files view ── */
@@ -996,7 +1133,7 @@
             width: min(440px, 100%); padding: 22px;
         }
         .modal-card h3 {
-            font-family: 'Syne', sans-serif;
+            font-family: 'Bebas Neue', sans-serif;
             font-size: 1.05rem; font-weight: 700; margin-bottom: 8px;
         }
         .modal-card p { font-size: 0.86rem; color: var(--text-2); margin-bottom: 14px; line-height: 1.5; }
@@ -1009,7 +1146,7 @@
             padding: 20px 16px;
             padding-bottom: max(20px, env(safe-area-inset-bottom));
         }
-        .about-container { max-width: 880px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+        .about-container { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
         .about-features {
             list-style: none; display: flex; flex-direction: column; gap: 10px;
             font-size: 0.88rem; line-height: 1.5; padding: 0;
@@ -1019,7 +1156,7 @@
             border-radius: var(--radius-xs); border: 1px solid var(--border);
         }
         .about-features code, .about-table code {
-            font-family: 'DM Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 0.82em; padding: 1px 6px;
             background: var(--surface-3); border-radius: var(--radius-xs);
         }
@@ -1032,7 +1169,7 @@
             vertical-align: top;
         }
         .about-table th {
-            font-family: 'DM Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.07em;
             color: var(--text-2); background: var(--surface-2);
         }
@@ -1040,7 +1177,7 @@
         .admin-badge {
             display: inline-flex; align-items: center; height: 22px;
             padding: 0 8px; border-radius: var(--radius-xs);
-            font-family: 'DM Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 0.67rem; font-weight: 500;
             background: var(--surface-3); color: var(--text-2);
         }
@@ -1049,7 +1186,7 @@
         .admin-actions { display: flex; gap: 6px; flex-wrap: wrap; }
         .about-tag {
             display: inline-block;
-            font-family: 'DM Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 0.67rem; font-weight: 500;
             padding: 2px 7px; border-radius: var(--radius-xs);
             margin: 1px 3px 1px 0; white-space: nowrap;
@@ -1070,7 +1207,7 @@
         .tab-item {
             flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
             padding: 9px 0; color: var(--text-2);
-            font-family: 'DM Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 0.58rem; font-weight: 500;
             text-transform: uppercase; letter-spacing: 0.07em;
             background: none; border: none; cursor: pointer; transition: color 0.12s;
@@ -1103,6 +1240,11 @@
         </nav>
         <div class="topbar-actions">
             <span class="session-email" id="session-label" data-i18n="nav.signedOut">Signed out</span>
+            <button class="theme-toggle-btn" id="theme-toggle-btn" type="button" title="Toggle theme" data-mode="system">
+                <svg class="icon-light" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="10" cy="10" r="4"/><path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.22 4.22l1.42 1.42M14.36 14.36l1.42 1.42M4.22 15.78l1.42-1.42M14.36 5.64l1.42-1.42"/></svg>
+                <svg class="icon-dark" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M17 12A7 7 0 019 4a7 7 0 100 12 7 7 0 008-4z"/></svg>
+                <svg class="icon-system" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="16" height="11" rx="1.5"/><path d="M7 18h6M10 15v3"/></svg>
+            </button>
             <button class="avatar-menu-btn hidden" id="avatar-menu-btn" type="button" title="Account">
                 <span class="avatar-circle" id="avatar-initials">--</span>
                 <span class="avatar-caret">⌄</span>
@@ -1232,7 +1374,7 @@
                         </svg>
                     </button>
                 </form>
-                <p class="composer-hint">Boss routes to Fitness · Nutrition · Mental Health · Productivity. Manual mode shows only that coach's thread.</p>
+                <p class="composer-hint" data-i18n="composer.hint">Boss routes to Fitness · Nutrition · Mental Health · Productivity. Manual mode shows only that coach's thread.</p>
             </div>
         </div>
         <aside class="side-pane" id="dashboard-panel">
@@ -1296,8 +1438,8 @@
         <div class="inner-team-shell">
             <aside class="inner-team-sidebar">
                 <div class="inner-team-sidebar-head">
-                    <h3>Inner Team Roles</h3>
-                    <button class="icon-btn" id="inner-add-role-btn" type="button" title="Add custom role">+</button>
+                    <h3 data-i18n="innerTeam.rolesTitle">Inner Team Roles</h3>
+                    <button class="icon-btn" id="inner-add-role-btn" type="button" data-i18n-title="innerTeam.addRoleTitle" title="Add custom role">+</button>
                 </div>
                 <div class="inner-role-list" id="inner-role-list"></div>
             </aside>
@@ -1305,100 +1447,116 @@
             <main class="inner-team-main">
                 <div class="inner-team-head">
                     <div>
-                        <div class="inner-team-title">Inner Team</div>
-                        <div class="inner-team-subtitle">Shows the role you are currently operating from. Coach chat stays separate.</div>
+                        <div class="inner-team-title" data-i18n="innerTeam.title">Inner Team</div>
+                        <div class="inner-team-subtitle" data-i18n="innerTeam.subtitle">Shows the role you are currently operating from. Coach chat stays separate.</div>
                     </div>
                     <div class="inner-mode-toggle" aria-label="Inner Team mode">
-                        <button id="inner-mode-auto" type="button">Auto</button>
-                        <button id="inner-mode-manual" type="button">Manual</button>
+                        <button id="inner-mode-auto" type="button" data-i18n="innerTeam.auto">Auto</button>
+                        <button id="inner-mode-manual" type="button" data-i18n="innerTeam.manual">Manual</button>
                     </div>
                 </div>
 
-                <section class="inner-team-panel">
-                    <div class="inner-active-grid">
-                        <div>
-                            <div class="inner-eyebrow">Active role</div>
-                            <div class="inner-active-title" id="inner-active-name">--</div>
-                            <div class="inner-active-desc" id="inner-active-description"></div>
-                        </div>
-                        <div class="inner-intention">
-                            <strong>Why this role is active</strong>
-                            <div id="inner-active-reason">--</div>
-                        </div>
-                    </div>
-                </section>
+                <!-- ── Option A: Role Stage ── -->
+                <div class="inner-role-stage" id="inner-active-panel">
 
-                <section class="inner-meta-grid">
-                    <div class="inner-meta-card">
-                        <h4>Strengths</h4>
-                        <div class="inner-pill-list" id="inner-strengths"></div>
+                    <!-- Hero band -->
+                    <div class="inner-stage-hero">
+                        <div class="inner-stage-hero-content">
+                            <div class="inner-eyebrow" data-i18n="innerTeam.activeRole">Active role</div>
+                            <div class="inner-stage-name" id="inner-active-name">--</div>
+                            <div class="inner-stage-desc" id="inner-active-description"></div>
+                            <div class="inner-stage-challenge" id="inner-stage-challenge-dots"></div>
+                        </div>
+                        <div class="inner-stage-icon-wrap">
+                            <div class="inner-active-avatar" id="inner-active-avatar"></div>
+                            <div class="inner-stage-archetype-label" id="inner-stage-arch-label"></div>
+                        </div>
                     </div>
-                    <div class="inner-meta-card">
-                        <h4>Watch-outs</h4>
-                        <div class="inner-pill-list" id="inner-watch-outs"></div>
-                    </div>
-                    <div class="inner-meta-card">
-                        <h4>Tasks</h4>
-                        <div class="inner-task-list" id="inner-tasks"></div>
-                    </div>
-                </section>
 
-                <section class="inner-team-panel">
-                    <div class="inner-eyebrow">Role settings</div>
-                    <div class="inner-editor-grid">
-                        <div>
-                            <label for="inner-role-name">Name</label>
-                            <input id="inner-role-name" maxlength="60">
+                    <!-- Stat strip -->
+                    <div class="inner-stage-stats">
+                        <div class="inner-stat-col">
+                            <div class="inner-stat-label" data-i18n="innerTeam.strengths">Strengths</div>
+                            <div class="inner-pill-list" id="inner-strengths"></div>
                         </div>
-                        <div>
-                            <label for="inner-role-tone">Tone</label>
-                            <input id="inner-role-tone" maxlength="80">
+                        <div class="inner-stat-col">
+                            <div class="inner-stat-label" data-i18n="innerTeam.watchOuts">Watch-outs</div>
+                            <div class="inner-pill-list" id="inner-watch-outs"></div>
                         </div>
-                        <div class="full">
-                            <label for="inner-role-description">Short description</label>
-                            <input id="inner-role-description" maxlength="200">
-                        </div>
-                        <div class="full">
-                            <label for="inner-role-intention">Role intention</label>
-                            <textarea id="inner-role-intention" rows="2" maxlength="400"></textarea>
-                        </div>
-                        <div>
-                            <label for="inner-role-strengths">Strengths</label>
-                            <input id="inner-role-strengths" placeholder="Comma-separated">
-                        </div>
-                        <div>
-                            <label for="inner-role-watch-outs">Watch-outs</label>
-                            <input id="inner-role-watch-outs" placeholder="Comma-separated">
-                        </div>
-                        <div class="full">
-                            <label for="inner-role-tasks">Tasks</label>
-                            <input id="inner-role-tasks" placeholder="Comma-separated">
-                        </div>
-                        <div>
-                            <label for="inner-role-focus">Focus areas</label>
-                            <input id="inner-role-focus" placeholder="Comma-separated">
-                        </div>
-                        <div>
-                            <label for="inner-role-avoid">Avoid</label>
-                            <input id="inner-role-avoid" placeholder="Comma-separated">
-                        </div>
-                        <div>
-                            <label for="inner-role-challenge">Challenge level</label>
-                            <select id="inner-role-challenge">
-                                <option value="1">1 - very gentle</option>
-                                <option value="2">2 - supportive</option>
-                                <option value="3">3 - balanced</option>
-                                <option value="4">4 - direct</option>
-                                <option value="5">5 - demanding</option>
-                            </select>
+                        <div class="inner-stat-col">
+                            <div class="inner-stat-label" data-i18n="innerTeam.whyActive">Why active</div>
+                            <div class="inner-active-reason-text" id="inner-active-reason">--</div>
                         </div>
                     </div>
-                    <div class="inner-editor-actions">
-                        <button class="btn-save" id="inner-save-role-btn" type="button">Save role</button>
-                        <button class="btn-cancel" id="inner-delete-role-btn" type="button">Delete role</button>
-                        <span class="status" id="inner-role-status"></span>
+
+                </div>
+
+                <!-- Editor accordion -->
+                <details class="inner-editor-accordion" id="inner-editor-accordion">
+                    <summary class="inner-editor-summary">
+                        <span data-i18n="innerTeam.editRole">Edit role</span>
+                        <svg class="inner-editor-chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M5 7l3 3 3-3"/></svg>
+                    </summary>
+                    <div class="inner-editor-body">
+                        <div class="inner-editor-grid">
+                            <div class="full">
+                                <div class="inner-archetype-label" data-i18n="innerTeam.archetype">Archetype</div>
+                                <div class="inner-archetype-picker" id="inner-archetype-picker"></div>
+                            </div>
+                            <div>
+                                <label for="inner-role-name" data-i18n="innerTeam.nameLabel">Name</label>
+                                <input id="inner-role-name" maxlength="60">
+                            </div>
+                            <div>
+                                <label for="inner-role-tone" data-i18n="innerTeam.toneLabel">Tone</label>
+                                <input id="inner-role-tone" maxlength="80">
+                            </div>
+                            <div class="full">
+                                <label for="inner-role-description" data-i18n="innerTeam.description">Short description</label>
+                                <input id="inner-role-description" maxlength="200">
+                            </div>
+                            <div class="full">
+                                <label for="inner-role-intention" data-i18n="innerTeam.intention">Role intention</label>
+                                <textarea id="inner-role-intention" rows="2" maxlength="400"></textarea>
+                            </div>
+                            <div>
+                                <label for="inner-role-strengths" data-i18n="innerTeam.strengths">Strengths</label>
+                                <input id="inner-role-strengths" placeholder="Comma-separated">
+                            </div>
+                            <div>
+                                <label for="inner-role-watch-outs" data-i18n="innerTeam.watchOuts">Watch-outs</label>
+                                <input id="inner-role-watch-outs" placeholder="Comma-separated">
+                            </div>
+                            <div class="full">
+                                <label for="inner-role-tasks" data-i18n="innerTeam.tasksLabel">Tasks</label>
+                                <input id="inner-role-tasks" placeholder="Comma-separated">
+                            </div>
+                            <div>
+                                <label for="inner-role-focus" data-i18n="innerTeam.focusAreas">Focus areas</label>
+                                <input id="inner-role-focus" placeholder="Comma-separated">
+                            </div>
+                            <div>
+                                <label for="inner-role-avoid" data-i18n="innerTeam.avoid">Avoid</label>
+                                <input id="inner-role-avoid" placeholder="Comma-separated">
+                            </div>
+                            <div>
+                                <label for="inner-role-challenge" data-i18n="innerTeam.challengeLevel">Challenge level</label>
+                                <select id="inner-role-challenge">
+                                    <option value="1" data-i18n="innerTeam.challenge1">1 - very gentle</option>
+                                    <option value="2" data-i18n="innerTeam.challenge2">2 - supportive</option>
+                                    <option value="3" data-i18n="innerTeam.challenge3">3 - balanced</option>
+                                    <option value="4" data-i18n="innerTeam.challenge4">4 - direct</option>
+                                    <option value="5" data-i18n="innerTeam.challenge5">5 - demanding</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="inner-editor-actions">
+                            <button class="btn-save" id="inner-save-role-btn" type="button" data-i18n="innerTeam.saveRole">Save role</button>
+                            <button class="btn-cancel" id="inner-delete-role-btn" type="button" data-i18n="innerTeam.deleteRole">Delete role</button>
+                            <span class="status" id="inner-role-status"></span>
+                        </div>
                     </div>
-                </section>
+                </details>
             </main>
         </div>
     </div>
@@ -1407,46 +1565,46 @@
     <div class="settings-wrap hidden" id="settings-view">
         <div class="settings-container">
             <aside class="settings-sidebar">
-                <button class="settings-nav-btn active" type="button" data-settings-target="account">Account</button>
-                <button class="settings-nav-btn" type="button" data-settings-target="security">Security</button>
-                <button class="settings-nav-btn" type="button" data-settings-target="body">Body metrics</button>
-                <button class="settings-nav-btn" type="button" data-settings-target="coaches">Coaches & API keys</button>
-                <button class="settings-nav-btn" type="button" data-settings-target="calendar">Calendar export</button>
-                <button class="settings-nav-btn" type="button" data-settings-target="appearance">Appearance</button>
-                <button class="settings-nav-btn" type="button" data-settings-target="developer">Developer</button>
+                <button class="settings-nav-btn active" type="button" data-settings-target="account" data-i18n="settings.account">Account</button>
+                <button class="settings-nav-btn" type="button" data-settings-target="security" data-i18n="settings.security">Security</button>
+                <button class="settings-nav-btn" type="button" data-settings-target="body" data-i18n="settings.body">Body metrics</button>
+                <button class="settings-nav-btn" type="button" data-settings-target="coaches" data-i18n="settings.coaches">Coaches & API keys</button>
+                <button class="settings-nav-btn" type="button" data-settings-target="calendar" data-i18n="settings.calendar">Calendar export</button>
+                <button class="settings-nav-btn" type="button" data-settings-target="appearance" data-i18n="settings.appearance">Appearance</button>
+                <button class="settings-nav-btn" type="button" data-settings-target="developer" data-i18n="settings.developer">Developer</button>
             </aside>
 
             <main class="settings-main">
                 <div>
-                    <div class="settings-heading" id="settings-section-title">Settings</div>
-                    <div class="settings-subheading" id="settings-section-subtitle">Manage your account, security, and coaching preferences</div>
+                    <div class="settings-heading" id="settings-section-title" data-i18n="nav.settings">Settings</div>
+                    <div class="settings-subheading" id="settings-section-subtitle" data-i18n="settings.subtitle">Manage your account, security, and coaching preferences</div>
                 </div>
 
             <!-- Account -->
             <div class="settings-card active" data-settings-section="account">
                 <div class="card-header">
                     <h3 data-i18n="settings.account">Account</h3>
-                    <p>Your identity and personal details</p>
+                    <p data-i18n="settings.accountDesc">Your identity and personal details</p>
                 </div>
                 <div class="card-body">
                     <div class="settings-grid">
                         <div class="field full">
-                            <label>Email</label>
+                            <label data-i18n="settings.emailLabel">Email</label>
                             <input id="s-email" type="email" readonly tabindex="-1">
-                            <div class="field-help">Used for sign-in and account recovery.</div>
+                            <div class="field-help" data-i18n="settings.emailHelp">Used for sign-in and account recovery.</div>
                         </div>
                         <div class="field">
-                            <label for="s-birth-date">Date of birth</label>
+                            <label for="s-birth-date" data-i18n="settings.birthDate">Date of birth</label>
                             <input type="date" id="s-birth-date">
                         </div>
                         <div class="field">
-                            <label for="s-sex">Sex</label>
+                            <label for="s-sex" data-i18n="settings.sex">Sex</label>
                             <select id="s-sex">
-                                <option value="">Unset</option>
-                                <option value="female">Female</option>
-                                <option value="male">Male</option>
-                                <option value="other">Other</option>
-                                <option value="unspecified">Unspecified</option>
+                                <option value="" data-i18n="settings.sexUnset">Unset</option>
+                                <option value="female" data-i18n="settings.sexFemale">Female</option>
+                                <option value="male" data-i18n="settings.sexMale">Male</option>
+                                <option value="other" data-i18n="settings.sexOther">Other</option>
+                                <option value="unspecified" data-i18n="settings.sexUnspecified">Unspecified</option>
                             </select>
                         </div>
                     </div>
@@ -1462,20 +1620,20 @@
             <div class="settings-card" data-settings-section="security">
                 <div class="card-header">
                     <h3 data-i18n="settings.security">Security</h3>
-                    <p>Change your login password</p>
+                    <p data-i18n="settings.securityDesc">Change your login password</p>
                 </div>
                 <div class="card-body">
                     <div class="settings-grid">
                         <div class="field full">
-                            <label for="s-current-pw">Current password</label>
+                            <label for="s-current-pw" data-i18n="settings.currentPw">Current password</label>
                             <input type="password" id="s-current-pw" autocomplete="current-password">
                         </div>
                         <div class="field">
-                            <label for="s-new-pw">New password</label>
-                            <input type="password" id="s-new-pw" autocomplete="new-password" placeholder="Min. 8 characters">
+                            <label for="s-new-pw" data-i18n="settings.newPw">New password</label>
+                            <input type="password" id="s-new-pw" autocomplete="new-password" data-i18n-placeholder="settings.minCharsHint" placeholder="Min. 8 characters">
                         </div>
                         <div class="field">
-                            <label for="s-confirm-pw">Confirm new password</label>
+                            <label for="s-confirm-pw" data-i18n="settings.confirmPw">Confirm new password</label>
                             <input type="password" id="s-confirm-pw" autocomplete="new-password">
                         </div>
                     </div>
@@ -1491,20 +1649,20 @@
             <div class="settings-card" data-settings-section="body">
                 <div class="card-header">
                     <h3 data-i18n="settings.body">Body metrics</h3>
-                    <p>Used for personalised calorie and training recommendations</p>
+                    <p data-i18n="settings.bodyDesc">Used for personalised calorie and training recommendations</p>
                 </div>
                 <div class="card-body">
                     <div class="settings-grid">
                         <div class="field">
-                            <label for="s-height">Height (cm)</label>
+                            <label for="s-height" data-i18n="settings.height">Height (cm)</label>
                             <input type="number" id="s-height" min="50" max="250" step="0.1" placeholder="175">
                         </div>
                         <div class="field">
-                            <label for="s-weight">Current weight (kg)</label>
+                            <label for="s-weight" data-i18n="settings.weight">Current weight (kg)</label>
                             <input type="number" id="s-weight" min="20" max="350" step="0.1" placeholder="80">
                         </div>
                         <div class="field">
-                            <label for="s-target-weight">Target weight (kg)</label>
+                            <label for="s-target-weight" data-i18n="settings.targetWeight">Target weight (kg)</label>
                             <input type="number" id="s-target-weight" min="20" max="350" step="0.1" placeholder="75">
                         </div>
                     </div>
@@ -1520,25 +1678,25 @@
             <div class="settings-card" data-settings-section="body">
                 <div class="card-header">
                     <h3 data-i18n="settings.training">Training</h3>
-                    <p>Goals, schedule, and available equipment</p>
+                    <p data-i18n="settings.trainingDesc">Goals, schedule, and available equipment</p>
                 </div>
                 <div class="card-body">
                     <div class="settings-grid">
                         <div class="field full">
-                            <label for="s-goal">Primary goal</label>
-                            <input type="text" id="s-goal" maxlength="80" placeholder="fat loss, hypertrophy, endurance…">
+                            <label for="s-goal" data-i18n="settings.primaryGoal">Primary goal</label>
+                            <input type="text" id="s-goal" maxlength="80" data-i18n-placeholder="settings.goalPlaceholder" placeholder="fat loss, hypertrophy, endurance…">
                         </div>
                         <div class="field">
-                            <label for="s-weekly">Weekly workouts</label>
+                            <label for="s-weekly" data-i18n="settings.weeklyWorkouts">Weekly workouts</label>
                             <input type="number" id="s-weekly" min="0" max="14" step="1" placeholder="4">
                         </div>
                         <div class="field full">
-                            <label for="s-equipment">Equipment (comma-separated)</label>
-                            <input type="text" id="s-equipment" placeholder="pull-up bar, TRX, dumbbells">
+                            <label for="s-equipment" data-i18n="settings.equipment">Equipment (comma-separated)</label>
+                            <input type="text" id="s-equipment" data-i18n-placeholder="settings.equipmentPlaceholder" placeholder="pull-up bar, TRX, dumbbells">
                         </div>
                         <div class="field full">
-                            <label for="s-notes">Notes for the coach</label>
-                            <textarea id="s-notes" rows="3" maxlength="2000" placeholder="Injuries, preferred session length, schedule constraints…"></textarea>
+                            <label for="s-notes" data-i18n="settings.coachNotes">Notes for the coach</label>
+                            <textarea id="s-notes" rows="3" maxlength="2000" data-i18n-placeholder="settings.coachNotesPlaceholder" placeholder="Injuries, preferred session length, schedule constraints…"></textarea>
                         </div>
                     </div>
                 </div>
@@ -1553,34 +1711,34 @@
             <div class="settings-card" data-settings-section="body">
                 <div class="card-header">
                     <h3 data-i18n="settings.nutrition">Nutrition</h3>
-                    <p>Daily calorie and macro targets, dietary preferences</p>
+                    <p data-i18n="settings.nutritionDesc">Daily calorie and macro targets, dietary preferences</p>
                 </div>
                 <div class="card-body">
                     <div class="settings-grid">
                         <div class="field">
-                            <label for="s-calories">Daily calories (kcal)</label>
+                            <label for="s-calories" data-i18n="settings.calories">Daily calories (kcal)</label>
                             <input type="number" id="s-calories" min="800" max="8000" step="1" placeholder="2500">
                         </div>
                         <div class="field full">
-                            <label>Macros (g / day)</label>
+                            <label data-i18n="settings.macros">Macros (g / day)</label>
                             <div class="macro-row">
                                 <div>
-                                    <label for="s-protein">Protein</label>
+                                    <label for="s-protein" data-i18n="settings.protein">Protein</label>
                                     <input type="number" id="s-protein" min="0" max="500" step="1" placeholder="160 g">
                                 </div>
                                 <div>
-                                    <label for="s-carbs">Carbs</label>
+                                    <label for="s-carbs" data-i18n="settings.carbs">Carbs</label>
                                     <input type="number" id="s-carbs" min="0" max="1000" step="1" placeholder="280 g">
                                 </div>
                                 <div>
-                                    <label for="s-fat">Fat</label>
+                                    <label for="s-fat" data-i18n="settings.fat">Fat</label>
                                     <input type="number" id="s-fat" min="0" max="300" step="1" placeholder="80 g">
                                 </div>
                             </div>
                         </div>
                         <div class="field full">
-                            <label for="s-diet">Dietary restrictions (comma-separated)</label>
-                            <input type="text" id="s-diet" placeholder="vegetarian, lactose-free, gluten-free">
+                            <label for="s-diet" data-i18n="settings.dietRestrictions">Dietary restrictions (comma-separated)</label>
+                            <input type="text" id="s-diet" data-i18n-placeholder="settings.dietPlaceholder" placeholder="vegetarian, lactose-free, gluten-free">
                         </div>
                     </div>
                 </div>
@@ -1594,13 +1752,8 @@
             <!-- LLM providers + API keys -->
             <div class="settings-card" data-settings-section="coaches">
                 <div class="card-header">
-                    <h3 data-i18n="settings.llm">LLM providers &amp; API keys</h3>
-                    <p>
-                        Pick the provider per coach (overrides .env defaults; leave on
-                        “Default” to inherit). API keys are encrypted at rest with
-                        Fernet (AES-128-CBC + HMAC-SHA256) and never returned to the
-                        client. Empty a key field to clear the override.
-                    </p>
+                    <h3 data-i18n=”settings.llm”>LLM providers &amp; API keys</h3>
+                    <p data-i18n=”settings.llmDesc”>Pick the provider per coach (overrides .env defaults; leave on “Default” to inherit). API keys are encrypted at rest with Fernet (AES-128-CBC + HMAC-SHA256) and never returned to the client. Empty a key field to clear the override.</p>
                 </div>
                 <div class="card-body" id="llm-config-body">
                     <!-- populated by renderLLMConfig() -->
@@ -1665,12 +1818,7 @@
             <div class="settings-card" data-settings-section="coaches">
                 <div class="card-header">
                     <h3 data-i18n="settings.prompts">Coach prompts</h3>
-                    <p>
-                        Override the system prompt used by each coach. Leave a textarea
-                        blank to use the built-in default. The Boss prompt controls
-                        routing — if you edit it, keep the four routing labels intact
-                        or classification will silently fall back to Fitness.
-                    </p>
+                    <p data-i18n="settings.promptsDesc">Override the system prompt used by each coach. Leave a textarea blank to use the built-in default. The Boss prompt controls routing — if you edit it, keep the four routing labels intact or classification will silently fall back to Fitness.</p>
                 </div>
                 <div class="card-body" id="coach-prompts-body">
                     <!-- populated by renderCoachPrompts() -->
@@ -1684,16 +1832,16 @@
 
             <div class="settings-card" data-settings-section="calendar">
                 <div class="card-header">
-                    <h3>Calendar export</h3>
-                    <p>Subscribe to upcoming workouts and meals from your calendar app.</p>
+                    <h3 data-i18n="settings.calendar">Calendar export</h3>
+                    <p data-i18n="settings.calendarDesc">Subscribe to upcoming workouts and meals from your calendar app.</p>
                 </div>
                 <div class="card-body">
                     <div class="field full">
-                        <label>Upcoming feed</label>
+                        <label data-i18n="settings.calendarFeed">Upcoming feed</label>
                         <input value="/calendar/upcoming.ics" readonly tabindex="-1">
-                        <div class="field-help">Use this authenticated feed from the History tab download button, or copy the URL for clients that support bearer-auth feeds.</div>
+                        <div class="field-help" data-i18n="settings.calendarHelp">Use this authenticated feed from the History tab download button, or copy the URL for clients that support bearer-auth feeds.</div>
                     </div>
-                    <a class="text-btn" href="/calendar/upcoming.ics" download style="display:inline-flex;align-items:center;text-decoration:none;height:38px;padding:0 12px;">Download .ics</a>
+                    <a class="text-btn" href="/calendar/upcoming.ics" download style="display:inline-flex;align-items:center;text-decoration:none;height:38px;padding:0 12px;" data-i18n="settings.downloadIcs">Download .ics</a>
                 </div>
             </div>
 
@@ -1723,14 +1871,14 @@
             <!-- Developer -->
             <div class="settings-card" data-settings-section="developer">
                 <div class="card-header">
-                    <h3>Developer</h3>
-                    <p>Diagnostics shown only when you need to inspect model behavior.</p>
+                    <h3 data-i18n="settings.developer">Developer</h3>
+                    <p data-i18n="settings.developerDesc">Diagnostics shown only when you need to inspect model behavior.</p>
                 </div>
                 <div class="card-body">
                     <div class="field" style="display:flex;align-items:center;gap:12px;">
                         <label style="margin:0;flex:1;">
-                            <span>Show model and token details in chat</span>
-                            <div style="font-weight:400;color:var(--text-2);font-size:0.78rem;text-transform:none;letter-spacing:0;margin-top:3px;">Shows provider model labels and per-message token counts.</div>
+                            <span data-i18n="settings.devModelDetails">Show model and token details in chat</span>
+                            <div style="font-weight:400;color:var(--text-2);font-size:0.78rem;text-transform:none;letter-spacing:0;margin-top:3px;" data-i18n="settings.devModelDetailsDesc">Shows provider model labels and per-message token counts.</div>
                         </label>
                         <label class="switch" style="flex-shrink:0;">
                             <input type="checkbox" id="developer-details-toggle">
@@ -1739,8 +1887,8 @@
                     </div>
                     <div class="field" style="display:flex;align-items:center;gap:12px;">
                         <label style="margin:0;flex:1;">
-                            <span>Show model identifiers only</span>
-                            <div class="field-help">Useful when comparing local, Anthropic, and OpenAI routing.</div>
+                            <span data-i18n="settings.devModelIds">Show model identifiers only</span>
+                            <div class="field-help" data-i18n="settings.devModelIdsDesc">Useful when comparing local, Anthropic, and OpenAI routing.</div>
                         </label>
                         <label class="switch" style="flex-shrink:0;">
                             <input type="checkbox" id="developer-models-toggle">
@@ -1749,20 +1897,20 @@
                     </div>
                     <div class="settings-grid">
                         <div class="field full">
-                            <label>Data directory</label>
-                            <input value="/opt/fitness-agent-data" readonly tabindex="-1">
+                            <label data-i18n="settings.dataDir">Data directory</label>
+                            <input value="/opt/coacher-data" readonly tabindex="-1">
                         </div>
                         <div class="field">
-                            <label>Scheduler</label>
+                            <label data-i18n="settings.scheduler">Scheduler</label>
                             <input value="Enabled" readonly tabindex="-1">
                         </div>
                         <div class="field">
-                            <label>Version</label>
+                            <label data-i18n="settings.version">Version</label>
                             <input value="0.1.0" readonly tabindex="-1">
                         </div>
                         <div class="field full">
-                            <label>Repository</label>
-                            <a href="https://github.com/pbzh/fitness-agent" target="_blank" rel="noopener" style="color:var(--primary);font-size:0.86rem;">github.com/pbzh/fitness-agent</a>
+                            <label data-i18n="settings.repository">Repository</label>
+                            <a href="https://github.com/pbzh/coacher" target="_blank" rel="noopener" style="color:var(--primary);font-size:0.86rem;">github.com/pbzh/coacher</a>
                         </div>
                     </div>
                 </div>
@@ -1772,7 +1920,7 @@
             <div class="settings-card" data-settings-section="account">
                 <div class="card-header">
                     <h3 data-i18n="settings.session">Session</h3>
-                    <p>Sign out of this device</p>
+                    <p data-i18n="settings.sessionDesc">Sign out of this device</p>
                 </div>
                 <div class="card-footer" style="border-top: none; margin-top: 0;">
                     <button class="btn-danger" id="settings-logout-btn" type="button" data-i18n="nav.signOut">Sign out</button>
@@ -1787,15 +1935,15 @@
     <div class="history-wrap hidden" id="history-view">
         <div class="history-container">
             <div>
-                <div class="settings-heading">History</div>
-                <div class="settings-subheading">Past chat messages, persisted server-side</div>
+                <div class="settings-heading" data-i18n="nav.history">History</div>
+                <div class="settings-subheading" data-i18n="history.subtitle">Past chat messages, persisted server-side</div>
             </div>
             <div class="history-toolbar">
-                <input type="search" id="history-search" placeholder="Search messages…">
-                <button class="text-btn" id="history-refresh-btn" type="button">Refresh</button>
-                <button class="text-btn" id="history-export-btn" type="button">Export</button>
+                <input type="search" id="history-search" data-i18n-placeholder="history.search" placeholder="Search messages…">
+                <button class="text-btn" id="history-refresh-btn" type="button" data-i18n="common.refresh">Refresh</button>
+                <button class="text-btn" id="history-export-btn" type="button" data-i18n="history.export">Export</button>
                 <a class="text-btn" id="history-ics-btn" href="/calendar/upcoming.ics" download style="display:inline-flex;align-items:center;text-decoration:none;height:38px;padding:0 12px;">📆 .ics</a>
-                <button class="btn-danger" id="history-clear-btn" type="button" style="height: 38px;">Clear all</button>
+                <button class="btn-danger" id="history-clear-btn" type="button" style="height: 38px;" data-i18n="history.clearAll">Clear all</button>
             </div>
             <div class="history-stats" id="history-stats"></div>
             <div class="history-list" id="history-list"></div>
@@ -1806,13 +1954,13 @@
     <div class="files-wrap hidden" id="files-view">
         <div class="files-container">
             <div>
-                <div class="settings-heading">Files</div>
-                <div class="settings-subheading">Uploads (progress photos, meal pics, PDFs) and agent-generated plan images</div>
+                <div class="settings-heading" data-i18n="nav.files">Files</div>
+                <div class="settings-subheading" data-i18n="files.subtitle">Uploads (progress photos, meal pics, PDFs) and agent-generated plan images</div>
             </div>
             <div class="history-toolbar">
                 <input type="file" id="file-input" style="flex:1;height:38px;padding:6px 8px;">
-                <button class="text-btn" id="file-upload-btn" type="button">Upload</button>
-                <button class="text-btn" id="file-refresh-btn" type="button">Refresh</button>
+                <button class="text-btn" id="file-upload-btn" type="button" data-i18n="files.upload">Upload</button>
+                <button class="text-btn" id="file-refresh-btn" type="button" data-i18n="common.refresh">Refresh</button>
                 <span class="status" id="file-status"></span>
             </div>
             <div class="history-list" id="files-list"></div>
@@ -1821,21 +1969,116 @@
 
     <!-- ── Admin view ── -->
     <div class="history-wrap hidden" id="admin-view">
-        <div class="history-container">
-            <div>
-                <div class="settings-heading">Admin</div>
-                <div class="settings-subheading">Approve new users and manage admin access</div>
+        <div class="history-container" style="max-width:900px;">
+
+            <!-- Header -->
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+                <div>
+                    <div class="settings-heading">Admin</div>
+                    <div class="settings-subheading">Approve new users and manage admin access</div>
+                </div>
+                <button class="text-btn" id="admin-refresh-btn" type="button" style="flex-shrink:0;">Refresh</button>
             </div>
-            <div class="history-toolbar">
-                <button class="text-btn" id="admin-refresh-btn" type="button">Refresh</button>
-                <span class="status" id="admin-status"></span>
-            </div>
+            <span class="status" id="admin-status"></span>
+
+            <!-- Users -->
             <div class="history-list" id="admin-users-list"></div>
-            <div>
-                <div class="settings-heading" style="font-size:1rem;margin-top:10px;">Audit</div>
-                <div class="settings-subheading">Recent admin actions</div>
+
+            <!-- Email server config -->
+            <div class="settings-card" style="margin-top:20px;">
+                <div class="card-header">
+                    <h3>Email server</h3>
+                    <p>SMTP settings for account approval and notification emails sent to admins and new users.</p>
+                </div>
+                <div class="card-body">
+                    <div class="settings-grid">
+                        <div class="field">
+                            <label for="smtp-host">SMTP host</label>
+                            <input id="smtp-host" type="text" placeholder="smtp.example.com">
+                        </div>
+                        <div class="field">
+                            <label for="smtp-port">Port</label>
+                            <input id="smtp-port" type="number" min="1" max="65535" placeholder="587">
+                        </div>
+                        <div class="field">
+                            <label for="smtp-user">Username</label>
+                            <input id="smtp-user" type="text" autocomplete="off" placeholder="noreply@example.com">
+                        </div>
+                        <div class="field">
+                            <label for="smtp-pass">Password</label>
+                            <input id="smtp-pass" type="password" autocomplete="new-password" placeholder="App password or SMTP key">
+                        </div>
+                        <div class="field">
+                            <label for="smtp-from">From address</label>
+                            <input id="smtp-from" type="email" placeholder="coacher@example.com">
+                        </div>
+                        <div class="field">
+                            <label for="smtp-tls">Security</label>
+                            <select id="smtp-tls">
+                                <option value="starttls">STARTTLS (port 587)</option>
+                                <option value="tls">TLS/SSL (port 465)</option>
+                                <option value="none">None (port 25)</option>
+                            </select>
+                        </div>
+                        <div class="field full" style="display:flex;align-items:center;gap:12px;">
+                            <label style="margin:0;flex:1;">
+                                <span>Send approval emails</span>
+                                <div style="font-weight:400;color:var(--text-2);font-size:0.78rem;text-transform:none;letter-spacing:0;margin-top:3px;">Email admin when a new user registers. Email user when approved or rejected.</div>
+                            </label>
+                            <label class="switch" style="flex-shrink:0;">
+                                <input type="checkbox" id="smtp-approval-toggle" checked>
+                                <span class="switch-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button class="btn-save" id="admin-smtp-save-btn" type="button">Save</button>
+                    <button class="text-btn" id="admin-smtp-test-btn" type="button" style="height:36px;padding:0 14px;">Send test email</button>
+                    <span class="status" id="smtp-status"></span>
+                </div>
             </div>
-            <div class="history-list" id="admin-audit-list"></div>
+
+            <!-- Audit log -->
+            <div style="margin-top:20px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;">
+                    <div>
+                        <div class="settings-heading" style="font-size:1.1rem;">Audit log</div>
+                        <div class="settings-subheading">Account lifecycle, permission changes, and admin actions</div>
+                    </div>
+                    <button class="text-btn" id="admin-audit-export-btn" type="button" style="flex-shrink:0;">Export CSV</button>
+                </div>
+
+                <!-- Audit filters -->
+                <div class="admin-audit-filters">
+                    <select id="audit-filter-type">
+                        <option value="">All events</option>
+                        <option value="registration">Registration</option>
+                        <option value="approval">Approval</option>
+                        <option value="rejection">Rejection</option>
+                        <option value="deletion">Deletion</option>
+                        <option value="role_change">Role change</option>
+                        <option value="login">Login</option>
+                        <option value="login_fail">Failed login</option>
+                    </select>
+                    <input type="date" id="audit-filter-from" title="From date">
+                    <input type="date" id="audit-filter-to" title="To date">
+                    <button class="text-btn" id="audit-filter-apply-btn" type="button">Filter</button>
+                    <button class="text-btn" id="audit-filter-reset-btn" type="button">Reset</button>
+                </div>
+
+                <div class="history-list" id="admin-audit-list"></div>
+            </div>
+
+            <!-- Login attempts -->
+            <div style="margin-top:20px;">
+                <div style="margin-bottom:10px;">
+                    <div class="settings-heading" style="font-size:1.1rem;">Login attempts</div>
+                    <div class="settings-subheading">Recent authentication events — successful and failed</div>
+                </div>
+                <div class="history-list" id="admin-login-list"></div>
+            </div>
+
         </div>
     </div>
 
@@ -1846,12 +2089,12 @@
                 <div class="settings-heading">About coacher</div>
                 <div class="settings-subheading" id="about-version">Loading version…</div>
                 <div class="settings-subheading" style="margin-top:6px;">
-                    <a href="https://github.com/pbzh/fitness-agent" target="_blank" rel="noopener"
+                    <a href="https://github.com/pbzh/coacher" target="_blank" rel="noopener"
                        style="color:var(--primary);text-decoration:none;display:inline-flex;align-items:center;gap:6px;">
                         <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
                             <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.55 0-.27-.01-1.16-.02-2.1-3.2.7-3.87-1.36-3.87-1.36-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.69 1.24 3.34.95.1-.74.4-1.24.72-1.53-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.18-3.1-.12-.29-.51-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.79 0c2.2-1.49 3.17-1.18 3.17-1.18.62 1.59.23 2.76.11 3.05.74.81 1.18 1.84 1.18 3.1 0 4.42-2.69 5.39-5.26 5.68.41.36.78 1.05.78 2.13 0 1.54-.01 2.78-.01 3.16 0 .31.21.67.8.55C20.21 21.39 23.5 17.07 23.5 12 23.5 5.65 18.35.5 12 .5z"/>
                         </svg>
-                        github.com/pbzh/fitness-agent
+                        github.com/pbzh/coacher
                     </a>
                 </div>
             </div>
@@ -1871,7 +2114,7 @@
                         <li><strong>📎 Multimodal attachments</strong> — drop images, PDFs, DOCX, or text into chat. Images go to Claude as binary; the rest is text-extracted (capped at 20 000 chars per file).</li>
                         <li><strong>🎨 Image generation</strong> — coaches can call <code>generate_plan_image</code> (OpenAI <code>gpt-image-1</code>); PNG saved to the file store and inlined.</li>
                         <li><strong>📆 ICS calendar export</strong> — per-plan or rolling 30-day feed with Europe/Zurich VTIMEZONE. Drag into your calendar app.</li>
-                        <li><strong>📁 Files</strong> — uploads + generated images live on disk at <code>/opt/fitness-agent-data</code>.</li>
+                        <li><strong>📁 Files</strong> — uploads + generated images live on disk at <code>/opt/coacher-data</code>.</li>
                         <li><strong>🗓️ Auto weekly plan</strong> — APScheduler runs Sunday 19:00 Europe/Zurich.</li>
                         <li><strong>⚙️ Per-user customization</strong> — override system prompt and provider per coach; bring your own API keys (encrypted at rest).</li>
                     </ul>
@@ -2103,6 +2346,7 @@
             "settings.nutrition": "Nutrition",
             "settings.llm": "LLM providers & API keys", "settings.prompts": "Coach prompts",
             "settings.privacy": "Data & Privacy", "settings.session": "Session",
+            "settings.privacyToggleDesc": "Routing and retention controls. The full GDPR notice and account-management actions are below.",
             "settings.savePrompts": "Save prompts", "settings.changePassword": "Change password",
             "settings.localOnly": "Local-only mode",
             "settings.localOnlyDesc": "Force every coach onto your local LLM. No turn is ever sent to Anthropic or OpenAI. Image generation is disabled while this is on (it requires OpenAI).",
@@ -2115,6 +2359,68 @@
             "settings.languageDesc": "Drives UI translations and prepends a 'respond in this language' directive to every coach.",
             "settings.langAuto": "Auto-detect", "settings.langEn": "English", "settings.langDe": "Deutsch",
             "common.save": "Save", "common.cancel": "Cancel", "common.refresh": "Refresh",
+            "innerTeam.rolesTitle": "Inner Team Roles",
+            "innerTeam.addRoleTitle": "Add custom role",
+            "innerTeam.title": "Inner Team",
+            "innerTeam.subtitle": "Shows the role you are currently operating from. Coach chat stays separate.",
+            "innerTeam.auto": "Auto", "innerTeam.manual": "Manual",
+            "innerTeam.activeRole": "Active role",
+            "innerTeam.strengths": "Strengths", "innerTeam.watchOuts": "Watch-outs", "innerTeam.whyActive": "Why active",
+            "innerTeam.editRole": "Edit role",
+            "innerTeam.archetype": "Archetype",
+            "innerTeam.nameLabel": "Name", "innerTeam.toneLabel": "Tone",
+            "innerTeam.description": "Short description", "innerTeam.intention": "Role intention",
+            "innerTeam.tasksLabel": "Tasks", "innerTeam.focusAreas": "Focus areas", "innerTeam.avoid": "Avoid",
+            "innerTeam.challengeLevel": "Challenge level",
+            "innerTeam.challenge1": "1 - very gentle", "innerTeam.challenge2": "2 - supportive",
+            "innerTeam.challenge3": "3 - balanced", "innerTeam.challenge4": "4 - direct", "innerTeam.challenge5": "5 - demanding",
+            "innerTeam.saveRole": "Save role", "innerTeam.deleteRole": "Delete role",
+            "composer.hint": "Boss routes to Fitness · Nutrition · Mental Health · Productivity. Manual mode shows only that coach's thread.",
+            "settings.subtitle": "Manage your account, security, and coaching preferences",
+            "settings.coaches": "Coaches & API keys", "settings.calendar": "Calendar export",
+            "settings.appearance": "Appearance", "settings.developer": "Developer",
+            "settings.accountDesc": "Your identity and personal details",
+            "settings.emailLabel": "Email", "settings.emailHelp": "Used for sign-in and account recovery.",
+            "settings.birthDate": "Date of birth", "settings.sex": "Sex",
+            "settings.sexUnset": "Unset", "settings.sexFemale": "Female", "settings.sexMale": "Male",
+            "settings.sexOther": "Other", "settings.sexUnspecified": "Unspecified",
+            "settings.securityDesc": "Change your login password",
+            "settings.currentPw": "Current password", "settings.newPw": "New password",
+            "settings.minCharsHint": "Min. 8 characters", "settings.confirmPw": "Confirm new password",
+            "settings.bodyDesc": "Used for personalised calorie and training recommendations",
+            "settings.height": "Height (cm)", "settings.weight": "Current weight (kg)",
+            "settings.targetWeight": "Target weight (kg)",
+            "settings.trainingDesc": "Goals, schedule, and available equipment",
+            "settings.primaryGoal": "Primary goal",
+            "settings.goalPlaceholder": "fat loss, hypertrophy, endurance…",
+            "settings.weeklyWorkouts": "Weekly workouts",
+            "settings.equipment": "Equipment (comma-separated)",
+            "settings.equipmentPlaceholder": "pull-up bar, TRX, dumbbells",
+            "settings.coachNotes": "Notes for the coach",
+            "settings.coachNotesPlaceholder": "Injuries, preferred session length, schedule constraints…",
+            "settings.nutritionDesc": "Daily calorie and macro targets, dietary preferences",
+            "settings.calories": "Daily calories (kcal)", "settings.macros": "Macros (g / day)",
+            "settings.protein": "Protein", "settings.carbs": "Carbs", "settings.fat": "Fat",
+            "settings.dietRestrictions": "Dietary restrictions (comma-separated)",
+            "settings.dietPlaceholder": "vegetarian, lactose-free, gluten-free",
+            "settings.llmDesc": "Pick the provider per coach (overrides .env defaults; leave on \"Default\" to inherit). API keys are encrypted at rest with Fernet (AES-128-CBC + HMAC-SHA256) and never returned to the client. Empty a key field to clear the override.",
+            "settings.promptsDesc": "Override the system prompt used by each coach. Leave a textarea blank to use the built-in default. The Boss prompt controls routing — if you edit it, keep the four routing labels intact or classification will silently fall back to Fitness.",
+            "settings.calendarDesc": "Subscribe to upcoming workouts and meals from your calendar app.",
+            "settings.calendarFeed": "Upcoming feed",
+            "settings.calendarHelp": "Use this authenticated feed from the History tab download button, or copy the URL for clients that support bearer-auth feeds.",
+            "settings.downloadIcs": "Download .ics",
+            "settings.developerDesc": "Diagnostics shown only when you need to inspect model behavior.",
+            "settings.devModelDetails": "Show model and token details in chat",
+            "settings.devModelDetailsDesc": "Shows provider model labels and per-message token counts.",
+            "settings.devModelIds": "Show model identifiers only",
+            "settings.devModelIdsDesc": "Useful when comparing local, Anthropic, and OpenAI routing.",
+            "settings.dataDir": "Data directory", "settings.scheduler": "Scheduler",
+            "settings.version": "Version", "settings.repository": "Repository",
+            "settings.sessionDesc": "Sign out of this device",
+            "history.subtitle": "Past chat messages, persisted server-side",
+            "history.search": "Search messages…", "history.export": "Export", "history.clearAll": "Clear all",
+            "files.subtitle": "Uploads (progress photos, meal pics, PDFs) and agent-generated plan images",
+            "files.upload": "Upload",
             "privacy.export": "📦 Download my data (.zip)",
             "privacy.delete": "🗑 Delete my account", "privacy.deleteConfirm": "Delete account",
             "about.title": "About coacher", "about.what": "What it does",
@@ -2141,6 +2447,7 @@
             "settings.nutrition": "Ernährung",
             "settings.llm": "LLM-Anbieter & API-Schlüssel", "settings.prompts": "Coach-Prompts",
             "settings.privacy": "Daten & Datenschutz", "settings.session": "Sitzung",
+            "settings.privacyToggleDesc": "Routing- und Aufbewahrungseinstellungen. Der vollständige DSGVO-Hinweis und Kontoverwaltungsaktionen sind weiter unten.",
             "settings.savePrompts": "Prompts speichern", "settings.changePassword": "Passwort ändern",
             "settings.localOnly": "Nur-Lokal-Modus",
             "settings.localOnlyDesc": "Erzwingt für jeden Coach das lokale LLM. Keine Nachricht wird je an Anthropic oder OpenAI gesendet. Bildgenerierung ist in diesem Modus deaktiviert (benötigt OpenAI).",
@@ -2153,6 +2460,68 @@
             "settings.languageDesc": "Steuert UI-Übersetzungen und stellt jedem Coach eine „antworte in dieser Sprache“-Anweisung voran.",
             "settings.langAuto": "Automatisch erkennen", "settings.langEn": "English", "settings.langDe": "Deutsch",
             "common.save": "Speichern", "common.cancel": "Abbrechen", "common.refresh": "Aktualisieren",
+            "innerTeam.rolesTitle": "Inner-Team-Rollen",
+            "innerTeam.addRoleTitle": "Eigene Rolle hinzufügen",
+            "innerTeam.title": "Inner Team",
+            "innerTeam.subtitle": "Zeigt die Rolle, aus der du gerade agierst. Coach-Chat bleibt getrennt.",
+            "innerTeam.auto": "Auto", "innerTeam.manual": "Manuell",
+            "innerTeam.activeRole": "Aktive Rolle",
+            "innerTeam.strengths": "Stärken", "innerTeam.watchOuts": "Achtsamkeiten", "innerTeam.whyActive": "Warum aktiv",
+            "innerTeam.editRole": "Rolle bearbeiten",
+            "innerTeam.archetype": "Archetyp",
+            "innerTeam.nameLabel": "Name", "innerTeam.toneLabel": "Ton",
+            "innerTeam.description": "Kurzbeschreibung", "innerTeam.intention": "Rollenabsicht",
+            "innerTeam.tasksLabel": "Aufgaben", "innerTeam.focusAreas": "Schwerpunkte", "innerTeam.avoid": "Vermeiden",
+            "innerTeam.challengeLevel": "Herausforderungsstufe",
+            "innerTeam.challenge1": "1 - sehr sanft", "innerTeam.challenge2": "2 - unterstützend",
+            "innerTeam.challenge3": "3 - ausgewogen", "innerTeam.challenge4": "4 - direkt", "innerTeam.challenge5": "5 - fordernd",
+            "innerTeam.saveRole": "Rolle speichern", "innerTeam.deleteRole": "Rolle löschen",
+            "composer.hint": "Boss leitet weiter zu Fitness · Ernährung · Mentale Gesundheit · Produktivität. Manueller Modus zeigt nur den Thread dieses Coaches.",
+            "settings.subtitle": "Konto, Sicherheit und Coaching-Einstellungen verwalten",
+            "settings.coaches": "Coaches & API-Schlüssel", "settings.calendar": "Kalender-Export",
+            "settings.appearance": "Darstellung", "settings.developer": "Entwickler",
+            "settings.accountDesc": "Deine Identität und persönliche Angaben",
+            "settings.emailLabel": "E-Mail", "settings.emailHelp": "Für Anmeldung und Kontowiederherstellung.",
+            "settings.birthDate": "Geburtsdatum", "settings.sex": "Geschlecht",
+            "settings.sexUnset": "Nicht angegeben", "settings.sexFemale": "Weiblich", "settings.sexMale": "Männlich",
+            "settings.sexOther": "Divers", "settings.sexUnspecified": "Keine Angabe",
+            "settings.securityDesc": "Anmeldepasswort ändern",
+            "settings.currentPw": "Aktuelles Passwort", "settings.newPw": "Neues Passwort",
+            "settings.minCharsHint": "Mind. 8 Zeichen", "settings.confirmPw": "Neues Passwort bestätigen",
+            "settings.bodyDesc": "Für personalisierte Kalorien- und Trainingsempfehlungen",
+            "settings.height": "Körpergrösse (cm)", "settings.weight": "Aktuelles Gewicht (kg)",
+            "settings.targetWeight": "Zielgewicht (kg)",
+            "settings.trainingDesc": "Ziele, Trainingsplan und verfügbares Equipment",
+            "settings.primaryGoal": "Hauptziel",
+            "settings.goalPlaceholder": "Fettabbau, Hypertrophie, Ausdauer…",
+            "settings.weeklyWorkouts": "Trainingseinheiten pro Woche",
+            "settings.equipment": "Equipment (kommagetrennt)",
+            "settings.equipmentPlaceholder": "Klimmzugstange, TRX, Kurzhanteln",
+            "settings.coachNotes": "Hinweise für den Coach",
+            "settings.coachNotesPlaceholder": "Verletzungen, bevorzugte Trainingsdauer, Terminbeschränkungen…",
+            "settings.nutritionDesc": "Tägliche Kalorien- und Makroziele, Ernährungspräferenzen",
+            "settings.calories": "Tägliche Kalorien (kcal)", "settings.macros": "Makros (g / Tag)",
+            "settings.protein": "Protein", "settings.carbs": "Kohlenhydrate", "settings.fat": "Fett",
+            "settings.dietRestrictions": "Ernährungseinschränkungen (kommagetrennt)",
+            "settings.dietPlaceholder": "vegetarisch, laktosefrei, glutenfrei",
+            "settings.llmDesc": "Provider pro Coach wählen (überschreibt .env-Standardwerte; \"Standard\" belassen zum Erben). API-Schlüssel werden mit Fernet (AES-128-CBC + HMAC-SHA256) verschlüsselt gespeichert und nie an den Client zurückgegeben. Feld leeren zum Zurücksetzen.",
+            "settings.promptsDesc": "System-Prompt für jeden Coach überschreiben. Leer lassen für eingebaute Standardwerte. Der Boss-Prompt steuert das Routing — die vier Routing-Labels beibehalten, sonst fällt die Klassifizierung still auf Fitness zurück.",
+            "settings.calendarDesc": "Bevorstehende Workouts und Mahlzeiten aus deiner Kalender-App abonnieren.",
+            "settings.calendarFeed": "Bevorstehende Termine",
+            "settings.calendarHelp": "Diesen authentifizierten Feed über den Download-Button im Verlauf-Tab verwenden oder die URL für Clients mit Bearer-Auth-Feed-Unterstützung kopieren.",
+            "settings.downloadIcs": "Herunterladen .ics",
+            "settings.developerDesc": "Diagnosen, wenn du das Modellverhalten prüfen möchtest.",
+            "settings.devModelDetails": "Modell- und Token-Details im Chat anzeigen",
+            "settings.devModelDetailsDesc": "Zeigt Anbieter-Modell-Labels und Token-Anzahlen pro Nachricht.",
+            "settings.devModelIds": "Nur Modellkennungen anzeigen",
+            "settings.devModelIdsDesc": "Nützlich beim Vergleich von lokalem, Anthropic- und OpenAI-Routing.",
+            "settings.dataDir": "Datenverzeichnis", "settings.scheduler": "Scheduler",
+            "settings.version": "Version", "settings.repository": "Repository",
+            "settings.sessionDesc": "Von diesem Gerät abmelden",
+            "history.subtitle": "Vergangene Chat-Nachrichten, serverseitig gespeichert",
+            "history.search": "Nachrichten suchen…", "history.export": "Exportieren", "history.clearAll": "Alle löschen",
+            "files.subtitle": "Uploads (Fortschrittsfotos, Mahlzeitenbilder, PDFs) und agent-generierte Plan-Bilder",
+            "files.upload": "Hochladen",
             "privacy.export": "📦 Meine Daten herunterladen (.zip)",
             "privacy.delete": "🗑 Konto löschen", "privacy.deleteConfirm": "Konto löschen",
             "about.title": "Über coacher", "about.what": "Funktionen",
@@ -2240,6 +2609,8 @@
             : t;
         document.documentElement.dataset.theme = resolved;
         localStorage.setItem(themeKey, t);
+        const btn = $("theme-toggle-btn");
+        if (btn) btn.dataset.mode = t;
     }
     $("account-lang-btn").addEventListener("click", () => {
         setLanguage((window._lang || "en") === "en" ? "de" : "en");
@@ -2247,6 +2618,11 @@
     $("account-theme-light-btn").addEventListener("click", () => applyTheme("light"));
     $("account-theme-dark-btn").addEventListener("click", () => applyTheme("dark"));
     $("account-theme-system-btn").addEventListener("click", () => applyTheme("system"));
+    $("theme-toggle-btn").addEventListener("click", () => {
+        const modes = ["light", "dark", "system"];
+        const cur = localStorage.getItem(themeKey) || "system";
+        applyTheme(modes[(modes.indexOf(cur) + 1) % modes.length]);
+    });
     $("avatar-menu-btn").addEventListener("click", () => {
         $("account-menu").classList.toggle("hidden");
     });
@@ -2584,6 +2960,30 @@
         } catch (_) {}
     }
 
+    const ARCHETYPES = [
+        { id: 'warrior',   label: 'Warrior',   color: '#e05b3a', icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16L16 4"/><path d="M4 4l12 12"/><path d="M7 4l1-1h1M12 16l1 1h1"/></svg>' },
+        { id: 'architect', label: 'Architect', color: '#4e9be6', icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="13" width="14" height="4" rx="1"/><path d="M6 13V7h8v6"/><path d="M9 7V4h2v3"/></svg>' },
+        { id: 'healer',    label: 'Healer',    color: '#4ec994', icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M10 4v12M4 10h12"/></svg>' },
+        { id: 'analyst',   label: 'Analyst',   color: '#c4a840', icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="12" width="3" height="5" rx="1"/><rect x="8.5" y="8" width="3" height="9" rx="1"/><rect x="14" y="5" width="3" height="12" rx="1"/><path d="M3 17.5h14"/></svg>' },
+        { id: 'creator',   label: 'Creator',   color: '#b04ee6', icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2a5 5 0 00-2 9.5V14h4v-2.5A5 5 0 0010 2z"/><path d="M8 16h4M8.5 18h3"/></svg>' },
+        { id: 'explorer',  label: 'Explorer',  color: '#4ec4c4', icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="7"/><path d="M13 7l-2 5-5 2 2-5z"/></svg>' },
+        { id: 'guardian',  label: 'Guardian',  color: '#e6844e', icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2L4 5v5c0 3.8 2.6 6.3 6 7.2C13.4 16.3 16 13.8 16 10V5z"/></svg>' },
+        { id: 'sage',      label: 'Sage',      color: '#8bc44e', icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="9" height="13" rx="1"/><path d="M7 3V16M4 7h4M4 11h4"/><path d="M13 6h2a1 1 0 011 1v9a1 1 0 01-1 1h-2"/></svg>' },
+        { id: 'leader',    label: 'Leader',    color: '#e6c440', icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2l2 5h5l-4 3 1.5 5L10 12l-4.5 3L7 10 3 7h5z"/></svg>' },
+        { id: 'shadow',    label: 'Shadow',    color: '#9c8ce6', icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M14.5 10A6.5 6.5 0 018 3.5a6.5 6.5 0 000 13A6.5 6.5 0 0014.5 10z"/></svg>' },
+        { id: 'athlete',   label: 'Athlete',   color: '#e64e60', icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2L6 10h5l-2 8 9-10h-6z"/></svg>' },
+        { id: 'monk',      label: 'Monk',      color: '#4e9e8c', icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="7"/><circle cx="10" cy="10" r="3.5"/><circle cx="10" cy="10" r="1" fill="currentColor" stroke="none"/></svg>' },
+    ];
+
+    function archetypeFor(role) {
+        return ARCHETYPES.find(a => a.id === role.archetype) || ARCHETYPES[0];
+    }
+
+    function applyRoleColor(el, role) {
+        const arch = archetypeFor(role);
+        el.style.setProperty('--role-color', arch.color);
+    }
+
     function activeInnerRole() {
         const cfg = state.innerTeam || {};
         return (cfg.roles || []).find(r => r.id === cfg.active_role_id) || null;
@@ -2646,14 +3046,16 @@
 
         const list = $("inner-role-list");
         list.replaceChildren();
-        roles.forEach((role, index) => {
+        roles.forEach((role) => {
+            const arch = archetypeFor(role);
             const btn = document.createElement("button");
             btn.type = "button";
             btn.className = "inner-role-row" + (role.id === cfg.active_role_id ? " active" : "");
             btn.dataset.roleId = role.id;
-            const n = document.createElement("div");
-            n.className = "inner-role-index";
-            n.textContent = String(index + 1);
+            btn.style.setProperty('--role-color', arch.color);
+            const avatar = document.createElement("div");
+            avatar.className = "inner-role-avatar";
+            avatar.innerHTML = arch.icon;
             const body = document.createElement("div");
             const name = document.createElement("div");
             name.className = "inner-role-name";
@@ -2662,18 +3064,59 @@
             desc.className = "inner-role-desc";
             desc.textContent = role.description || "No description";
             body.append(name, desc);
-            btn.append(n, body);
+            btn.append(avatar, body);
             btn.addEventListener("click", () => selectInnerRole(role.id));
             list.appendChild(btn);
         });
 
         if (!active) return;
+        const activeArch = archetypeFor(active);
+
+        const avatarEl = $("inner-active-avatar");
+        if (avatarEl) {
+            avatarEl.innerHTML = activeArch.icon;
+            avatarEl.style.setProperty('--role-color', activeArch.color);
+        }
+        const activePanel = $("inner-active-panel");
+        if (activePanel) activePanel.style.setProperty('--role-color', activeArch.color);
+
         $("inner-active-name").textContent = active.name;
         $("inner-active-description").textContent = active.description || "";
         $("inner-active-reason").textContent = cfg.active_reason || "Selected manually.";
+
+        const archLabel = $("inner-stage-arch-label");
+        if (archLabel) archLabel.textContent = activeArch.label;
+
+        const dots = $("inner-stage-challenge-dots");
+        if (dots) {
+            dots.replaceChildren();
+            const level = active.challenge_level || 3;
+            for (let i = 1; i <= 5; i++) {
+                const d = document.createElement("div");
+                d.className = "inner-stage-dot" + (i <= level ? " on" : "");
+                dots.appendChild(d);
+            }
+        }
+
+        const picker = $("inner-archetype-picker");
+        if (picker) {
+            picker.replaceChildren();
+            ARCHETYPES.forEach(a => {
+                const b = document.createElement("button");
+                b.type = "button";
+                b.className = "inner-archetype-btn" + (a.id === (active.archetype || ARCHETYPES[0].id) ? " active" : "");
+                b.style.setProperty('--role-color', a.color);
+                b.title = a.label;
+                b.innerHTML = a.icon;
+                b.addEventListener("click", () => {
+                    picker.querySelectorAll(".inner-archetype-btn").forEach(x => x.classList.remove("active"));
+                    b.classList.add("active");
+                });
+                picker.appendChild(b);
+            });
+        }
         renderInnerPills($("inner-strengths"), active.strengths);
         renderInnerPills($("inner-watch-outs"), active.watch_outs);
-        renderInnerTasks($("inner-tasks"), active.tasks);
 
         $("inner-role-name").value = active.name || "";
         $("inner-role-description").value = active.description || "";
@@ -2733,8 +3176,11 @@
     }
 
     function editableInnerRoleFromForm(role) {
+        const activeArchBtn = $("inner-archetype-picker")?.querySelector(".inner-archetype-btn.active");
+        const archetype = activeArchBtn ? ARCHETYPES.find(a => a.label === activeArchBtn.title)?.id || role.archetype : role.archetype;
         return {
             ...role,
+            archetype: archetype || ARCHETYPES[0].id,
             name: $("inner-role-name").value.trim(),
             description: $("inner-role-description").value.trim(),
             intention: $("inner-role-intention").value.trim(),
@@ -2771,9 +3217,12 @@
             return;
         }
         const id = `custom_${Date.now()}`;
+        const usedArchetypes = new Set((cfg.roles || []).map(r => r.archetype).filter(Boolean));
+        const defaultArch = ARCHETYPES.find(a => !usedArchetypes.has(a.id))?.id || ARCHETYPES[0].id;
         const role = {
             id,
             name: "Custom Role",
+            archetype: defaultArch,
             description: "Define when this role is useful.",
             intention: "Clarify what this role protects or enables.",
             strengths: ["Clarity"],
@@ -2916,7 +3365,7 @@
                 info: "Uploaded files (images, PDFs, DOCX, text)",
                 stored: [
                     ["db",   "Postgres · file (metadata)"],
-                    ["disk", "/opt/fitness-agent-data (bytes)"],
+                    ["disk", "/opt/coacher-data (bytes)"],
                 ],
                 sent:   ["per-attachment"],
                 note:   "Images go to whatever provider handles that turn (auto-routed to Claude if local). PDFs/DOCX/text are extracted to text first.",
@@ -2925,7 +3374,7 @@
                 info: "Generated plan images",
                 stored: [
                     ["db",   "Postgres · file"],
-                    ["disk", "/opt/fitness-agent-data"],
+                    ["disk", "/opt/coacher-data"],
                 ],
                 sent:   ["openai"],
                 note:   "OpenAI gpt-image-1 generates the PNG; bytes return to the file store.",
@@ -2944,7 +3393,7 @@
             },
             {
                 info: "Encryption key",
-                stored: [["disk", "/opt/fitness-agent-data/.encryption.key (or SETTINGS_ENCRYPTION_KEY env)"]],
+                stored: [["disk", "/opt/coacher-data/.encryption.key (or SETTINGS_ENCRYPTION_KEY env)"]],
                 sent:   ["never"],
                 note:   "Loses the key → API keys become unreadable; service falls back to .env values.",
             },
@@ -3889,36 +4338,21 @@
                 item.appendChild(actions);
                 list.appendChild(item);
             }
-            const audit = await fetchAdminAudit();
-            if (audit.length === 0) {
-                const empty = document.createElement("div");
-                empty.className = "history-empty";
-                empty.textContent = "No admin actions recorded yet.";
-                auditList.appendChild(empty);
-            } else {
-                for (const a of audit) {
-                    const item = document.createElement("div");
-                    item.className = "history-item";
-                    const head = document.createElement("div");
-                    head.className = "history-item-head";
-                    const action = document.createElement("span");
-                    action.className = "role-agent";
-                    action.textContent = a.action.replaceAll("_", " ");
-                    head.appendChild(action);
-                    const ts = document.createElement("span");
-                    ts.textContent = "· " + formatTs(a.created_at);
-                    head.appendChild(ts);
-                    item.appendChild(head);
-                    const body = document.createElement("div");
-                    body.className = "history-item-text";
-                    const target = a.action === "delete_user" && a.after?.deleted_email
-                        ? `${a.after.deleted_email} (deleted)`
-                        : (a.target_email || a.target_user_id);
-                    body.textContent = `${a.actor_email || a.actor_user_id} → ${target}`;
-                    item.appendChild(body);
-                    auditList.appendChild(item);
+            // pending badge on nav tab
+            const pending = users.filter(u => !u.is_approved).length;
+            const adminTab = $("admin-nav-tab");
+            if (adminTab) {
+                let badge = adminTab.querySelector(".audit-pending-badge");
+                if (pending > 0) {
+                    if (!badge) { badge = document.createElement("span"); badge.className = "audit-pending-badge"; adminTab.appendChild(badge); }
+                    badge.textContent = pending;
+                } else if (badge) {
+                    badge.remove();
                 }
             }
+
+            _cachedAudit = await fetchAdminAudit();
+            renderAuditList(_cachedAudit);
         } catch (err) {
             setStatus($("admin-status"), err.message, "error");
             const empty = document.createElement("div");
@@ -3928,7 +4362,92 @@
         }
     }
 
+    const AUDIT_BADGE_MAP = {
+        approve_user: "approval", reject_user: "rejection", delete_user: "deletion",
+        promote_admin: "role_change", demote_admin: "role_change",
+        registration: "registration", login: "login", login_fail: "login_fail",
+    };
+
+    function renderAuditList(audit, typeFilter, fromDate, toDate) {
+        const auditList = $("admin-audit-list");
+        auditList.replaceChildren();
+        let entries = audit || [];
+        if (typeFilter) entries = entries.filter(a => (AUDIT_BADGE_MAP[a.action] || a.action) === typeFilter);
+        if (fromDate) entries = entries.filter(a => new Date(a.created_at) >= new Date(fromDate));
+        if (toDate)   entries = entries.filter(a => new Date(a.created_at) <= new Date(toDate + "T23:59:59"));
+        if (entries.length === 0) {
+            const empty = document.createElement("div");
+            empty.className = "history-empty";
+            empty.textContent = typeFilter ? "No matching audit entries." : "No admin actions recorded yet.";
+            auditList.appendChild(empty);
+            return;
+        }
+        for (const a of entries) {
+            const item = document.createElement("div");
+            item.className = "audit-item";
+            const badgeKey = AUDIT_BADGE_MAP[a.action] || "default";
+            const badge = document.createElement("span");
+            badge.className = `audit-badge audit-badge-${badgeKey}`;
+            badge.textContent = (a.action || "").replaceAll("_", " ");
+            const time = document.createElement("span");
+            time.className = "audit-item-time";
+            time.textContent = formatTs(a.created_at);
+            const actor = document.createElement("span");
+            actor.className = "audit-item-actor";
+            actor.textContent = a.actor_email || a.actor_user_id || "—";
+            const detail = document.createElement("span");
+            detail.className = "audit-item-detail";
+            const target = a.action === "delete_user" && a.after?.deleted_email
+                ? `${a.after.deleted_email} (deleted)`
+                : (a.target_email || a.target_user_id || "");
+            detail.textContent = target ? `→ ${target}` : "";
+            item.append(badge, time, actor, detail);
+            auditList.appendChild(item);
+        }
+        auditList._rawData = audit;
+    }
+
+    let _cachedAudit = [];
+
     $("admin-refresh-btn").addEventListener("click", renderAdminUsers);
+
+    $("audit-filter-apply-btn").addEventListener("click", () => {
+        renderAuditList(
+            _cachedAudit,
+            $("audit-filter-type").value,
+            $("audit-filter-from").value,
+            $("audit-filter-to").value
+        );
+    });
+    $("audit-filter-reset-btn").addEventListener("click", () => {
+        $("audit-filter-type").value = "";
+        $("audit-filter-from").value = "";
+        $("audit-filter-to").value = "";
+        renderAuditList(_cachedAudit);
+    });
+
+    $("admin-audit-export-btn").addEventListener("click", () => {
+        const entries = _cachedAudit;
+        if (!entries.length) return;
+        const header = "time,action,actor,target\n";
+        const rows = entries.map(a => {
+            const target = a.action === "delete_user" && a.after?.deleted_email
+                ? a.after.deleted_email : (a.target_email || a.target_user_id || "");
+            return [a.created_at, a.action, a.actor_email || a.actor_user_id || "", target]
+                .map(v => `"${String(v).replace(/"/g, '""')}"`).join(",");
+        }).join("\n");
+        const blob = new Blob([header + rows], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a"); a.href = url; a.download = "audit-log.csv";
+        a.click(); URL.revokeObjectURL(url);
+    });
+
+    $("admin-smtp-save-btn")?.addEventListener("click", () => {
+        flashStatus("smtp-status", "SMTP config saved (backend not yet implemented)", "success");
+    });
+    $("admin-smtp-test-btn")?.addEventListener("click", () => {
+        flashStatus("smtp-status", "Test email sent (backend not yet implemented)", "success");
+    });
 
     /* ── Chat ── */
     function renderAttachments(container, attachments) {
