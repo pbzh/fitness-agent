@@ -1838,10 +1838,10 @@
                 <div class="card-body">
                     <div class="field full">
                         <label data-i18n="settings.calendarFeed">Upcoming feed</label>
-                        <input value="/calendar/upcoming.ics" readonly tabindex="-1">
+                        <input id="calendar-feed-url" value="/calendar/upcoming.ics" readonly tabindex="-1">
                         <div class="field-help" data-i18n="settings.calendarHelp">Use this authenticated feed from the History tab download button, or copy the URL for clients that support bearer-auth feeds.</div>
                     </div>
-                    <a class="text-btn" href="/calendar/upcoming.ics" download style="display:inline-flex;align-items:center;text-decoration:none;height:38px;padding:0 12px;" data-i18n="settings.downloadIcs">Download .ics</a>
+                    <a class="text-btn" id="calendar-feed-download-btn" href="/calendar/upcoming.ics" download style="display:inline-flex;align-items:center;text-decoration:none;height:38px;padding:0 12px;" data-i18n="settings.downloadIcs">Download .ics</a>
                 </div>
             </div>
 
@@ -2414,6 +2414,13 @@
             "settings.calendarHelp": "Use this authenticated feed from the History tab download button, or copy the URL for clients that support bearer-auth feeds.",
             "settings.downloadIcs": "Download .ics",
             "settings.developerDesc": "Diagnostics shown only when you need to inspect model behavior.",
+            "settings.accountSectionSubtitle": "Identity, data export, and session controls",
+            "settings.securitySectionSubtitle": "Change your password",
+            "settings.bodySectionSubtitle": "Body, training, and nutrition inputs for coaching",
+            "settings.coachesSectionSubtitle": "Provider routing, encrypted keys, and custom prompts",
+            "settings.calendarSectionSubtitle": "Download calendar feeds",
+            "settings.appearanceSectionSubtitle": "Language, theme, privacy, and retention",
+            "settings.developerSectionSubtitle": "Diagnostics and implementation details",
             "settings.devModelDetails": "Show model and token details in chat",
             "settings.devModelDetailsDesc": "Shows provider model labels and per-message token counts.",
             "settings.devModelIds": "Show model identifiers only",
@@ -2425,6 +2432,22 @@
             "history.search": "Search messages…", "history.export": "Export", "history.clearAll": "Clear all",
             "files.subtitle": "Uploads (progress photos, meal pics, PDFs) and agent-generated plan images",
             "files.upload": "Upload",
+            "chat.empty.titleAuto": "What do you need today?",
+            "chat.empty.titleManual": "No {coach} messages yet",
+            "chat.empty.hintAuto": "Or just type - Boss will route to the right coach.",
+            "chat.empty.hintManual": "Manual mode shows only messages handled by this coach.",
+            "chat.prompt.planWeek.label": "Plan next week",
+            "chat.prompt.planWeek.value": "Plan next week for me based on my recent training.",
+            "chat.prompt.logMeal.label": "Log a meal",
+            "chat.prompt.logMeal.value": "Help me log a meal I just ate: ",
+            "chat.prompt.progress.label": "Check my progress",
+            "chat.prompt.progress.value": "How's my progress this week?",
+            "chat.prompt.mental.label": "Quick mental check-in",
+            "chat.prompt.mental.value": "I want a quick mental check-in.",
+            "chat.prompt.recipe.label": "Recipe ideas",
+            "chat.prompt.recipe.value": "Give me recipe ideas that fit my macros.",
+            "chat.prompt.weight.label": "Log today's weight",
+            "chat.prompt.weight.value": "Log my current weight: ",
             "privacy.export": "📦 Download my data (.zip)",
             "privacy.delete": "🗑 Delete my account", "privacy.deleteConfirm": "Delete account",
             "about.title": "About coacher", "about.what": "What it does",
@@ -2515,6 +2538,13 @@
             "settings.calendarHelp": "Diesen authentifizierten Feed über den Download-Button im Verlauf-Tab verwenden oder die URL für Clients mit Bearer-Auth-Feed-Unterstützung kopieren.",
             "settings.downloadIcs": "Herunterladen .ics",
             "settings.developerDesc": "Diagnosen, wenn du das Modellverhalten prüfen möchtest.",
+            "settings.accountSectionSubtitle": "Identität, Datenexport und Sitzungssteuerung",
+            "settings.securitySectionSubtitle": "Passwort ändern",
+            "settings.bodySectionSubtitle": "Körper-, Trainings- und Ernährungsdaten für das Coaching",
+            "settings.coachesSectionSubtitle": "Provider-Routing, verschlüsselte Schlüssel und eigene Prompts",
+            "settings.calendarSectionSubtitle": "Kalender-Feeds herunterladen",
+            "settings.appearanceSectionSubtitle": "Sprache, Theme, Datenschutz und Aufbewahrung",
+            "settings.developerSectionSubtitle": "Diagnosen und Implementierungsdetails",
             "settings.devModelDetails": "Modell- und Token-Details im Chat anzeigen",
             "settings.devModelDetailsDesc": "Zeigt Anbieter-Modell-Labels und Token-Anzahlen pro Nachricht.",
             "settings.devModelIds": "Nur Modellkennungen anzeigen",
@@ -2526,6 +2556,22 @@
             "history.search": "Nachrichten suchen…", "history.export": "Exportieren", "history.clearAll": "Alle löschen",
             "files.subtitle": "Uploads (Fortschrittsfotos, Mahlzeitenbilder, PDFs) und agent-generierte Plan-Bilder",
             "files.upload": "Hochladen",
+            "chat.empty.titleAuto": "Was brauchst du heute?",
+            "chat.empty.titleManual": "Noch keine Nachrichten für {coach}",
+            "chat.empty.hintAuto": "Oder schreib einfach los - Boss leitet an den richtigen Coach weiter.",
+            "chat.empty.hintManual": "Im manuellen Modus werden nur Nachrichten dieses Coaches angezeigt.",
+            "chat.prompt.planWeek.label": "Nächste Woche planen",
+            "chat.prompt.planWeek.value": "Plane meine nächste Woche basierend auf meinem letzten Training.",
+            "chat.prompt.logMeal.label": "Mahlzeit protokollieren",
+            "chat.prompt.logMeal.value": "Hilf mir, eine Mahlzeit zu protokollieren, die ich gerade gegessen habe: ",
+            "chat.prompt.progress.label": "Fortschritt prüfen",
+            "chat.prompt.progress.value": "Wie läuft mein Fortschritt diese Woche?",
+            "chat.prompt.mental.label": "Kurzer Mental-Check-in",
+            "chat.prompt.mental.value": "Ich möchte einen kurzen Mental-Check-in.",
+            "chat.prompt.recipe.label": "Rezeptideen",
+            "chat.prompt.recipe.value": "Gib mir Rezeptideen, die zu meinen Makros passen.",
+            "chat.prompt.weight.label": "Heutiges Gewicht erfassen",
+            "chat.prompt.weight.value": "Protokolliere mein aktuelles Gewicht: ",
             "privacy.export": "📦 Meine Daten herunterladen (.zip)",
             "privacy.delete": "🗑 Konto löschen", "privacy.deleteConfirm": "Konto löschen",
             "about.title": "Über coacher", "about.what": "Funktionen",
@@ -2545,6 +2591,12 @@
         const lang = window._lang || "en";
         return (I18N[lang] && I18N[lang][key]) || I18N.en[key] || key;
     }
+    function formatI18n(key, vars = {}) {
+        return Object.entries(vars).reduce(
+            (text, [name, value]) => text.replaceAll(`{${name}}`, value),
+            t(key),
+        );
+    }
     function applyI18n() {
         document.documentElement.lang = window._lang || "en";
         document.querySelectorAll("[data-i18n]").forEach(el => {
@@ -2560,7 +2612,11 @@
             if (v !== undefined) el.title = v;
         });
         const btn = document.getElementById("account-lang-btn");
-        if (btn) btn.textContent = "Language: " + ((window._lang || "en").toUpperCase());
+        if (btn) btn.textContent = `${t("settings.language")}: ${((window._lang || "en").toUpperCase())}`;
+        const activeSettingsBtn = document.querySelector("[data-settings-target].active");
+        if (activeSettingsBtn) switchSettingsSection(activeSettingsBtn.dataset.settingsTarget);
+        if ($("chat-history")) renderCurrentChatThread();
+        updateProtectedResourceLinks();
     }
     function setLanguage(lang) {
         if (!I18N[lang]) lang = "en";
@@ -2605,6 +2661,22 @@
     };
 
     const $ = id => document.getElementById(id);
+
+    function authenticatedUrl(path) {
+        const url = new URL(path, window.location.origin);
+        if (state.token) url.searchParams.set("access_token", state.token);
+        return url.toString();
+    }
+
+    function updateProtectedResourceLinks() {
+        const calendarUrl = authenticatedUrl("/calendar/upcoming.ics");
+        const calendarInput = $("calendar-feed-url");
+        if (calendarInput) calendarInput.value = calendarUrl;
+        const calendarBtn = $("calendar-feed-download-btn");
+        if (calendarBtn) calendarBtn.href = calendarUrl;
+        const historyIcsBtn = $("history-ics-btn");
+        if (historyIcsBtn) historyIcsBtn.href = calendarUrl;
+    }
 
     /* ── Theme ── */
     function applyTheme(t) {
@@ -2696,13 +2768,13 @@
     }
 
     const SETTINGS_TITLES = {
-        account: ["Account", "Identity, data export, and session controls"],
-        security: ["Security", "Change your password"],
-        body: ["Body metrics", "Body, training, and nutrition inputs for coaching"],
-        coaches: ["Coaches & API keys", "Provider routing, encrypted keys, and custom prompts"],
-        calendar: ["Calendar export", "Download calendar feeds"],
-        appearance: ["Appearance", "Language, theme, privacy, and retention"],
-        developer: ["Developer", "Diagnostics and implementation details"],
+        account: ["settings.account", "settings.accountSectionSubtitle"],
+        security: ["settings.security", "settings.securitySectionSubtitle"],
+        body: ["settings.body", "settings.bodySectionSubtitle"],
+        coaches: ["settings.coaches", "settings.coachesSectionSubtitle"],
+        calendar: ["settings.calendar", "settings.calendarSectionSubtitle"],
+        appearance: ["settings.appearance", "settings.appearanceSectionSubtitle"],
+        developer: ["settings.developer", "settings.developerSectionSubtitle"],
     };
 
     function switchSettingsSection(section) {
@@ -2712,9 +2784,9 @@
         document.querySelectorAll("[data-settings-target]").forEach(btn =>
             btn.classList.toggle("active", btn.dataset.settingsTarget === section)
         );
-        const [title, subtitle] = SETTINGS_TITLES[section] || SETTINGS_TITLES.account;
-        $("settings-section-title").textContent = title;
-        $("settings-section-subtitle").textContent = subtitle;
+        const [titleKey, subtitleKey] = SETTINGS_TITLES[section] || SETTINGS_TITLES.account;
+        $("settings-section-title").textContent = t(titleKey);
+        $("settings-section-subtitle").textContent = t(subtitleKey);
     }
 
     document.querySelectorAll("[data-settings-target]").forEach(btn =>
@@ -2734,6 +2806,7 @@
         $("session-label").textContent = isSignedIn ? state.email : "Signed out";
         $("account-menu-email").textContent = state.email || "";
         $("avatar-initials").textContent = initials(state.email);
+        updateProtectedResourceLinks();
         $("admin-nav-tab").classList.toggle("hidden", !isSignedIn || !state.isAdmin);
         $("admin-tab-mobile").classList.toggle("hidden", !isSignedIn || !state.isAdmin);
         $("provider-select").disabled = !state.isAdmin;
@@ -2928,6 +3001,7 @@
             $("session-label").textContent = state.email;
             $("account-menu-email").textContent = state.email;
             $("avatar-initials").textContent = initials(state.email);
+            updateProtectedResourceLinks();
             $("admin-nav-tab").classList.toggle("hidden", !state.isAdmin);
             $("admin-tab-mobile").classList.toggle("hidden", !state.isAdmin);
             $("provider-select").disabled = !state.isAdmin;
@@ -4114,7 +4188,7 @@
 
                 if ((f.mime_type || "").startsWith("image/")) {
                     const img = document.createElement("img");
-                    img.src = "/files/" + f.id;
+                    img.src = authenticatedUrl("/files/" + f.id);
                     img.style.maxWidth = "320px"; img.style.maxHeight = "320px";
                     img.style.borderRadius = "8px"; img.style.marginTop = "6px";
                     item.appendChild(img);
@@ -4125,7 +4199,7 @@
                 const dl = document.createElement("a");
                 dl.className = "text-btn"; dl.style.height = "32px"; dl.style.padding = "0 10px";
                 dl.style.display = "inline-flex"; dl.style.alignItems = "center";
-                dl.style.textDecoration = "none"; dl.href = "/files/" + f.id; dl.download = f.filename;
+                dl.style.textDecoration = "none"; dl.href = authenticatedUrl("/files/" + f.id); dl.download = f.filename;
                 dl.textContent = "Download";
                 const del = document.createElement("button");
                 del.className = "btn-danger"; del.style.height = "32px"; del.style.padding = "0 10px";
@@ -4507,12 +4581,12 @@
             const isImg = (a.mime_type || "").startsWith("image/");
             if (isImg) {
                 const img = document.createElement("img");
-                img.src = "/files/" + a.id + "?t=" + Date.now();
+                img.src = authenticatedUrl("/files/" + a.id);
                 img.alt = a.filename;
                 wrap.appendChild(img);
             } else {
                 const link = document.createElement("a");
-                link.href = "/files/" + a.id;
+                link.href = authenticatedUrl("/files/" + a.id);
                 link.target = "_blank";
                 link.rel = "noopener";
                 link.textContent = "📎 " + a.filename;
@@ -4659,31 +4733,31 @@
         wrap.className = "chat-empty-state";
         const title = document.createElement("h2");
         title.textContent = currentTask === "auto"
-            ? "What do you need today?"
-            : `No ${COACH_META[currentTask]?.label || "coach"} messages yet`;
+            ? t("chat.empty.titleAuto")
+            : formatI18n("chat.empty.titleManual", { coach: COACH_META[currentTask]?.label || t("nav.chat") });
         const grid = document.createElement("div");
         grid.className = "prompt-grid";
         const prompts = [
-            ["Plan next week", "Plan next week for me based on my recent training."],
-            ["Log a meal", "Help me log a meal I just ate: "],
-            ["Check my progress", "How's my progress this week?"],
-            ["Quick mental check-in", "I want a quick mental check-in."],
-            ["Recipe ideas", "Give me recipe ideas that fit my macros."],
-            ["Log today's weight", "Log my current weight: "],
+            ["chat.prompt.planWeek.label", "chat.prompt.planWeek.value"],
+            ["chat.prompt.logMeal.label", "chat.prompt.logMeal.value"],
+            ["chat.prompt.progress.label", "chat.prompt.progress.value"],
+            ["chat.prompt.mental.label", "chat.prompt.mental.value"],
+            ["chat.prompt.recipe.label", "chat.prompt.recipe.value"],
+            ["chat.prompt.weight.label", "chat.prompt.weight.value"],
         ];
-        for (const [label, prompt] of prompts) {
+        for (const [labelKey, promptKey] of prompts) {
             const btn = document.createElement("button");
             btn.type = "button";
             btn.className = "prompt-card";
-            btn.textContent = label;
-            btn.addEventListener("click", () => sendPrompt(prompt));
+            btn.textContent = t(labelKey);
+            btn.addEventListener("click", () => sendPrompt(t(promptKey)));
             grid.appendChild(btn);
         }
         const hint = document.createElement("div");
         hint.className = "empty-hint";
         hint.textContent = currentTask === "auto"
-            ? "Or just type — Boss will route to the right coach."
-            : "Manual mode shows only messages handled by this coach.";
+            ? t("chat.empty.hintAuto")
+            : t("chat.empty.hintManual");
         wrap.append(title, grid, hint);
         history.appendChild(wrap);
     }
