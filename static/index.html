@@ -2032,9 +2032,13 @@
                         </div>
                     </div>
                 </div>
-                <div class="card-footer">
+                <div class="card-footer" style="flex-wrap:wrap;gap:10px;">
                     <button class="btn-save" id="admin-smtp-save-btn" type="button">Save</button>
-                    <button class="text-btn" id="admin-smtp-test-btn" type="button" style="height:36px;padding:0 14px;">Send test email</button>
+                    <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:220px;">
+                        <input id="smtp-test-to" type="email" placeholder="test@example.com"
+                               style="flex:1;min-width:0;height:36px;padding:0 10px;border:1px solid var(--border);border-radius:6px;background:var(--input-bg);color:var(--text-1);font-size:0.85rem;">
+                        <button class="text-btn" id="admin-smtp-test-btn" type="button" style="height:36px;padding:0 14px;white-space:nowrap;">Send test</button>
+                    </div>
                     <span class="status" id="smtp-status"></span>
                 </div>
             </div>
@@ -2685,6 +2689,7 @@
             renderAbout();
         } else if (viewId === "admin-view") {
             renderAdminUsers();
+            loadSmtpConfig();
         } else if (viewId === "app-view") {
             loadDashboard();
         }
@@ -4442,11 +4447,55 @@
         a.click(); URL.revokeObjectURL(url);
     });
 
-    $("admin-smtp-save-btn")?.addEventListener("click", () => {
-        flashStatus("smtp-status", "SMTP config saved (backend not yet implemented)", "success");
+    async function loadSmtpConfig() {
+        try {
+            const res = await request("/admin/smtp", { headers: authHeaders() });
+            if (!res.ok) return;
+            const cfg = await res.json();
+            $("smtp-host").value = cfg.host || "";
+            $("smtp-port").value = cfg.port || 587;
+            $("smtp-user").value = cfg.username || "";
+            $("smtp-from").value = cfg.from_address || "";
+            if (cfg.use_ssl) $("smtp-tls").value = "tls";
+            else if (cfg.use_tls) $("smtp-tls").value = "starttls";
+            else $("smtp-tls").value = "none";
+            if (cfg.has_password) $("smtp-pass").placeholder = "••••••••  (set — leave blank to keep)";
+        } catch { /* not admin or not configured */ }
+    }
+
+    $("admin-smtp-save-btn")?.addEventListener("click", async () => {
+        const tls = $("smtp-tls").value;
+        const body = {
+            host: $("smtp-host").value.trim(),
+            port: parseInt($("smtp-port").value) || 587,
+            username: $("smtp-user").value.trim(),
+            password: $("smtp-pass").value,
+            from_address: $("smtp-from").value.trim(),
+            use_tls: tls === "starttls",
+            use_ssl: tls === "tls",
+        };
+        try {
+            const res = await request("/admin/smtp", { method: "PUT", headers: authHeaders(), body: JSON.stringify(body) });
+            if (!res.ok) throw new Error((await res.json()).detail || "Save failed");
+            $("smtp-pass").value = "";
+            $("smtp-pass").placeholder = "••••••••  (set — leave blank to keep)";
+            flashStatus("smtp-status", "Saved", "success");
+        } catch (e) {
+            flashStatus("smtp-status", e.message || "Save failed", "error");
+        }
     });
-    $("admin-smtp-test-btn")?.addEventListener("click", () => {
-        flashStatus("smtp-status", "Test email sent (backend not yet implemented)", "success");
+
+    $("admin-smtp-test-btn")?.addEventListener("click", async () => {
+        const to = $("smtp-test-to").value.trim();
+        if (!to) { flashStatus("smtp-status", "Enter a recipient address", "error"); return; }
+        try {
+            const res = await request(`/admin/smtp/test?to=${encodeURIComponent(to)}`, { method: "POST", headers: authHeaders() });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.detail || "Test failed");
+            flashStatus("smtp-status", data.ok ? `Sent to ${data.to}` : "Delivery failed", data.ok ? "success" : "error");
+        } catch (e) {
+            flashStatus("smtp-status", e.message || "Test failed", "error");
+        }
     });
 
     /* ── Chat ── */
