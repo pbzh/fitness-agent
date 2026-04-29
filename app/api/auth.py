@@ -128,6 +128,7 @@ async def register(
         approved_at=datetime.utcnow() if is_first_user else None,
     )
     session.add(user)
+    await session.flush()  # write user row first so FK on audit log resolves
     session.add(
         AdminAuditLog(
             actor_user_id=user.id,
