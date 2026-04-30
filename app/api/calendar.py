@@ -124,6 +124,7 @@ async def workout_plan_ics(
             await session.execute(
                 select(WorkoutSession)
                 .where(WorkoutSession.plan_id == plan_id)
+                .where(WorkoutSession.user_id == user_id)
                 .order_by(WorkoutSession.scheduled_date)
             )
         ).scalars().all()
@@ -178,6 +179,7 @@ async def meal_plan_ics(
             await session.execute(
                 select(PlannedMeal)
                 .where(PlannedMeal.plan_id == plan_id)
+                .where(PlannedMeal.user_id == user_id)
                 .order_by(PlannedMeal.scheduled_date, PlannedMeal.slot)
             )
         ).scalars().all()

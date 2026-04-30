@@ -20,7 +20,7 @@ from app.agent.prompts import resolve_prompt
 from app.agent.router import Provider, TaskClass, _env_provider_for, build_model
 from app.agent.tools import register_tools
 from app.config import get_settings
-from app.db.models import User, UserProfile
+from app.db.models import User, UserProfile, WorkoutSession
 from app.db.session import AsyncSessionLocal
 
 log = structlog.get_logger()
@@ -47,6 +47,7 @@ Steps:
 """
 
     settings = get_settings()
+    week_end = next_monday + timedelta(days=7)
     async with AsyncSessionLocal() as session:
         users = (
             await session.execute(select(User).where(User.is_approved == True))  # noqa: E712
@@ -86,6 +87,20 @@ Steps:
         deps = AgentDeps(session_factory=AsyncSessionLocal, user_id=user.id)
 
         try:
+            async with AsyncSessionLocal() as session:
+                stale = (
+                    await session.execute(
+                        select(WorkoutSession)
+                        .where(WorkoutSession.user_id == user.id)
+                        .where(WorkoutSession.scheduled_date >= next_monday)
+                        .where(WorkoutSession.scheduled_date < week_end)
+                        .where(WorkoutSession.completed == False)  # noqa: E712
+                    )
+                ).scalars().all()
+                for session_obj in stale:
+                    await session.delete(session_obj)
+                await session.commit()
+
             result = await agent.run(prompt, deps=deps)
             log.info(
                 "Weekly plan generated",

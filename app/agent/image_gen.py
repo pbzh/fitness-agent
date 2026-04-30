@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 from dataclasses import dataclass
+from typing import Literal
 
 from openai import AsyncOpenAI
 
@@ -21,7 +22,16 @@ class GeneratedImage:
 async def generate_image(
     prompt: str,
     *,
-    size: str = "1024x1024",
+    size: Literal[
+        "auto",
+        "1024x1024",
+        "1536x1024",
+        "1024x1536",
+        "256x256",
+        "512x512",
+        "1792x1024",
+        "1024x1792",
+    ] = "1024x1024",
     api_key: str | None = None,
 ) -> GeneratedImage:
     settings = get_settings()
@@ -42,14 +52,16 @@ async def generate_image(
         raise RuntimeError("Image API returned no data")
 
     item = resp.data[0]
-    if getattr(item, "b64_json", None):
-        data = base64.b64decode(item.b64_json)
-    elif getattr(item, "url", None):
+    b64_json = item.b64_json
+    url = item.url
+    if b64_json:
+        data = base64.b64decode(b64_json)
+    elif url:
         # Fallback: fetch URL bytes
         import httpx
 
         async with httpx.AsyncClient(timeout=30.0) as http:
-            r = await http.get(item.url)
+            r = await http.get(url)
             r.raise_for_status()
             data = r.content
     else:

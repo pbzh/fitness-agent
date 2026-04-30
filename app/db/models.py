@@ -76,7 +76,7 @@ class User(SQLModel, table=True):
 class AdminAuditLog(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     actor_user_id: UUID = Field(foreign_key="user.id", index=True)
-    target_user_id: UUID = Field(foreign_key="user.id", index=True)
+    target_user_id: UUID | None = Field(default=None, foreign_key="user.id", index=True)
     action: str = Field(index=True)
     before: dict | None = Field(default=None, sa_type=JSONB)
     after: dict | None = Field(default=None, sa_type=JSONB)

@@ -46,7 +46,7 @@ class AdminAuditRead(BaseModel):
     id: UUID
     actor_user_id: UUID
     actor_email: str | None = None
-    target_user_id: UUID
+    target_user_id: UUID | None = None
     target_email: str | None = None
     action: str
     before: dict | None
@@ -298,7 +298,7 @@ async def delete_user(
         session.add(
             AdminAuditLog(
                 actor_user_id=admin.id,
-                target_user_id=admin.id,
+                target_user_id=None,
                 action="delete_user",
                 before=before,
                 after={"deleted_user_id": str(user.id), "deleted_email": user.email},
@@ -325,7 +325,8 @@ async def list_audit_logs(
                 select(AdminAuditLog).order_by(AdminAuditLog.created_at.desc()).limit(bounded_limit)
             )
         ).scalars().all()
-        user_ids = {r.actor_user_id for r in rows} | {r.target_user_id for r in rows}
+        user_ids = {r.actor_user_id for r in rows}
+        user_ids |= {r.target_user_id for r in rows if r.target_user_id is not None}
         users = (
             await session.execute(select(User).where(User.id.in_(user_ids)))
         ).scalars().all()
@@ -336,7 +337,11 @@ async def list_audit_logs(
             actor_user_id=row.actor_user_id,
             actor_email=email_by_id.get(row.actor_user_id),
             target_user_id=row.target_user_id,
-            target_email=email_by_id.get(row.target_user_id),
+            target_email=(
+                email_by_id.get(row.target_user_id)
+                if row.target_user_id is not None
+                else None
+            ),
             action=row.action,
             before=row.before,
             after=row.after,

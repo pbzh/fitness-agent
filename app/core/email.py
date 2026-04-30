@@ -55,12 +55,13 @@ def _send_sync(cfg: dict, to: str, subject: str, body_html: str, body_text: str)
     msg.attach(MIMEText(body_html, "html", "utf-8"))
 
     ctx = ssl.create_default_context()
+    server: smtplib.SMTP
     if cfg.get("use_ssl"):
-        smtp_cls = partial(smtplib.SMTP_SSL, cfg["host"], int(cfg["port"]), context=ctx)
+        server = smtplib.SMTP_SSL(cfg["host"], int(cfg["port"]), context=ctx)
     else:
-        smtp_cls = partial(smtplib.SMTP, cfg["host"], int(cfg["port"]))
+        server = smtplib.SMTP(cfg["host"], int(cfg["port"]))
 
-    with smtp_cls() as server:
+    with server:
         if cfg.get("use_tls") and not cfg.get("use_ssl"):
             server.starttls(context=ctx)
         if cfg.get("username"):

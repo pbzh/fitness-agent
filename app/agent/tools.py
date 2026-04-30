@@ -22,6 +22,7 @@ from app.db.models import (
     MealSlot,
     UserProfile,
     WorkoutLocation,
+    WorkoutPlan,
     WorkoutSession,
     WorkoutType,
 )
@@ -187,6 +188,17 @@ def register_tools(agent: Agent[AgentDeps, str]) -> None:
             sched_time = _time(int(hh), int(mm))
 
         async with ctx.deps.session_factory() as session:
+            if plan_id is not None:
+                plan = (
+                    await session.execute(
+                        select(WorkoutPlan)
+                        .where(WorkoutPlan.id == plan_id)
+                        .where(WorkoutPlan.user_id == ctx.deps.user_id)
+                    )
+                ).scalar_one_or_none()
+                if plan is None:
+                    return "Cannot schedule workout: plan_id was not found for this user."
+
             ws = WorkoutSession(
                 user_id=ctx.deps.user_id,
                 plan_id=plan_id,

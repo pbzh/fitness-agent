@@ -8,7 +8,7 @@ answered", never "request 500s".
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Any, Literal, cast
 
 import structlog
 from pydantic_ai import Agent
@@ -48,7 +48,7 @@ async def classify_turn(
     model = build_model(boss_provider, api_key=api_key)
     classifier: Agent[None, str] = Agent(
         model=model,
-        output_type=_LITERAL,
+        output_type=cast(Any, _LITERAL),
         system_prompt=prompt_override or BOSS_PROMPT,
     )
 
