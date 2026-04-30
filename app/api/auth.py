@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
-from app.agent.prompts import COACH_META, default_prompts
+from app.agent.prompts import COACH_META
 from app.api.deps import get_approved_user_id, get_current_user
 from app.config import get_settings
 from app.db.models import AdminAuditLog, LoginAttempt, User, UserProfile
@@ -87,7 +87,10 @@ async def _ensure_default_profile(session: AsyncSession, user_id: UUID) -> None:
     profile = UserProfile(
         user_id=user_id,
         coach_providers={task: "local" for task in COACH_META},
-        coach_prompts=default_prompts(),
+        # Leave prompts unset so prompt resolution uses built-in defaults.
+        # Persisting the full default prompt text breaks on legacy SQL_ASCII
+        # Postgres databases because the prompts contain non-ASCII characters.
+        coach_prompts=None,
     )
     session.add(profile)
     await session.commit()
