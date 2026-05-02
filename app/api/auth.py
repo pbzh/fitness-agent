@@ -9,6 +9,7 @@ import bcrypt
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from jose import jwt
 from pydantic import BaseModel, Field
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
@@ -17,7 +18,7 @@ from app.api.deps import get_approved_user_id, get_current_user
 from app.config import get_settings
 from app.db.models import AdminAuditLog, LoginAttempt, User, UserProfile
 from app.db.session import get_session
-from app.security.rate_limit import check_auth_rate_limit, clear_auth_rate_limit
+from app.security.rate_limit import check_auth_rate_limit, clear_auth_rate_limit, client_ip
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 _background_tasks: set = set()
@@ -115,12 +116,12 @@ async def register(
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> RegisterResponse:
     await check_auth_rate_limit(request, req.email)
+    # Serialize "first user becomes admin" bootstrap so concurrent first-run
+    # registrations cannot all self-promote.
+    await session.execute(text("SELECT pg_advisory_xact_lock(918273645546372819)"))
     result = await session.execute(select(User).where(User.email == req.email))
     if result.scalar_one_or_none() is not None:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="An account with that email already exists",
-        )
+        return RegisterResponse(pending_approval=True)
     has_users = (await session.execute(select(User.id).limit(1))).first() is not None
     is_first_user = not has_users
     user = User(
@@ -193,39 +194,26 @@ async def login(
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> TokenResponse:
     await check_auth_rate_limit(request, credentials.email)
-    ip = request.headers.get("X-Forwarded-For", request.client.host if request.client else None)
+    ip = client_ip(request)
     ua = request.headers.get("User-Agent")
 
     result = await session.execute(select(User).where(User.email == credentials.email))
     user = result.scalar_one_or_none()
 
-    if not user or not verify_password(credentials.password, user.hashed_password):
+    password_ok = bool(user and verify_password(credentials.password, user.hashed_password))
+    if not password_ok or not user or not user.is_approved:
         session.add(LoginAttempt(
             email=credentials.email,
             user_id=user.id if user else None,
             success=False,
             ip_address=ip,
             user_agent=ua,
-            failure_reason="invalid_credentials",
+            failure_reason="pending_approval" if user and password_ok else "invalid_credentials",
         ))
         await session.commit()
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password",
-        )
-    if not user.is_approved:
-        session.add(LoginAttempt(
-            email=credentials.email,
-            user_id=user.id,
-            success=False,
-            ip_address=ip,
-            user_agent=ua,
-            failure_reason="pending_approval",
-        ))
-        await session.commit()
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Account is pending approval",
         )
 
     session.add(LoginAttempt(

@@ -145,7 +145,7 @@ async def workout_plan_ics(
         )[:300]
         events.append(
             {
-                "uid": f"workout-{s.id}@fitness-agent",
+                "uid": f"workout-{s.id}@coacher",
                 "start": start,
                 "end": end,
                 "summary": f"{s.workout_type.value.title()} ({s.intensity.value})",
@@ -204,7 +204,7 @@ async def meal_plan_ics(
             macros.append(f"{m.fat_g:.0f}F")
         events.append(
             {
-                "uid": f"meal-{m.id}@fitness-agent",
+                "uid": f"meal-{m.id}@coacher",
                 "start": start,
                 "end": end,
                 "summary": f"{m.slot.value.title()}: {m.name}",
@@ -260,7 +260,7 @@ async def upcoming_ics(
         start = datetime.combine(s.scheduled_date, datetime.min.time()).replace(hour=hh, minute=mm)
         events.append(
             {
-                "uid": f"workout-{s.id}@fitness-agent",
+                "uid": f"workout-{s.id}@coacher",
                 "start": start,
                 "end": start + timedelta(minutes=max(s.duration_min, 15)),
                 "summary": f"💪 {s.workout_type.value.title()}",
@@ -277,7 +277,7 @@ async def upcoming_ics(
         start = datetime.combine(m.scheduled_date, datetime.min.time()).replace(hour=hh, minute=mm)
         events.append(
             {
-                "uid": f"meal-{m.id}@fitness-agent",
+                "uid": f"meal-{m.id}@coacher",
                 "start": start,
                 "end": start + timedelta(minutes=30),
                 "summary": f"🍽 {m.slot.value.title()}: {m.name}",

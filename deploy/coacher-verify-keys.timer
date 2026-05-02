@@ -1,6 +1,6 @@
 [Unit]
-Description=Daily encrypted-key verification for fitness-agent
-Requires=fitness-agent-verify-keys.service
+Description=Daily encrypted-key verification for coacher
+Requires=coacher-verify-keys.service
 
 [Timer]
 # 03:30 local time every day; Persistent=true catches missed runs after

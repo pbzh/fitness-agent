@@ -110,8 +110,8 @@ class UserProfile(SQLModel, table=True):
     # Missing keys fall back to PROVIDER_FOR_X .env defaults.
     coach_providers: dict[str, str] | None = Field(default=None, sa_type=JSONB)
     # API keys, *encrypted* with app.security.secrets.encrypt(). Keys are
-    # provider names: "anthropic" | "openai" | "local". Missing keys fall
-    # back to the corresponding .env value.
+    # provider names: "anthropic" | "openai" | "local". Cloud keys are
+    # user-scoped; the local provider may still use deployment config.
     api_keys_enc: dict[str, str] | None = Field(default=None, sa_type=JSONB)
     # Privacy + i18n knobs.
     local_only: bool = False

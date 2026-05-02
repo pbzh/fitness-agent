@@ -70,43 +70,40 @@ def _env_provider_for(task: TaskClass) -> Provider:
 
 
 def _resolve_provider(task: TaskClass) -> Provider:
-    """Backwards-compat: .env-only resolver (used by the manager classifier)."""
-    settings = get_settings()
-    chosen = _env_provider_for(task)
-    # Fall back to local if the chosen cloud provider has no API key
-    if chosen == Provider.ANTHROPIC and not settings.anthropic_api_key:
-        chosen = Provider.LOCAL
-    if chosen == Provider.OPENAI and not settings.openai_api_key:
-        chosen = Provider.LOCAL
-    return chosen
+    """Backwards-compat: .env-only resolver (used by admin/default routing views)."""
+    return _env_provider_for(task)
 
 
 def build_model(provider: Provider, api_key: str | None = None) -> Model:
     """Construct a PydanticAI Model for ``provider``.
 
-    ``api_key`` overrides the .env value when provided.
+    ``api_key`` is required for cloud providers and optional for local.
     """
     settings = get_settings()
 
     if provider == Provider.ANTHROPIC:
+        if not api_key:
+            raise RuntimeError("Anthropic API key is not configured for this user")
         return AnthropicModel(
             model_name=settings.anthropic_model,
-            provider=AnthropicProvider(api_key=api_key or settings.anthropic_api_key),
+            provider=AnthropicProvider(api_key=api_key),
         )
 
     if provider == Provider.OPENAI:
+        if not api_key:
+            raise RuntimeError("OpenAI API key is not configured for this user")
         return OpenAIModel(
             model_name=settings.openai_model,
-            provider=OpenAIProvider(api_key=api_key or settings.openai_api_key),
+            provider=OpenAIProvider(api_key=api_key),
         )
 
     # Local llama.cpp / Ollama via OpenAI-compatible endpoint
     return OpenAIModel(
-        model_name=get_effective_local_model(),
-        provider=OpenAIProvider(
-            base_url=settings.local_llm_base_url,
-            api_key=api_key or settings.local_llm_api_key,
-        ),
+            model_name=get_effective_local_model(),
+            provider=OpenAIProvider(
+                base_url=settings.local_llm_base_url,
+                api_key=api_key or settings.local_llm_api_key,
+            ),
     )
 
 

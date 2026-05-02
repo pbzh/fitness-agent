@@ -10,12 +10,16 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import ipaddress
+import time
 from typing import Any
 from urllib.parse import unquote, urlparse
 
 from fastapi import HTTPException, Request, status
 
 from app.config import get_settings
+
+_memory_auth_counts: dict[str, tuple[int, float]] = {}
+_memory_auth_lock = asyncio.Lock()
 
 
 def client_ip(request: Request) -> str:
@@ -37,7 +41,7 @@ def client_ip(request: Request) -> str:
 
 def _auth_key(request: Request, email: str) -> str:
     raw = f"{client_ip(request)}:{email.lower()}".encode()
-    return "fitness-agent:auth-rate:" + hashlib.sha256(raw).hexdigest()
+    return "coacher:auth-rate:" + hashlib.sha256(raw).hexdigest()
 
 
 def _encode_command(*parts: str | int) -> bytes:
@@ -103,6 +107,27 @@ async def _redis_command(*parts: str | int) -> Any:
         await writer.wait_closed()
 
 
+async def _memory_incr(key: str, window_seconds: int) -> int:
+    now = time.monotonic()
+    async with _memory_auth_lock:
+        count, expires_at = _memory_auth_counts.get(key, (0, now + window_seconds))
+        if expires_at <= now:
+            count = 0
+            expires_at = now + window_seconds
+        count += 1
+        _memory_auth_counts[key] = (count, expires_at)
+
+        expired = [k for k, (_, expiry) in _memory_auth_counts.items() if expiry <= now]
+        for expired_key in expired:
+            _memory_auth_counts.pop(expired_key, None)
+        return count
+
+
+async def _memory_clear(key: str) -> None:
+    async with _memory_auth_lock:
+        _memory_auth_counts.pop(key, None)
+
+
 async def check_auth_rate_limit(request: Request, email: str) -> None:
     settings = get_settings()
     if settings.auth_rate_limit_backend in {"proxy", "disabled"}:
@@ -110,9 +135,12 @@ async def check_auth_rate_limit(request: Request, email: str) -> None:
 
     key = _auth_key(request, email)
     try:
-        count = int(await _redis_command("INCR", key))
-        if count == 1:
-            await _redis_command("EXPIRE", key, settings.auth_rate_limit_window_seconds)
+        if settings.auth_rate_limit_backend == "memory":
+            count = await _memory_incr(key, settings.auth_rate_limit_window_seconds)
+        else:
+            count = int(await _redis_command("INCR", key))
+            if count == 1:
+                await _redis_command("EXPIRE", key, settings.auth_rate_limit_window_seconds)
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -128,6 +156,9 @@ async def check_auth_rate_limit(request: Request, email: str) -> None:
 
 async def clear_auth_rate_limit(request: Request, email: str) -> None:
     settings = get_settings()
+    if settings.auth_rate_limit_backend == "memory":
+        await _memory_clear(_auth_key(request, email))
+        return
     if settings.auth_rate_limit_backend != "redis":
         return
     try:

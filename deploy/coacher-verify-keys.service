@@ -5,7 +5,7 @@ After=network-online.target
 [Service]
 Type=oneshot
 User=root
-WorkingDirectory=/opt/fitness-agent
+WorkingDirectory=/opt/coacher
 Environment="PATH=/root/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 # If you pinned SETTINGS_ENCRYPTION_KEY in the main service unit, mirror
 # it here (or use EnvironmentFile= for both).

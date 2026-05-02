@@ -83,7 +83,7 @@ Postgres    PydanticAI      APScheduler
        ┌────────┼────────┬─────────────┐
        ▼        ▼        ▼             ▼
 Boss       Coaches   Tools         Files
-  (router) (4 personas)│        (/opt/fitness-agent-data
+  (router) (4 personas)│        (/opt/coacher-data
                 ┌──────┤            + encrypted keys)
                 ▼      ▼
         Provider     11 tools
@@ -130,8 +130,8 @@ a structured classifier and free-form prose silently breaks routing.
 
 ### Encrypted API keys
 
-API keys can be supplied in `.env` (server-wide) or stored per-user in
-the DB. DB keys are encrypted with Fernet. The encryption key resolves
+Cloud API keys live per-user in the DB and are encrypted with Fernet.
+The encryption key resolves
 in this order:
 
 1. `SETTINGS_ENCRYPTION_KEY` env var (recommended for production)
@@ -139,8 +139,7 @@ in this order:
    (chmod 600)
 
 If you lose the encryption key, all DB-stored API keys become unreadable
-and the runtime falls back to `.env` values with a warning. **Back this
-file up.**
+until users re-enter them. **Back this file up.**
 
 API keys are never returned to clients — `GET /profile/llm` reports
 `"set"` / `"unset"` only.
@@ -238,9 +237,8 @@ locale-gen
 update-locale LANG=en_US.UTF-8 LC_TIME=de_CH.UTF-8 LC_NUMERIC=de_CH.UTF-8
 
 # File store
-# Default remains /opt/fitness-agent-data for backward compatibility.
-mkdir -p /opt/fitness-agent-data
-chmod 750 /opt/fitness-agent-data
+mkdir -p /opt/coacher-data
+chmod 750 /opt/coacher-data
 
 # Pull and configure
 mkdir -p /opt && cd /opt
@@ -303,22 +301,21 @@ LOCAL_LLM_BASE_URL=http://10.1.10.50:8080/v1
 # only set this to override.
 LOCAL_LLM_API_KEY=not-needed
 
-# Cloud LLM (leave key blank to disable that provider)
-ANTHROPIC_API_KEY=sk-ant-...
+# Cloud LLM model names (user API keys are stored encrypted in Postgres)
 ANTHROPIC_MODEL=claude-opus-4-7
-OPENAI_API_KEY=sk-...
 OPENAI_MODEL=gpt-5.3
 OPENAI_IMAGE_MODEL=gpt-image-1
 
 # Per-coach defaults (users can override in Settings)
 PROVIDER_FOR_CHAT=local
+PROVIDER_FOR_BOSS=anthropic
 PROVIDER_FOR_PLANNING=anthropic
 PROVIDER_FOR_NUTRITION=anthropic
 PROVIDER_FOR_PROGRESS=openai
 PROVIDER_FOR_MENTAL_HEALTH=anthropic
 
 # File storage
-FILE_STORAGE_DIR=/opt/fitness-agent-data
+FILE_STORAGE_DIR=/opt/coacher-data
 MAX_UPLOAD_BYTES=26214400   # 25 MB
 
 # Optional: pin the encryption key (otherwise auto-provisioned on first run)
@@ -425,8 +422,8 @@ Back up these alongside the DB — losing either breaks the agent:
 
 | Path | What |
 |---|---|
-| `/opt/fitness-agent-data/.encryption.key` | Fernet key for DB-stored API keys |
-| `/opt/fitness-agent-data/<shard>/<uuid>.<ext>` | uploads + generated images |
+| `/opt/coacher-data/.encryption.key` | Fernet key for DB-stored API keys |
+| `/opt/coacher-data/<shard>/<uuid>.<ext>` | uploads + generated images |
 
 If you'd rather not have the key on disk, set `SETTINGS_ENCRYPTION_KEY`
 in the systemd unit's `Environment=` and delete the file.
@@ -437,24 +434,23 @@ in the systemd unit's `Environment=` and delete the file.
 chat endpoint retries 3× with exponential backoff. If persistent, switch
 that coach's provider to `openai` in Settings, or in `.env`.
 
-**`401 invalid x-api-key`** — your Anthropic / OpenAI key is wrong or
-expired. Either rotate the value in `.env` (server-wide) or in Settings →
-"LLM providers & API keys" (per-user, encrypted in DB).
+**`401 invalid x-api-key`** — the user's Anthropic / OpenAI key is wrong
+or expired. Rotate it in Settings → "LLM providers & API keys".
 
 **`Could not probe local model`** at startup — the local llama.cpp endpoint
 is unreachable. The service still boots and falls back to the configured
 default model name; cloud-routed coaches still work.
 
-**Generated images aren't appearing in chat** — `OPENAI_API_KEY` missing or
-out of credits. Image generation requires OpenAI; Anthropic has no image
-endpoint.
+**Generated images aren't appearing in chat** — the user has no OpenAI key
+configured, or that key is out of credits. Image generation requires OpenAI;
+Anthropic has no image endpoint.
 
 **`concurrent operations are not permitted`** — a tool is sharing a
 session. Every tool must wrap its DB work in
 `async with ctx.deps.session_factory() as session:`.
 
 **Stored DB API keys stop decrypting after a restart** — the encryption
-key changed. Check `/opt/fitness-agent-data/.encryption.key` exists and is
+key changed. Check `/opt/coacher-data/.encryption.key` exists and is
 unchanged, or that `SETTINGS_ENCRYPTION_KEY` env matches what was used
 when the keys were stored.
 

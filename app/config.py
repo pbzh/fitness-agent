@@ -7,7 +7,7 @@ from uuid import UUID
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ProviderName = Literal["local", "anthropic", "openai"]
-AuthRateLimitBackend = Literal["proxy", "redis", "disabled"]
+AuthRateLimitBackend = Literal["memory", "proxy", "redis", "disabled"]
 
 
 class Settings(BaseSettings):
@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     jwt_secret: str
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 10080
-    auth_rate_limit_backend: AuthRateLimitBackend = "proxy"
+    auth_rate_limit_backend: AuthRateLimitBackend = "memory"
     auth_rate_limit_max_attempts: int = 10
     auth_rate_limit_window_seconds: int = 300
     auth_rate_limit_redis_url: str | None = None
@@ -32,11 +32,9 @@ class Settings(BaseSettings):
     local_llm_api_key: str = "not-needed"
 
     # Anthropic
-    anthropic_api_key: str | None = None
     anthropic_model: str = "claude-opus-4-7"
 
     # OpenAI
-    openai_api_key: str | None = None
     openai_model: str = "gpt-5.3"
     openai_image_model: str = "gpt-image-1"
 
@@ -49,13 +47,8 @@ class Settings(BaseSettings):
     provider_for_mental_health: ProviderName = "anthropic"
 
     # File storage (uploads + generated images)
-    file_storage_dir: str = "/opt/fitness-agent-data"
+    file_storage_dir: str = "/opt/coacher-data"
     max_upload_bytes: int = 25 * 1024 * 1024  # 25 MB
-
-    # External
-    garmin_email: str | None = None
-    garmin_password: str | None = None
-    google_calendar_id: str | None = None
 
     log_level: str = "INFO"
     timezone: str = "Europe/Zurich"

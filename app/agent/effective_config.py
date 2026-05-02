@@ -69,15 +69,16 @@ async def load_effective_config(user_id: UUID) -> EffectiveLLMConfig:
 
 
 def resolve_api_key(provider: Provider, cfg: EffectiveLLMConfig) -> str | None:
-    """User key if present, otherwise the .env value for that provider."""
+    """User key if present.
+
+    Cloud-provider keys are user-scoped and stored encrypted in the DB.
+    The local provider may still use a deployment-level API key when the
+    upstream local endpoint requires one.
+    """
     user_key = cfg.key_for(provider)
     if user_key:
         return user_key
     settings = get_settings()
-    if provider == Provider.ANTHROPIC:
-        return settings.anthropic_api_key
-    if provider == Provider.OPENAI:
-        return settings.openai_api_key
     if provider == Provider.LOCAL:
         return settings.local_llm_api_key
     return None

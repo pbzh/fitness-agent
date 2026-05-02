@@ -25,7 +25,6 @@ from app.agent.prompts import resolve_prompt
 from app.agent.router import Provider, TaskClass, _env_provider_for, build_model
 from app.agent.tools import register_tools
 from app.api.deps import get_approved_user_id
-from app.config import get_settings
 from app.db.models import AgentMessage, UserProfile
 from app.db.models import File as DBFile
 from app.db.session import AsyncSessionLocal
@@ -38,7 +37,7 @@ log = structlog.get_logger()
 
 def rolling_conversation_id(user_id: UUID) -> UUID:
     """Deterministic per-user conversation id for the rolling thread."""
-    return uuid5(NAMESPACE_DNS, f"fitness-agent.rolling.{user_id}")
+    return uuid5(NAMESPACE_DNS, f"coacher.rolling.{user_id}")
 
 
 class ChatRequest(BaseModel):
@@ -197,7 +196,6 @@ async def chat(
                 )
             ).scalars().all()
             recent_user_msgs = [m.content for m in reversed(recent)]
-        settings = get_settings()
         default_boss = _env_provider_for(TaskClass.AUTO)
         boss_provider = eff.provider_for("auto", default_boss)
         boss_api_key = resolve_api_key(boss_provider, eff)
@@ -238,7 +236,6 @@ async def chat(
 
     # Resolve provider: user override > .env default. Then fall back if the
     # chosen cloud provider has neither user nor .env API key.
-    settings = get_settings()
     local_only = bool(profile.local_only) if profile else False
 
     if local_only:
@@ -252,13 +249,7 @@ async def chat(
         resolved_provider = eff.provider_for(resolved_task.value, _env_provider_for(resolved_task))
 
         def _has_key(p: Provider) -> bool:
-            if eff.key_for(p):
-                return True
-            if p == Provider.ANTHROPIC:
-                return bool(settings.anthropic_api_key)
-            if p == Provider.OPENAI:
-                return bool(settings.openai_api_key)
-            return True  # local always usable
+            return p == Provider.LOCAL or bool(eff.key_for(p))
 
         if resolved_provider in (Provider.ANTHROPIC, Provider.OPENAI) and not _has_key(
             resolved_provider

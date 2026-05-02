@@ -35,13 +35,12 @@ async def generate_image(
     api_key: str | None = None,
 ) -> GeneratedImage:
     settings = get_settings()
-    resolved_api_key = api_key or settings.openai_api_key
-    if not resolved_api_key:
+    if not api_key:
         raise RuntimeError(
-            "OPENAI_API_KEY is not configured — image generation requires OpenAI."
+            "OpenAI image generation requires a user-configured OpenAI API key."
         )
 
-    client = AsyncOpenAI(api_key=resolved_api_key)
+    client = AsyncOpenAI(api_key=api_key)
     resp = await client.images.generate(
         model=settings.openai_image_model,
         prompt=prompt,

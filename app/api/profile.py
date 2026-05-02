@@ -1,6 +1,7 @@
 """User profile endpoints."""
 
 import json
+import unicodedata
 from datetime import date, datetime
 from enum import StrEnum
 from typing import Annotated, Any
@@ -133,7 +134,6 @@ class LLMConfigRead(BaseModel):
     env_providers: dict[str, str]      # task -> .env default (read-only)
     provider_models: dict[str, str]    # provider -> model name (for badge label)
     api_keys_set: dict[str, bool]      # provider -> "set in DB?"
-    api_keys_env: dict[str, bool]      # provider -> "set in .env?"
     local_only: bool                   # if true, every coach forced to local
     chat_retention_days: int | None    # null = keep forever
     preferred_language: str | None     # "en" | "de" | null=auto
@@ -200,6 +200,7 @@ class LLMConfigUpdate(BaseModel):
 class InnerTeamRole(BaseModel):
     id: str = Field(min_length=1, max_length=50, pattern=r"^[a-z0-9_-]+$")
     name: str = Field(min_length=1, max_length=60)
+    archetype: str = Field(default="warrior", min_length=1, max_length=40, pattern=r"^[a-z0-9_-]+$")
     description: str = Field(default="", max_length=200)
     intention: str = Field(default="", max_length=400)
     strengths: list[str] = Field(default_factory=list, max_length=8)
@@ -267,6 +268,44 @@ class InnerTeamUpdate(BaseModel):
         return value
 
 
+_ASCII_REPLACEMENTS = str.maketrans(
+    {
+        "\u00c4": "Ae",
+        "\u00d6": "Oe",
+        "\u00dc": "Ue",
+        "\u00df": "ss",
+        "\u00e4": "ae",
+        "\u00f6": "oe",
+        "\u00fc": "ue",
+        "\u2018": "'",
+        "\u2019": "'",
+        "\u201c": '"',
+        "\u201d": '"',
+        "\u2013": "-",
+        "\u2014": "-",
+        "\u2026": "...",
+        "\u00a0": " ",
+    }
+)
+
+
+def _ascii_safe_text(value: str) -> str:
+    value = value.translate(_ASCII_REPLACEMENTS)
+    normalized = unicodedata.normalize("NFKD", value)
+    return normalized.encode("ascii", "ignore").decode("ascii")
+
+
+def _ascii_safe_inner_team(value: Any) -> Any:
+    """Legacy SQL_ASCII Postgres cannot persist arbitrary Unicode in JSONB."""
+    if isinstance(value, str):
+        return _ascii_safe_text(value)
+    if isinstance(value, list):
+        return [_ascii_safe_inner_team(item) for item in value]
+    if isinstance(value, dict):
+        return {key: _ascii_safe_inner_team(item) for key, item in value.items()}
+    return value
+
+
 @router.get("/coach-prompts/defaults", response_model=list[CoachPromptDefault])
 async def get_coach_prompt_defaults(
     _: Annotated[UUID, Depends(get_approved_user_id)],
@@ -289,7 +328,6 @@ async def get_coach_prompt_defaults(
 
 
 def _llm_snapshot(profile: UserProfile | None) -> LLMConfigRead:
-    settings = get_settings()
     coach_providers = dict((profile.coach_providers if profile else None) or {})
     env_providers = {
         task: _env_provider_for(TaskClass(task)).value for task in COACH_META
@@ -301,17 +339,10 @@ def _llm_snapshot(profile: UserProfile | None) -> LLMConfigRead:
         env_providers=env_providers,
         provider_models={
             "local":     get_effective_local_model(),
-            "anthropic": settings.anthropic_model,
-            "openai":    settings.openai_model,
+            "anthropic": get_settings().anthropic_model,
+            "openai":    get_settings().openai_model,
         },
         api_keys_set={p: (p in enc) for p in _API_KEY_PROVIDERS},
-        api_keys_env={
-            "anthropic": bool(settings.anthropic_api_key),
-            "openai":    bool(settings.openai_api_key),
-            "local": bool(
-                settings.local_llm_api_key and settings.local_llm_api_key != "not-needed"
-            ),
-        },
         local_only=bool(profile.local_only) if profile else False,
         chat_retention_days=profile.chat_retention_days if profile else None,
         preferred_language=profile.preferred_language if profile else None,
@@ -431,7 +462,7 @@ async def update_inner_team(
             settings["active_reason"] = "Active role reset because the previous role was removed."
 
         settings["updated_at"] = datetime.utcnow().isoformat()
-        profile.inner_team = settings
+        profile.inner_team = _ascii_safe_inner_team(settings)
         profile.updated_at = datetime.utcnow()
         await session.commit()
         await session.refresh(profile)

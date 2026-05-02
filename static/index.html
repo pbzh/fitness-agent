@@ -842,8 +842,9 @@
             border: 1px solid color-mix(in srgb, var(--role-color, var(--primary)) 40%, transparent);
             color: var(--role-color, var(--primary));
             transition: transform 0.12s;
+            font-size: 17px;
+            line-height: 1;
         }
-        .inner-role-avatar svg { width: 16px; height: 16px; }
         .inner-role-row.active .inner-role-avatar { transform: scale(1.08); }
 
         .inner-role-name { font-weight: 600; font-size: 0.95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -855,8 +856,9 @@
             background: var(--surface-2); color: var(--text-2);
             display: flex; align-items: center; justify-content: center; cursor: pointer;
             transition: border-color 0.12s, background 0.12s, color 0.12s;
+            font-size: 19px;
+            line-height: 1;
         }
-        .inner-archetype-btn svg { width: 18px; height: 18px; }
         .inner-archetype-btn:hover {
             border-color: color-mix(in srgb, var(--role-color) 60%, transparent);
             color: var(--role-color);
@@ -940,8 +942,9 @@
             color: var(--role-color, var(--primary));
             box-shadow: 0 4px 20px color-mix(in srgb, var(--role-color, var(--primary)) 25%, transparent);
             transition: box-shadow 0.3s;
+            font-size: 42px;
+            line-height: 1;
         }
-        .inner-active-avatar svg { width: 38px; height: 38px; }
         .inner-stage-archetype-label {
             font-family: 'JetBrains Mono', monospace;
             font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.1em;
@@ -2325,9 +2328,9 @@
 
 </div>
 <script>
-    const tokenKey = "fitness-agent-token";
-    const emailKey = "fitness-agent-email";
-    const langKey  = "fitness-agent-lang";
+    const tokenKey = "coacher-token";
+    const emailKey = "coacher-email";
+    const langKey  = "coacher-lang";
 
     /* ── i18n ─────────────────────────────────────────────────── */
     const I18N = {
@@ -2625,7 +2628,7 @@
         applyI18n();
     }
 
-    const themeKey = "fitness-agent-theme";
+    const themeKey = "coacher-theme";
 
     let conversationId          = null;
     let currentTask             = "auto";  // Boss picks the coach by default
@@ -2656,16 +2659,42 @@
         isAdmin:    false,
         routing:    {},
         innerTeam:  null,
-        showTokens: localStorage.getItem("fitness-agent-tokens") === "1",
-        showModels: localStorage.getItem("fitness-agent-models") === "1"
+        showTokens: localStorage.getItem("coacher-tokens") === "1",
+        showModels: localStorage.getItem("coacher-models") === "1"
     };
 
     const $ = id => document.getElementById(id);
 
+    const protectedObjectUrls = new Map();
+
     function authenticatedUrl(path) {
-        const url = new URL(path, window.location.origin);
-        if (state.token) url.searchParams.set("access_token", state.token);
-        return url.toString();
+        return new URL(path, window.location.origin).toString();
+    }
+
+    function clearProtectedObjectUrls() {
+        for (const url of protectedObjectUrls.values()) URL.revokeObjectURL(url);
+        protectedObjectUrls.clear();
+    }
+
+    async function fetchProtectedObjectUrl(path) {
+        const cached = protectedObjectUrls.get(path);
+        if (cached) return cached;
+        const res = await request(path, { headers: { "Authorization": `Bearer ${state.token}` } });
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        protectedObjectUrls.set(path, url);
+        return url;
+    }
+
+    async function triggerProtectedDownload(path, filename) {
+        const url = await fetchProtectedObjectUrl(path);
+        const link = document.createElement("a");
+        link.href = url;
+        if (filename) link.download = filename;
+        link.style.display = "none";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
     }
 
     function updateProtectedResourceLinks() {
@@ -2727,8 +2756,11 @@
         const res = await fetch(path, options);
         if (res.status === 401) { logout(); throw new Error("Session expired"); }
         if (!res.ok) {
-            let msg;
-            try { msg = (await res.json()).detail; } catch (_) { msg = await res.text(); }
+            let msg = "";
+            const raw = await res.text();
+            if (raw) {
+                try { msg = JSON.parse(raw).detail || raw; } catch (_) { msg = raw; }
+            }
             throw new Error(msg || `Request failed with ${res.status}`);
         }
         return res;
@@ -2877,12 +2909,12 @@
     }
     function setDeveloperDetails(enabled) {
         state.showTokens = enabled;
-        localStorage.setItem("fitness-agent-tokens", state.showTokens ? "1" : "0");
+        localStorage.setItem("coacher-tokens", state.showTokens ? "1" : "0");
         applyTokenToggle();
     }
     function setDeveloperModels(enabled) {
         state.showModels = enabled;
-        localStorage.setItem("fitness-agent-models", state.showModels ? "1" : "0");
+        localStorage.setItem("coacher-models", state.showModels ? "1" : "0");
         applyTokenToggle();
     }
     $("developer-details-toggle").addEventListener("change", e => {
@@ -2903,7 +2935,7 @@
     /*
     $("token-toggle").addEventListener("click", () => {
         state.showTokens = !state.showTokens;
-        localStorage.setItem("fitness-agent-tokens", state.showTokens ? "1" : "0");
+        localStorage.setItem("coacher-tokens", state.showTokens ? "1" : "0");
         applyTokenToggle();
     });
     */
@@ -2975,6 +3007,7 @@
     }
 
     function logout() {
+        clearProtectedObjectUrls();
         state.token = "";
         state.userId = "";
         state.isAdmin = false;
@@ -3040,18 +3073,18 @@
     }
 
     const ARCHETYPES = [
-        { id: 'warrior',   label: 'Warrior',   color: '#e05b3a', icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16L16 4"/><path d="M4 4l12 12"/><path d="M7 4l1-1h1M12 16l1 1h1"/></svg>' },
-        { id: 'architect', label: 'Architect', color: '#4e9be6', icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="13" width="14" height="4" rx="1"/><path d="M6 13V7h8v6"/><path d="M9 7V4h2v3"/></svg>' },
-        { id: 'healer',    label: 'Healer',    color: '#4ec994', icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M10 4v12M4 10h12"/></svg>' },
-        { id: 'analyst',   label: 'Analyst',   color: '#c4a840', icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="12" width="3" height="5" rx="1"/><rect x="8.5" y="8" width="3" height="9" rx="1"/><rect x="14" y="5" width="3" height="12" rx="1"/><path d="M3 17.5h14"/></svg>' },
-        { id: 'creator',   label: 'Creator',   color: '#b04ee6', icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2a5 5 0 00-2 9.5V14h4v-2.5A5 5 0 0010 2z"/><path d="M8 16h4M8.5 18h3"/></svg>' },
-        { id: 'explorer',  label: 'Explorer',  color: '#4ec4c4', icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="7"/><path d="M13 7l-2 5-5 2 2-5z"/></svg>' },
-        { id: 'guardian',  label: 'Guardian',  color: '#e6844e', icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2L4 5v5c0 3.8 2.6 6.3 6 7.2C13.4 16.3 16 13.8 16 10V5z"/></svg>' },
-        { id: 'sage',      label: 'Sage',      color: '#8bc44e', icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="9" height="13" rx="1"/><path d="M7 3V16M4 7h4M4 11h4"/><path d="M13 6h2a1 1 0 011 1v9a1 1 0 01-1 1h-2"/></svg>' },
-        { id: 'leader',    label: 'Leader',    color: '#e6c440', icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2l2 5h5l-4 3 1.5 5L10 12l-4.5 3L7 10 3 7h5z"/></svg>' },
-        { id: 'shadow',    label: 'Shadow',    color: '#9c8ce6', icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M14.5 10A6.5 6.5 0 018 3.5a6.5 6.5 0 000 13A6.5 6.5 0 0014.5 10z"/></svg>' },
-        { id: 'athlete',   label: 'Athlete',   color: '#e64e60', icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2L6 10h5l-2 8 9-10h-6z"/></svg>' },
-        { id: 'monk',      label: 'Monk',      color: '#4e9e8c', icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="7"/><circle cx="10" cy="10" r="3.5"/><circle cx="10" cy="10" r="1" fill="currentColor" stroke="none"/></svg>' },
+        { id: 'warrior',   label: 'Warrior',   color: '#e05b3a', icon: '⚔️' },
+        { id: 'architect', label: 'Architect', color: '#4e9be6', icon: '🏛️' },
+        { id: 'healer',    label: 'Healer',    color: '#4ec994', icon: '💚' },
+        { id: 'analyst',   label: 'Analyst',   color: '#c4a840', icon: '📊' },
+        { id: 'creator',   label: 'Creator',   color: '#b04ee6', icon: '🎨' },
+        { id: 'explorer',  label: 'Explorer',  color: '#4ec4c4', icon: '🧭' },
+        { id: 'guardian',  label: 'Guardian',  color: '#e6844e', icon: '🛡️' },
+        { id: 'sage',      label: 'Sage',      color: '#8bc44e', icon: '📚' },
+        { id: 'leader',    label: 'Leader',    color: '#e6c440', icon: '👑' },
+        { id: 'shadow',    label: 'Shadow',    color: '#9c8ce6', icon: '🌘' },
+        { id: 'athlete',   label: 'Athlete',   color: '#e64e60', icon: '🏃' },
+        { id: 'monk',      label: 'Monk',      color: '#4e9e8c', icon: '🧘' },
     ];
 
     function archetypeFor(role) {
@@ -3134,7 +3167,7 @@
             btn.style.setProperty('--role-color', arch.color);
             const avatar = document.createElement("div");
             avatar.className = "inner-role-avatar";
-            avatar.innerHTML = arch.icon;
+            avatar.textContent = arch.icon;
             const body = document.createElement("div");
             const name = document.createElement("div");
             name.className = "inner-role-name";
@@ -3153,7 +3186,7 @@
 
         const avatarEl = $("inner-active-avatar");
         if (avatarEl) {
-            avatarEl.innerHTML = activeArch.icon;
+            avatarEl.textContent = activeArch.icon;
             avatarEl.style.setProperty('--role-color', activeArch.color);
         }
         const activePanel = $("inner-active-panel");
@@ -3186,7 +3219,7 @@
                 b.className = "inner-archetype-btn" + (a.id === (active.archetype || ARCHETYPES[0].id) ? " active" : "");
                 b.style.setProperty('--role-color', a.color);
                 b.title = a.label;
-                b.innerHTML = a.icon;
+                b.textContent = a.icon;
                 b.addEventListener("click", () => {
                     picker.querySelectorAll(".inner-archetype-btn").forEach(x => x.classList.remove("active"));
                     b.classList.add("active");
@@ -3380,13 +3413,12 @@
             const r = await request("/profile/llm", { headers: authHeaders() });
             cfg = await r.json();
         } catch (_) {
-            cfg = { coach_providers: {}, env_providers: {}, api_keys_set: {}, api_keys_env: {} };
+            cfg = { coach_providers: {}, env_providers: {}, api_keys_set: {} };
         }
         const providerForCoach = (task) =>
             cfg.coach_providers[task] || cfg.env_providers[task] || "local";
         const sourceFor = (provider) =>
-            cfg.api_keys_set[provider] ? "DB-encrypted" :
-            cfg.api_keys_env[provider] ? ".env" : "unset";
+            cfg.api_keys_set[provider] ? "DB-encrypted" : "unset";
 
         const rows = [
             {
@@ -3474,7 +3506,7 @@
                 info: "Encryption key",
                 stored: [["disk", "/opt/coacher-data/.encryption.key (or SETTINGS_ENCRYPTION_KEY env)"]],
                 sent:   ["never"],
-                note:   "Loses the key → API keys become unreadable; service falls back to .env values.",
+                note:   "Lose the key and stored API keys become unreadable until re-entered.",
             },
             {
                 info: "Auth (password + JWT)",
@@ -3719,14 +3751,14 @@
             input.id = `llm-key-${k.provider}`;
             input.placeholder = cfg.api_keys_set[k.provider]
                 ? "•••••••• (set — leave blank to keep)"
-                : (cfg.api_keys_env[k.provider] ? "Using .env value" : "Not set");
+                : "Not set";
 
             const status = document.createElement("span");
             status.className = "llm-key-status" + (cfg.api_keys_set[k.provider] ? " set" : "");
             status.id = `llm-key-status-${k.provider}`;
             status.textContent = cfg.api_keys_set[k.provider]
                 ? "DB"
-                : (cfg.api_keys_env[k.provider] ? ".env" : "unset");
+                : "unset";
 
             row.append(label, input, status);
             body.appendChild(row);
@@ -4188,10 +4220,11 @@
 
                 if ((f.mime_type || "").startsWith("image/")) {
                     const img = document.createElement("img");
-                    img.src = authenticatedUrl("/files/" + f.id);
+                    img.alt = f.filename;
                     img.style.maxWidth = "320px"; img.style.maxHeight = "320px";
                     img.style.borderRadius = "8px"; img.style.marginTop = "6px";
                     item.appendChild(img);
+                    fetchProtectedObjectUrl("/files/" + f.id).then(url => { img.src = url; }).catch(() => {});
                 }
 
                 const actions = document.createElement("div");
@@ -4199,8 +4232,12 @@
                 const dl = document.createElement("a");
                 dl.className = "text-btn"; dl.style.height = "32px"; dl.style.padding = "0 10px";
                 dl.style.display = "inline-flex"; dl.style.alignItems = "center";
-                dl.style.textDecoration = "none"; dl.href = authenticatedUrl("/files/" + f.id); dl.download = f.filename;
+                dl.style.textDecoration = "none"; dl.href = "#"; dl.download = f.filename;
                 dl.textContent = "Download";
+                dl.addEventListener("click", async (event) => {
+                    event.preventDefault();
+                    await triggerProtectedDownload("/files/" + f.id, f.filename);
+                });
                 const del = document.createElement("button");
                 del.className = "btn-danger"; del.style.height = "32px"; del.style.padding = "0 10px";
                 del.style.fontSize = "0.78rem";
@@ -4257,6 +4294,11 @@
         return await res.json();
     }
 
+    async function fetchAdminLoginAttempts() {
+        const res = await request("/admin/login-attempts?limit=50", { headers: authHeaders() });
+        return await res.json();
+    }
+
     async function updateAdminUser(userId, payload) {
         const res = await request("/admin/users/" + userId, {
             method: "PATCH",
@@ -4285,8 +4327,10 @@
         if (!state.isAdmin) return;
         const list = $("admin-users-list");
         const auditList = $("admin-audit-list");
+        const loginList = $("admin-login-list");
         list.replaceChildren();
         auditList.replaceChildren();
+        loginList.replaceChildren();
         setStatus($("admin-status"), "Loading…");
         try {
             const users = await fetchAdminUsers();
@@ -4432,6 +4476,8 @@
 
             _cachedAudit = await fetchAdminAudit();
             renderAuditList(_cachedAudit);
+            const loginAttempts = await fetchAdminLoginAttempts();
+            renderLoginAttemptsList(loginAttempts);
         } catch (err) {
             setStatus($("admin-status"), err.message, "error");
             const empty = document.createElement("div");
@@ -4484,6 +4530,51 @@
             auditList.appendChild(item);
         }
         auditList._rawData = audit;
+    }
+
+    function renderLoginAttemptsList(attempts) {
+        const loginList = $("admin-login-list");
+        loginList.replaceChildren();
+        if (!attempts || attempts.length === 0) {
+            const empty = document.createElement("div");
+            empty.className = "history-empty";
+            empty.textContent = "No login attempts recorded yet.";
+            loginList.appendChild(empty);
+            return;
+        }
+        for (const attempt of attempts) {
+            const item = document.createElement("div");
+            item.className = "history-item";
+
+            const head = document.createElement("div");
+            head.className = "history-item-head";
+
+            const email = document.createElement("span");
+            email.className = attempt.success ? "role-agent" : "role-user";
+            email.textContent = attempt.email || "unknown";
+            head.appendChild(email);
+
+            const ts = document.createElement("span");
+            ts.textContent = "· " + formatTs(attempt.created_at);
+            head.appendChild(ts);
+            item.appendChild(head);
+
+            const meta = document.createElement("div");
+            meta.className = "history-item-text";
+            meta.style.marginTop = "4px";
+            meta.style.fontSize = "0.82rem";
+            meta.style.color = "var(--text-2)";
+            const parts = [
+                attempt.success ? "success" : "failed",
+                attempt.ip_address ? `IP ${attempt.ip_address}` : null,
+                attempt.user_agent || null,
+                attempt.failure_reason ? `reason: ${attempt.failure_reason}` : null,
+            ].filter(Boolean);
+            meta.textContent = parts.join(" · ");
+            item.appendChild(meta);
+
+            loginList.appendChild(item);
+        }
     }
 
     let _cachedAudit = [];
@@ -4581,15 +4672,19 @@
             const isImg = (a.mime_type || "").startsWith("image/");
             if (isImg) {
                 const img = document.createElement("img");
-                img.src = authenticatedUrl("/files/" + a.id);
                 img.alt = a.filename;
                 wrap.appendChild(img);
+                fetchProtectedObjectUrl("/files/" + a.id).then(url => { img.src = url; }).catch(() => {});
             } else {
                 const link = document.createElement("a");
-                link.href = authenticatedUrl("/files/" + a.id);
+                link.href = "#";
                 link.target = "_blank";
                 link.rel = "noopener";
                 link.textContent = "📎 " + a.filename;
+                link.addEventListener("click", async (event) => {
+                    event.preventDefault();
+                    await triggerProtectedDownload("/files/" + a.id, a.filename);
+                });
                 wrap.appendChild(link);
             }
         }
@@ -4978,7 +5073,6 @@
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email, password })
             });
-            if (res.status === 409) throw new Error("An account with that email already exists");
             if (!res.ok) {
                 const body = await res.json().catch(() => ({}));
                 throw new Error(body.detail || `Request failed with ${res.status}`);
@@ -4989,7 +5083,7 @@
                 $("reg-confirm").value = "";
                 setStatus(
                     $("register-status"),
-                    "Account created. An admin must approve it before you can sign in.",
+                    "Registration received. If the account can be activated, an admin must approve it before you can sign in.",
                     "success",
                 );
                 return;
@@ -5013,6 +5107,22 @@
     /* ── Wire up ── */
     $("login-form").addEventListener("submit", login);
     $("register-form").addEventListener("submit", register);
+    $("calendar-feed-download-btn").addEventListener("click", async (event) => {
+        event.preventDefault();
+        try {
+            await triggerProtectedDownload("/calendar/upcoming.ics", "coacher-upcoming.ics");
+        } catch (err) {
+            flashStatus("history-toolbar-status", err.message, "error", 3000);
+        }
+    });
+    $("history-ics-btn").addEventListener("click", async (event) => {
+        event.preventDefault();
+        try {
+            await triggerProtectedDownload("/calendar/upcoming.ics", "coacher-upcoming.ics");
+        } catch (err) {
+            flashStatus("history-toolbar-status", err.message, "error", 3000);
+        }
+    });
     $("chat-form").addEventListener("submit", sendMessage);
 
     /* ── Boot ── */

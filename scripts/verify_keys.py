@@ -1,12 +1,12 @@
 """Daily verifier: every encrypted API key in the DB still decrypts.
 
-Run via the ``fitness-agent-verify-keys.timer`` systemd unit (see
+Run via the ``coacher-verify-keys.timer`` systemd unit (see
 ``deploy/`` in this repo). Exits 0 on success, 1 on any failure so the
 unit's ``OnFailure=`` chain (or your monitoring) can alert.
 
 Manual run:
 
-    cd /opt/fitness-agent
+    cd /opt/coacher
     uv run python scripts/verify_keys.py
 """
 

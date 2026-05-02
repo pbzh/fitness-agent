@@ -46,7 +46,6 @@ Steps:
 6. End with a 2-3 sentence summary of the week's focus and what changed vs last week.
 """
 
-    settings = get_settings()
     week_end = next_monday + timedelta(days=7)
     async with AsyncSessionLocal() as session:
         users = (
@@ -66,13 +65,9 @@ Steps:
                 TaskClass.PLAN_GENERATION.value,
                 _env_provider_for(TaskClass.PLAN_GENERATION),
             )
-            if provider == Provider.ANTHROPIC and not (
-                eff.key_for(provider) or settings.anthropic_api_key
-            ):
+            if provider == Provider.ANTHROPIC and not eff.key_for(provider):
                 provider = Provider.LOCAL
-            if provider == Provider.OPENAI and not (
-                eff.key_for(provider) or settings.openai_api_key
-            ):
+            if provider == Provider.OPENAI and not eff.key_for(provider):
                 provider = Provider.LOCAL
 
         agent: Agent[AgentDeps, str] = Agent(
